@@ -1,0 +1,44 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ "main" ]   # deploy when main is updated
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Upload code to production folder
+      - name: Upload files to Hostinger (Prod)
+        uses: easingthemes/ssh-deploy@v5.0.3
+        with:
+          REMOTE_HOST: ${{ secrets.PROD_SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
+          REMOTE_PORT: ${{ secrets.PROD_SSH_PORT }}
+          SOURCE: "./"
+          TARGET: "${{ secrets.PROD_APP_DIR }}"
+          # Optional: exclude things that shouldn't upload
+          EXCLUDE: ".git,.github,node_modules,tests,storage/framework,storage/logs"
+
+      # Run Laravel optimizations on the server
+      - name: Run Laravel optimize on Prod
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT }}
+          script: |
+            set -e
+            cd "${{ secrets.PROD_APP_DIR }}"
+            if command -v composer >/dev/null 2>&1; then C=composer; else C=/usr/bin/composer; fi
+            $C install --no-dev --prefer-dist --optimize-autoloader
+            php artisan migrate --force
+            php artisan storage:link || true
+            php artisan config:clear && php artisan route:clear && php artisan view:clear
+            php artisan config:cache && php artisan route:cache && php artisan view:cache
