@@ -188,14 +188,10 @@ Route::post('/clients/{client}/resend-signature', [ContractController::class, 'r
 Route::post('/webhooks/yousign', \App\Http\Controllers\Webhooks\YousignWebhookController::class)
 ->name('webhooks.yousign');
 
-Route::get('/__cfg/yousign', function () {
-    return response()->json([
-        'services' => config('services.yousign'),
-        'env_key'  => env('YOUSIGN_API_KEY'),     // should NOT be null
-        'app_url'  => config('app.url'),
-        'php_sapi' => php_sapi_name(),
-    ]);
-});
+Route::get('/__cfg/yousign', fn () => [
+    'base'  => config('services.yousign.base_url'),
+    'key?'  => config('services.yousign.api_key') ? 'present' : 'missing',
+]);
 
     // Bons de commande
     Route::resource('bons-de-commande', BonDeCommandeController::class)
