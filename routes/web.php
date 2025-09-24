@@ -165,19 +165,8 @@ Route::middleware(['auth', CompanyAccess::class])
     Route::get('/expenses/export/excel', [ExpenseController::class, 'exportExcel'])->name('expenses.export.excel');
     Route::get('/expenses/export/pdf', [ExpenseController::class, 'exportPDF'])->name('expenses.export.pdf');
 
-    Route::post('/contracts/{client}/send', [ContractController::class, 'send'])->name('contracts.send');
-Route::post('/webhooks/yousign', YousignWebhookController::class)->name('webhooks.yousign');
-
-Route::post('/clients/{client}/send-signature', [ContractController::class, 'send'])
-    ->name('clients.send_signature');
-
-Route::post('/clients/{client}/resend-signature', [ContractController::class, 'resend'])
-    ->name('clients.resend_signature');
-
-    Route::post('/clients/{client}/send-signature', [ClientSignatureController::class, 'send'])
-    ->name('clients.send_signature');
-
-    Route::post('/clients/{client}/contract/generate', [ContractController::class, 'generate'])
+// ---- CONTRACT ACTIONS ----
+Route::post('/clients/{client}/contract/generate', [ContractController::class, 'generate'])
     ->name('clients.contract.generate');
 
 Route::get('/clients/{client}/contract/download', [ContractController::class, 'download'])
@@ -186,20 +175,21 @@ Route::get('/clients/{client}/contract/download', [ContractController::class, 'd
 Route::get('/clients/{client}/contract/download-signed', [ContractController::class, 'downloadSigned'])
     ->name('clients.contract.download_signed');
 
-    Route::post('/webhooks/yousign', YousignWebhookController::class)
+// ---- SIGNATURE ACTIONS ----
+Route::post('/clients/{client}/send-signature', [ClientSignatureController::class, 'send'])
+    ->name('clients.send_signature');
+
+Route::post('/clients/{client}/resend-signature', [ClientSignatureController::class, 'resend'])
+    ->name('clients.resend_signature');
+
+// ---- WEBHOOK (Yousign callback) ----
+Route::post('/webhooks/yousign', YousignWebhookController::class)
     ->name('webhooks.yousign');
 
-    Route::get('/_cfg/yousign', function () {
-        return response()->json(config('services.yousign'));
-    });
-
- // routes/web.php
-Route::post('/webhooks/yousign', \App\Http\Controllers\Webhooks\YousignWebhookController::class)
-->name('webhooks.yousign');
-
+// ---- DEBUG CONFIG (optional) ----
 Route::get('/__cfg/yousign', fn () => [
-    'base'  => config('services.yousign.base_url'),
-    'key?'  => config('services.yousign.api_key') ? 'present' : 'missing',
+    'base' => config('services.yousign.base_url'),
+    'key'  => config('services.yousign.api_key') ? 'present' : 'missing',
 ]);
 
     // Bons de commande
