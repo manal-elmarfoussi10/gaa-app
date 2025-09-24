@@ -2,50 +2,28 @@ name: Deploy to Dev
 
 on:
   push:
-    branches: [ "dev" ]   # trigger only when pushing to dev branch
+    branches:
+      - dev   # only run when pushing to dev branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Install PHP dependencies
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          tools: composer
-      - run: composer install --no-dev --prefer-dist --optimize-autoloader
-
-      # Install Node dependencies if package.json exists
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: |
-          if [ -f package.json ]; then
-            npm ci
-            npm run build || npm run prod
-          fi
-
-      # Prepare artifact (excluding .git etc.)
-      - run: |
-          rm -rf .git node_modules tests
-          tar -czf release.tgz ./
-
-      # Upload artifact to DEV server
-      - name: Upload artifact
+      - name: Upload files to Hostinger (Dev)
         uses: easingthemes/ssh-deploy@v5.0.3
         with:
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USER }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
           REMOTE_PORT: ${{ secrets.SSH_PORT }}
-          SOURCE: "release.tgz"
-          TARGET: "${{ secrets.DEV_APP_DIR }}/tmp"
+          SOURCE: "./"
+          TARGET: "${{ secrets.DEV_APP_DIR }}"
 
-      # Finalize deployment on DEV
-      - name: Finalize release on DEV
+      - name: Run Laravel optimizations
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -53,26 +31,12 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            set -e
-            APP_DIR="${{ secrets.DEV_APP_DIR }}"
-            TS=$(date +%Y%m%d%H%M%S)
-            REL="${APP_DIR}/releases/${TS}"
-            mkdir -p "$REL" "${APP_DIR}/shared" "${APP_DIR}/tmp"
-            mv "${APP_DIR}/tmp/release.tgz" "$REL/"
-            cd "$REL" && tar -xzf release.tgz && rm release.tgz
-
-            # link shared resources
-            mkdir -p "${APP_DIR}/shared/storage"
-            [ -f "${APP_DIR}/shared/.env" ] || cp .env.example "${APP_DIR}/shared/.env"
-            rm -rf "$REL/storage" && ln -s "${APP_DIR}/shared/storage" "$REL/storage"
-            ln -sfn "${APP_DIR}/shared/.env" "$REL/.env"
-
-            # Laravel optimize
-            php "$REL/artisan" storage:link || true
-            php "$REL/artisan" migrate --force
-            php "$REL/artisan" config:cache
-            php "$REL/artisan" route:cache
-            php "$REL/artisan" view:cache
-
-            # switch current symlink
-            ln -sfn "$REL" "${APP_DIR}/current"
+            cd ${{ secrets.DEV_APP_DIR }}
+            composer install --no-dev --prefer-dist --optimize-autoloader
+            php artisan migrate --force
+            php artisan config:clear
+            php artisan route:clear
+            php artisan view:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
