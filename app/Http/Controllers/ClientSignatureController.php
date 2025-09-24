@@ -10,11 +10,12 @@ class ClientSignatureController extends Controller
 {
     public function __construct(private YousignService $yousign) {}
 
-    public function send(Request $request, Client $client)
+    public function send(Request $request, \App\Models\Client $client)
     {
-        $this->yousign->sendContract($client);
+        app(\App\Services\YousignService::class)->sendContract($client);
+    
         $client->update(['statut_gsauto' => 'sent']);
-
+    
         return back()->with('success', 'Document envoyé au client pour signature.');
     }
 
