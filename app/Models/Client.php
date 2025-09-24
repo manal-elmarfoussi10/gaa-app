@@ -20,8 +20,13 @@ class Client extends Model
         'raison', 'type_vitrage', 'professionnel', 'reparation',
         'photo_vitrage', 'photo_carte_verte', 'photo_carte_grise',
         'type_cadeau', 'numero_sinistre', 'kilometrage', 'connu_par',
-        'adresse_pose', 'reference_interne', 'reference_client', 'precision', 'statut', 'company_id'
+        'adresse_pose', 'reference_interne', 'reference_client', 'precision', 'statut', 'company_id', 'statut_gsauto','yousign_procedure_id','yousign_file_id','signed_at'
     ];
+
+    protected $casts = [
+        'signed_at' => 'datetime',
+    ];
+
     public function rdvs()
 {
     return $this->hasMany(Rdv::class);
@@ -80,5 +85,10 @@ public function emails()
 public function interventions()
     {
         return $this->hasMany(Intervention::class);
+    }
+
+    public function getNomCompletAttribute(): string
+    {
+        return trim(($this->prenom ?? '').' '.($this->nom_assure ?? ''));
     }
 }
