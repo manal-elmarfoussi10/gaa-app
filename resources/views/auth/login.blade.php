@@ -3,7 +3,7 @@
 @section('title', 'Connexion')
 
 @section('content')
-<p style="color:green;">DEV TEST CHANGE ✅</p>
+<p style="color:green;">DEV TEST CHANGE </p>
 <div class="bg-white rounded-2xl shadow-lg px-8 py-10 max-w-lg w-full">
     {{-- Logo --}}
     <div class="flex justify-center mb-8">
