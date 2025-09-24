@@ -55,7 +55,7 @@
         </h2>
   
         <p class="text-sm text-gray-600 mt-1">
-          Envoyez le contrat au client pour signature (Yousign). Le statut se mettra à jour automatiquement.
+          Envoyez le contrat au client pour signature. Le statut se mettra à jour automatiquement.
         </p>
   
         @if($client->signed_at)
