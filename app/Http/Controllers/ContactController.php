@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Services\YousignService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -10,37 +11,30 @@ use Illuminate\Support\Facades\Storage;
 class ContractController extends Controller
 {
     /**
-     * Build the contract PDF for a client, store it, and (optionally) return it.
-     * POST so we can regenerate safely.
+     * Generate the draft contract PDF and store it.
      */
     public function generate(Request $request, Client $client)
     {
-        // 1) Render the PDF from a Blade view (see view below)
         $pdf = Pdf::loadView('contracts.client', [
             'client' => $client,
         ])->setPaper('a4');
 
-        // 2) Decide where to save it (public disk so it’s downloadable via /storage)
         $dir = "contracts/{$client->id}";
         $filename = 'contract.pdf';
         $path = "{$dir}/{$filename}";
 
-        // Make sure dir exists & write the file
         Storage::disk('public')->makeDirectory($dir);
         Storage::disk('public')->put($path, $pdf->output());
 
-        // 3) Persist path & mark status as 'draft' (or keep current if already sent)
-        $client->contract_pdf_path = $path;              // column from the migration we planned
+        $client->contract_pdf_path = $path;
         $client->statut_gsauto = $client->statut_gsauto ?: 'draft';
         $client->save();
 
-        return back()
-            ->with('success', 'Contrat généré.')
-            ->with('open_signature', true); // auto-scroll your block
+        return back()->with('success', 'Contrat généré.')->with('open_signature', true);
     }
 
     /**
-     * Download the current (non-signed) PDF we generated for this client.
+     * Download the draft contract PDF.
      */
     public function download(Client $client)
     {
@@ -52,7 +46,7 @@ class ContractController extends Controller
     }
 
     /**
-     * Download the signed contract (filled by webhook after signature).
+     * Download the signed contract PDF.
      */
     public function downloadSigned(Client $client)
     {
@@ -61,5 +55,65 @@ class ContractController extends Controller
         }
 
         return Storage::disk('public')->download($client->contract_signed_pdf_path, "Contrat-Signe-{$client->id}.pdf");
+    }
+
+    /**
+     * Send the contract for signature via Yousign.
+     */
+    public function send(Request $request, Client $client, YousignService $yousign)
+    {
+        if (!$client->contract_pdf_path || !Storage::disk('public')->exists($client->contract_pdf_path)) {
+            return back()->with('error', 'Veuillez générer le contrat avant de l’envoyer.');
+        }
+
+        try {
+            // 1) Create signature request
+            $signatureRequest = $yousign->createSignatureRequest("Contrat client #{$client->id}");
+
+            // 2) Upload the contract file
+            $fullPath = Storage::disk('public')->path($client->contract_pdf_path);
+            $document = $yousign->uploadDocument($signatureRequest['id'], $fullPath, 'contract.pdf');
+
+            // 3) Add the signer
+            $yousign->addSigner(
+                $signatureRequest['id'],
+                $document['id'],
+                $client->email,
+                $client->prenom,
+                $client->nom
+            );
+
+            // 4) Activate
+            $yousign->activateSignatureRequest($signatureRequest['id']);
+
+            $client->yousign_request_id = $signatureRequest['id'];
+            $client->statut_gsauto = 'sent';
+            $client->save();
+
+            return back()->with('success', 'Contrat envoyé au client pour signature.')->with('open_signature', true);
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Erreur lors de l’envoi du contrat : ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Resend a contract signature request (if failed or expired).
+     */
+    public function resend(Request $request, Client $client, YousignService $yousign)
+    {
+        if (!$client->yousign_request_id) {
+            return back()->with('error', 'Aucun envoi précédent trouvé pour ce client.');
+        }
+
+        try {
+            $yousign->resendSignatureRequest($client->yousign_request_id);
+
+            $client->statut_gsauto = 'resent';
+            $client->save();
+
+            return back()->with('success', 'Contrat renvoyé au client.')->with('open_signature', true);
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Erreur lors du renvoi : ' . $e->getMessage());
+        }
     }
 }
