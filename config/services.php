@@ -28,10 +28,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'yousign' => [
-    'api_key'  => env('YOUSIGN_API_KEY'),
-    'mode'     => env('YOUSIGN_MODE', 'sandbox'),
-    'base_url' => env('YOUSIGN_BASE_URL', 'https://api-sandbox.yousign.com/v3'),
+'yousign' => [
+    'api_key' => env('YOUSIGN_KEY'), // was YOUSIGN_API_KEY
+    'mode'    => env('YOUSIGN_SANDBOX', true) ? 'sandbox' : 'production',
+    'base_url'=> env('YOUSIGN_BASE_URL', env('YOUSIGN_SANDBOX', true)
+                   ? 'https://api-sandbox.yousign.com/v3'
+                   : 'https://api.yousign.com/v3'),
 ],
 
     'slack' => [
