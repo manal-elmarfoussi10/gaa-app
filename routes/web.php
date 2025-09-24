@@ -6,6 +6,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Middleware\CompanyAccess;
 use App\Http\Middleware\SuperAdminAccess;
 use App\Http\Controllers\ContractController;
+use App\Http\Controllers\ClientSignatureController;
 use App\Http\Controllers\Webhooks\YousignWebhookController;
 
 // ===============================
@@ -327,6 +328,9 @@ Route::post('/clients/{client}/send-signature', [ContractController::class, 'sen
 
 Route::post('/clients/{client}/resend-signature', [ContractController::class, 'resend'])
     ->name('clients.resend_signature');
+
+    Route::post('/clients/{client}/send-signature', [ClientSignatureController::class, 'send'])
+    ->name('clients.send_signature');
 
     
     });

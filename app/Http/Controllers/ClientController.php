@@ -225,4 +225,11 @@ class ClientController extends Controller
 
         return $pdf->download($filename);
     }
+
+    public function sendSignature(Request $request, Client $client)
+{
+    app(\App\Services\YousignService::class)->sendContract($client);
+    $client->update(['statut_gsauto' => 'sent']);
+    return back()->with('success', 'TODO: envoyer à Yousign');
+}
 }
