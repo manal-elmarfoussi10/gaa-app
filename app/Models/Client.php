@@ -20,7 +20,11 @@ class Client extends Model
         'raison', 'type_vitrage', 'professionnel', 'reparation',
         'photo_vitrage', 'photo_carte_verte', 'photo_carte_grise',
         'type_cadeau', 'numero_sinistre', 'kilometrage', 'connu_par',
-        'adresse_pose', 'reference_interne', 'reference_client', 'precision', 'statut', 'company_id', 'statut_gsauto','yousign_procedure_id','yousign_file_id','signed_at'
+        'adresse_pose', 'reference_interne', 'reference_client', 'precision', 'statut', 'company_id', 'statut_gsauto','yousign_procedure_id','yousign_file_id','signed_at',    'contract_pdf_path',
+        'signed_pdf_path',
+        'yousign_signature_request_id',
+        'yousign_document_id',
+        'signed_at',
     ];
 
     protected $casts = [

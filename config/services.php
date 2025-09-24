@@ -28,10 +28,14 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-'yousign' => [
-    'api_key'  => env('YOUSIGN_API_KEY'),
-    'mode'     => env('YOUSIGN_MODE', 'sandhttps://api-sandbox.yousign.app/v3'),
-],
+    'yousign' => [
+        'api_key'  => env('YOUSIGN_API_KEY'),
+        'mode'     => env('YOUSIGN_MODE', 'sandbox'),
+        'base_url' => env('YOUSIGN_BASE_URL', 'https://api-sandbox.yousign.com/v3'),
+        'webhook'  => [
+            'secret' => env('YOUSIGN_WEBHOOK_SECRET'),
+        ],
+    ],
 
     'slack' => [
         'notifications' => [

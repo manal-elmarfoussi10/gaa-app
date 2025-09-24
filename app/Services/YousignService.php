@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class YousignService
 {
@@ -12,76 +13,126 @@ class YousignService
 
     public function __construct()
     {
-        // pull from config, then env, then safe default
-        $this->base  = (string) (config('services.yousign.base_url') ?: env('YOUSIGN_BASE_URL') ?: 'https://api-sandbox.yousign.com/v3');
-        $this->token = (string) (config('services.yousign.api_key')  ?: env('YOUSIGN_API_KEY')  ?: '');
+        $this->base  = (string) config('services.yousign.base_url') ?: 'https://api-sandbox.yousign.com/v3';
+        $this->token = (string) config('services.yousign.api_key');
 
         if (!$this->token) {
-            throw new \RuntimeException('YOUSIGN_API_KEY is missing.');
+            throw new RuntimeException('YOUSIGN_API_KEY is missing.');
         }
-
-        // normalize
-        $this->base = rtrim($this->base, '/');
     }
 
     protected function client(): PendingRequest
     {
-        return Http::asJson()
-            ->acceptJson()
-            ->withToken($this->token);
-            // NOTE: we’ll send absolute URLs below, so baseUrl() is optional now
+        return Http::withToken($this->token)
+            ->baseUrl($this->base)
+            ->acceptJson();
     }
 
-    // ---- minimal creation, enrich later with files/members ----
-    public function createSignatureRequest(string $name): array
+    /** 1) Create signature request */
+    public function createSignatureRequest(string $name, string $timezone = 'Europe/Paris', string $deliveryMode = 'email'): array
     {
         return $this->client()
-            ->post($this->base . '/signature_requests', [
-                'name' => $name,
+            ->post('/signature_requests', [
+                'name'          => $name,
+                'delivery_mode' => $deliveryMode,
+                'timezone'      => $timezone,
             ])
             ->throw()
             ->json();
     }
 
-    public function uploadFile(string $signatureRequestId, string $path, string $filename): array
+    /** 2) Upload a PDF document to the request (multipart) */
+    public function uploadDocument(string $signatureRequestId, string $absolutePdfPath): array
     {
+        if (!is_file($absolutePdfPath)) {
+            throw new RuntimeException("PDF not found at: {$absolutePdfPath}");
+        }
+
         return $this->client()
-            ->attach('file', file_get_contents($path), $filename)
-            ->post($this->base . "/signature_requests/{$signatureRequestId}/files")
+            ->asMultipart()
+            ->attach(
+                'file',
+                file_get_contents($absolutePdfPath),
+                basename($absolutePdfPath)
+            )
+            ->post("/signature_requests/{$signatureRequestId}/documents", [
+                'nature'        => 'signable_document',
+                'parse_anchors' => true,
+            ])
             ->throw()
             ->json();
     }
 
-    public function addRecipient(string $signatureRequestId, array $member): array
-    {
+    /** 3) Add signer (with one signature field on page 1 at x/y—adjust to your PDF) */
+    public function addSigner(
+        string $signatureRequestId,
+        string $documentId,
+        string $email,
+        string $firstName,
+        string $lastName,
+        int $page = 1,
+        int $x = 77,
+        int $y = 581
+    ): array {
         return $this->client()
-            ->post($this->base . "/signature_requests/{$signatureRequestId}/recipients", $member)
+            ->post("/signature_requests/{$signatureRequestId}/signers", [
+                'info' => [
+                    'first_name' => $firstName,
+                    'last_name'  => $lastName,
+                    'email'      => $email,
+                    'locale'     => 'fr',
+                ],
+                'signature_authentication_mode' => 'no_otp',               // sandbox friendly
+                'signature_level'               => 'electronic_signature', // standard level
+                'fields' => [[
+                    'type'        => 'signature',
+                    'document_id' => $documentId,
+                    'page'        => $page,
+                    'x'           => $x,
+                    'y'           => $y,
+                    'width'       => 150,   // tweak to fit your contract
+                    'height'      => 40,
+                ]],
+            ])
             ->throw()
             ->json();
     }
 
-    public function startSignatureRequest(string $signatureRequestId): array
+    /** 4) Activate signature request (sends emails) */
+    public function activate(string $signatureRequestId): array
     {
         return $this->client()
-            ->post($this->base . "/signature_requests/{$signatureRequestId}/start")
+            ->post("/signature_requests/{$signatureRequestId}/activate")
             ->throw()
             ->json();
     }
 
-    // convenience for your controller
-    public function sendContract(\App\Models\Client $client): array
+    /** High-level helper you can call from controller */
+    public function sendContract(string $pdfPath, array $signer, string $name = 'Contrat'): array
     {
-        $sr = $this->createSignatureRequest("Contrat GS Auto - {$client->nom_assure}");
+        // 1
+        $sr = $this->createSignatureRequest($name);
 
-        // add file/recipient here (example only):
-        // $this->uploadFile($sr['id'], storage_path('app/contracts/template.pdf'), 'contrat.pdf');
-        // $this->addRecipient($sr['id'], [
-        //   'firstname' => $client->prenom ?: $client->nom_assure,
-        //   'lastname'  => $client->nom_assure,
-        //   'email'     => $client->email,
-        // ]);
+        // 2
+        $doc = $this->uploadDocument($sr['id'], $pdfPath);
 
-        // start
-        return $this->startSignatureRequest($sr['id']);
+        // 3
+        $this->addSigner(
+            $sr['id'],
+            $doc['id'],
+            $signer['email'],
+            $signer['first_name'],
+            $signer['last_name'],
+            page: 1, x: 100, y: 600
+        );
+
+        // 4
+        $activated = $this->activate($sr['id']);
+
+        return [
+            'signature_request' => $sr,
+            'document'          => $doc,
+            'activated'         => $activated,
+        ];
     }
 }

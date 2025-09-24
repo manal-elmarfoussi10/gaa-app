@@ -1,52 +1,54 @@
 <?php
-// app/Http/Controllers/ContactController.php
 
 namespace App\Http\Controllers;
 
-use App\Models\Contact;
-use App\Models\User;
+use App\Models\Client;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
-class ContactController extends Controller
+class ContractController extends Controller
 {
     /**
-     * Show the contact form (tenant side).
+     * Build the contract PDF for a client, store it, and (optionally) return it.
+     * POST so we can regenerate safely.
      */
-    public function index()
+    public function generate(Request $request, Client $client)
     {
-        return view('contact.contact'); // was contact.index
+        // 1) Render HTML -> PDF (adjust the Blade view path/HTML as you like)
+        $pdf = Pdf::loadView('contracts.contract', [
+            'client' => $client,
+            'today'  => now(),
+        ])->setPaper('a4');
+
+        // 2) Persist to storage/app/contracts/{id}.pdf
+        $relative = "contracts/{$client->id}.pdf";
+        Storage::put($relative, $pdf->output());
+
+        // 3) Save the path in DB
+        $client->update([
+            'contract_pdf_path' => $relative, // non signed
+        ]);
+
+        // 4) Redirect back with a message
+        return back()->with('success', 'Contrat généré.')->with('open_signature', true);
     }
 
     /**
-     * Handle submission and persist the contact message.
+     * Download the current (non-signed) PDF we generated for this client.
      */
-    public function send(Request $request)
+    public function download(Client $client)
     {
-        // Basic validation
-        $data = $request->validate([
-            'name'    => ['required', 'string', 'max:255'],
-            'email'   => ['required', 'email', 'max:255'],
-            'message' => ['required', 'string', 'max:5000'],
-        ]);
+        abort_unless($client->contract_pdf_path && Storage::exists($client->contract_pdf_path), 404, 'PDF introuvable');
+        return response()->download(Storage::path($client->contract_pdf_path), "contrat-{$client->id}.pdf");
+    }
 
-        // Attach company_id when the sender is authenticated (tenant user)
-        $data['company_id'] = Auth::check() ? (Auth::user()->company_id ?? null) : null;
-
-        // Persist
-        $contact = Contact::create($data);
-
-        /**
-         * (Optional) Notify superadmins by email/notification
-         * Uncomment/replace with your preferred notification logic.
-         *
-         * use Illuminate\Support\Facades\Notification;
-         * use App\Notifications\NewContactMessage; // create if you want
-         *
-         * $superadmins = User::where('role', 'superadmin')->get();
-         * Notification::send($superadmins, new NewContactMessage($contact));
-         */
-
-        return back()->with('success', 'Message envoyé. Merci, nous revenons vers vous rapidement.');
+    /**
+     * (Optional) Download the signed file if/when you save it later from a webhook.
+     */
+    public function downloadSigned(Client $client)
+    {
+        abort_unless($client->signed_pdf_path && Storage::exists($client->signed_pdf_path), 404, 'PDF signé introuvable');
+        return response()->download(Storage::path($client->signed_pdf_path), "contrat-signe-{$client->id}.pdf");
     }
 }

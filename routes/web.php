@@ -177,6 +177,15 @@ Route::post('/clients/{client}/resend-signature', [ContractController::class, 'r
     Route::post('/clients/{client}/send-signature', [ClientSignatureController::class, 'send'])
     ->name('clients.send_signature');
 
+    Route::post('/clients/{client}/contract/generate', [ContractController::class, 'generate'])
+    ->name('clients.contract.generate');
+
+Route::get('/clients/{client}/contract/download', [ContractController::class, 'download'])
+    ->name('clients.contract.download');
+
+Route::get('/clients/{client}/contract/download-signed', [ContractController::class, 'downloadSigned'])
+    ->name('clients.contract.download_signed');
+
     Route::post('/webhooks/yousign', YousignWebhookController::class)
     ->name('webhooks.yousign');
 
