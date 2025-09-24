@@ -180,6 +180,10 @@ Route::post('/clients/{client}/resend-signature', [ContractController::class, 'r
     Route::post('/webhooks/yousign', YousignWebhookController::class)
     ->name('webhooks.yousign');
 
+    Route::get('/_cfg/yousign', function () {
+        return response()->json(config('services.yousign'));
+    });
+
 
 
     // Bons de commande

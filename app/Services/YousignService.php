@@ -1,8 +1,9 @@
 <?php
-
+// app/Services/YousignService.php
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class YousignService
 {
@@ -11,8 +12,12 @@ class YousignService
 
     public function __construct()
     {
-        $this->base  = config('services.yousign.base_url');
-        $this->token = config('services.yousign.api_key');
+        $this->base  = (string) (config('services.yousign.base_url') ?: 'https://api-sandbox.yousign.com/v3');
+        $this->token = (string) config('services.yousign.api_key');
+
+        if ($this->token === '' || $this->token === null) {
+            throw new RuntimeException('YOUSIGN_API_KEY is missing. Set it in .env and rebuild config cache.');
+        }
     }
 
     protected function client()
@@ -27,7 +32,8 @@ class YousignService
 
     public function uploadFile(string $procedureId, string $path, string $filename): array
     {
-        return $this->client()->attach('file', file_get_contents($path), $filename)
+        return $this->client()
+            ->attach('file', file_get_contents($path), $filename)
             ->post("/procedures/{$procedureId}/files")
             ->throw()
             ->json();
