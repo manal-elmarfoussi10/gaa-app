@@ -1,0 +1,89 @@
+[1mdiff --git a/.htaccess b/.htaccess[m
+[1mindex 5457848..b574a59 100644[m
+[1m--- a/.htaccess[m
+[1m+++ b/.htaccess[m
+[36m@@ -22,13 +22,4 @@[m
+     RewriteCond %{REQUEST_FILENAME} !-d[m
+     RewriteCond %{REQUEST_FILENAME} !-f[m
+     RewriteRule ^ index.php [L][m
+[31m-    [m
+[31m-    # Ne pas passer par Laravel pour les fichiers dans /storage/[m
+[31m-RewriteCond %{REQUEST_URI} ^/storage/[m
+[31m-RewriteRule .* - [L][m
+[31m-</IfModule>[m
+[31m-[m
+[31m-<IfModule mod_security.c>[m
+[31m-SecRuleRemoveById 400011[m
+[31m-SecRuleRemoveById 400012[m
+ </IfModule>[m
+[1mdiff --git a/app/Http/Controllers/SuperAdmin/ClientsController.php b/app/Http/Controllers/SuperAdmin/ClientsController.php[m
+[1mdeleted file mode 100644[m
+[1mindex cbfe391..0000000[m
+[1m--- a/app/Http/Controllers/SuperAdmin/ClientsController.php[m
+[1m+++ /dev/null[m
+[36m@@ -1,142 +0,0 @@[m
+[31m-<?php[m
+[31m-[m
+[31m-namespace App\Http\Controllers\Superadmin;[m
+[31m-[m
+[31m-use App\Http\Controllers\Controller;[m
+[31m-use App\Models\Client;[m
+[31m-use App\Models\User;[m
+[31m-use Illuminate\Support\Facades\Schema;[m
+[31m-use Barryvdh\DomPDF\Facade\Pdf;[m
+[31m-use Illuminate\Database\Eloquent\SoftDeletes;[m
+[31m-[m
+[31m-class ClientsController extends Controller[m
+[31m-{[m
+[31m-    /**[m
+[31m-     * Show a client's dossier for support (superadmin + client_service).[m
+[31m-     * Bypasses tenant/global scopes. Soft-deletes are included only if the model uses SoftDeletes.[m
+[31m-     */[m
+[31m-    public function show($id)[m
+[31m-    {[m
+[31m-        // Allow superadmin + client_service only[m
+[31m-        abort_unless([m
+[31m-            auth()->check() &&[m
+[31m-            in_array(auth()->user()->role, [User::ROLE_SUPERADMIN, User::ROLE_CLIENT_SERVICE], true),[m
+[31m-            403[m
+[31m-        );[m
+[31m-[m
+[31m-        // Disable debugbar if present[m
+[31m-        if (class_exists(\Barryvdh\Debugbar\Facades\Debugbar::class)) {[m
+[31m-            \Barryvdh\Debugbar\Facades\Debugbar::disable();[m
+[31m-        }[m
+[31m-[m
+[31m-        // Defensive column list[m
+[31m-        $candidateCols = [[m
+[31m-            'id','company_id','prenom','nom_assure','plaque',[m
+[31m-            'email','telephone','adresse','kilometrage','type_vitrage',[m
+[31m-            'ancien_modele_plaque','nom_assurance','numero_police','numero_sinistre',[m
+[31m-            'autre_assurance','date_sinistre','date_declaration','raison','reparation',[m
+[31m-            'connu_par','adresse_pose','precision',[m
+[31m-            'statut_signature','statut_verif_bdg','statut_envoi','statut_relance','statut_termine',[m
+[31m-            'statut_interne',[m
+[31m-            'encaisse','type_cadeau','reference_interne','reference_client',[m
+[31m-            'created_at',[m
+[31m-        ];[m
+[31m-        $existingCols = Schema::getColumnListing('clients');[m
+[31m-        $selectCols   = array_values(array_intersect($candidateCols, $existingCols));[m
+[31m-[m
+[31m-        // Start query without tenant/global scopes[m
+[31m-        $query = Client::query()->withoutGlobalScopes();[m
+[31m-[m
+[31m-        // Include soft-deleted rows only if the model uses SoftDeletes[m
+[31m-        if (in_array(SoftDeletes::class, class_uses_recursive(Client::class), true)) {[m
+[31m-            $query->withTrashed();[m
+[31m-        }[m
+[31m-[m
+[31m-        $client = $query[m
+[31m-            ->when($selectCols, fn ($q) => $q->select($selectCols))[m
+[31m-            ->with([[m
+[31m-                'factures'        => fn($q) => $q->latest()->limit(100),[m
+[31m-                'factures.avoirs' => fn($q) => $q,[m
+[31m-                'devis'           => fn($q) => $q->latest()->limit(100),[m
+[31m-                'photos'          => fn($q) => $q->latest()->limit(20),[m
+[31m-                'conversations' => function ($q) {[m
+[31m-                    $q->with([[m
+[31m-                        'creator:id,name',[m
+[31m-                        'emails' => function (
