@@ -33,6 +33,92 @@
         </div>
     </div>
 
+
+    {{-- Signature GS Auto block --}}
+<div class="bg-white rounded-xl shadow-md p-6 mb-8" id="signature-block">
+    <div class="flex items-start justify-between">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+          Signature électronique (GS Auto)
+          @if($client->statut_gsauto)
+            <span class="ml-3 text-xs px-2 py-1 rounded-full
+              @class([
+                'bg-gray-100 text-gray-800' => $client->statut_gsauto==='draft',
+                'bg-amber-100 text-amber-800' => $client->statut_gsauto==='sent',
+                'bg-blue-100 text-blue-800' => $client->statut_gsauto==='viewed',
+                'bg-green-100 text-green-800' => $client->statut_gsauto==='signed',
+                'bg-red-100 text-red-800' => $client->statut_gsauto==='failed',
+              ])">
+              Statut GS Auto : {{ strtoupper($client->statut_gsauto) }}
+            </span>
+          @endif
+        </h2>
+  
+        <p class="text-sm text-gray-600 mt-1">
+          Envoyez le contrat au client pour signature (Yousign). Le statut se mettra à jour automatiquement.
+        </p>
+  
+        @if($client->signed_at)
+          <p class="text-xs text-gray-500 mt-1">Signé le {{ $client->signed_at->format('d/m/Y H:i') }}</p>
+        @endif
+      </div>
+  
+      <div class="flex items-center gap-2">
+        @if(!$client->statut_gsauto || $client->statut_gsauto === 'draft')
+          <form method="POST" action="{{ route('clients.send_signature', $client->id) }}">
+            @csrf
+            <button type="submit"
+              class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              Envoyer pour signature
+            </button>
+          </form>
+        @elseif(in_array($client->statut_gsauto, ['sent','viewed']))
+          <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}">
+            @csrf
+            <button type="submit"
+              class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">
+              Renvoyer
+            </button>
+          </form>
+        @elseif($client->statut_gsauto === 'signed')
+          <span class="inline-flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-lg text-sm">
+            Déjà signé
+          </span>
+        @elseif($client->statut_gsauto === 'failed')
+          <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}">
+            @csrf
+            <button type="submit"
+              class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              Renvoyer (échec)
+            </button>
+          </form>
+        @endif
+      </div>
+    </div>
+  
+    @if(session('success'))
+      <div class="mt-4 bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded">
+        {{ session('success') }}
+      </div>
+    @endif
+    @if(session('error'))
+      <div class="mt-4 bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded">
+        {{ session('error') }}
+      </div>
+    @endif
+  </div>
+  
+  {{-- Auto-scroll to signature block after creation --}}
+  @if(session('open_signature'))
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const el = document.getElementById('signature-block');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    </script>
+  @endif
+
+  
     <!-- Status Section -->
     <div class="bg-white rounded-xl shadow-md p-6 mb-8">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center">

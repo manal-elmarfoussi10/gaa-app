@@ -5,6 +5,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 use App\Http\Middleware\CompanyAccess;
 use App\Http\Middleware\SuperAdminAccess;
+use App\Http\Controllers\ContractController;
+use App\Http\Controllers\Webhooks\YousignWebhookController;
 
 // ===============================
 // Superadmin area controllers
@@ -315,6 +317,18 @@ Route::middleware(['auth','support'])
         Route::get('/emails',       [SAEmailController::class, 'index'])->name('emails.index');
         Route::get('/emails/{email}', [SAEmailController::class, 'show'])->name('emails.show');
         Route::post('/emails/{email}/reply', [SAEmailController::class, 'reply'])->name('emails.reply');
+
+
+Route::post('/contracts/{client}/send', [ContractController::class, 'send'])->name('contracts.send');
+Route::post('/webhooks/yousign', YousignWebhookController::class)->name('webhooks.yousign');
+
+Route::post('/clients/{client}/send-signature', [ContractController::class, 'send'])
+    ->name('clients.send_signature');
+
+Route::post('/clients/{client}/resend-signature', [ContractController::class, 'resend'])
+    ->name('clients.resend_signature');
+
+    
     });
 
 require __DIR__.'/auth.php';

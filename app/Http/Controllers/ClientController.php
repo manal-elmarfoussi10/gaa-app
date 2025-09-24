@@ -146,26 +146,32 @@ class ClientController extends Controller
             'reference_client'   => 'nullable|string|max:255',
             'precision'          => 'nullable|string',
         ]);
-
-        // flags
+    
+        // Flags
         $validated['ancien_modele_plaque'] = $request->has('ancien_modele_plaque');
         $validated['reparation']           = $request->has('reparation');
-
-        // IMPORTANT: attach to the current company
-        $validated['company_id'] = auth()->user()->company_id;
-
-        // uploads
+    
+        // Attach to current company
+        $validated['company_id'] = auth()->user()->company_id ?? null;
+    
+        // Initial GS Auto status (separate from your existing "statut")
+        $validated['statut_gsauto'] = 'draft';
+    
+        // Uploads -> store on "public" disk; returns paths like "uploads/xxxx.jpg"
         foreach (['photo_vitrage', 'photo_carte_verte', 'photo_carte_grise'] as $field) {
             if ($request->hasFile($field)) {
                 $validated[$field] = $request->file($field)->store('uploads', 'public');
             }
         }
-
-        Client::create($validated);
-
+    
+        // Create client (dossier)
+        $client = Client::create($validated);
+    
+        // Redirect to SHOW with a flag that auto-scrolls/opens the signature block
         return redirect()
-            ->route('clients.create')
-            ->with('success', 'Dossier client créé avec succès.');
+            ->route('clients.show', $client->id)
+            ->with('open_signature', true)
+            ->with('success', 'Dossier client créé. Vous pouvez l’envoyer pour signature.');
     }
 
     public function storePhoto(Request $request, Client $client)
