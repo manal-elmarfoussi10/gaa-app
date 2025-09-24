@@ -184,6 +184,9 @@ Route::post('/clients/{client}/resend-signature', [ContractController::class, 'r
         return response()->json(config('services.yousign'));
     });
 
+    // routes/web.php
+Route::yousignWebhooks('/yousign/webhooks');
+
 
 
     // Bons de commande
