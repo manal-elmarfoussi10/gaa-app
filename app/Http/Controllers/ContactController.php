@@ -15,23 +15,28 @@ class ContractController extends Controller
      */
     public function generate(Request $request, Client $client)
     {
-        // 1) Render HTML -> PDF (adjust the Blade view path/HTML as you like)
-        $pdf = Pdf::loadView('contracts.contract', [
+        // 1) Render the PDF from a Blade view (see view below)
+        $pdf = Pdf::loadView('contracts.client', [
             'client' => $client,
-            'today'  => now(),
         ])->setPaper('a4');
 
-        // 2) Persist to storage/app/contracts/{id}.pdf
-        $relative = "contracts/{$client->id}.pdf";
-        Storage::put($relative, $pdf->output());
+        // 2) Decide where to save it (public disk so it’s downloadable via /storage)
+        $dir = "contracts/{$client->id}";
+        $filename = 'contract.pdf';
+        $path = "{$dir}/{$filename}";
 
-        // 3) Save the path in DB
-        $client->update([
-            'contract_pdf_path' => $relative, // non signed
-        ]);
+        // Make sure dir exists & write the file
+        Storage::disk('public')->makeDirectory($dir);
+        Storage::disk('public')->put($path, $pdf->output());
 
-        // 4) Redirect back with a message
-        return back()->with('success', 'Contrat généré.')->with('open_signature', true);
+        // 3) Persist path & mark status as 'draft' (or keep current if already sent)
+        $client->contract_pdf_path = $path;              // column from the migration we planned
+        $client->statut_gsauto = $client->statut_gsauto ?: 'draft';
+        $client->save();
+
+        return back()
+            ->with('success', 'Contrat généré.')
+            ->with('open_signature', true); // auto-scroll your block
     }
 
     /**
@@ -39,16 +44,22 @@ class ContractController extends Controller
      */
     public function download(Client $client)
     {
-        abort_unless($client->contract_pdf_path && Storage::exists($client->contract_pdf_path), 404, 'PDF introuvable');
-        return response()->download(Storage::path($client->contract_pdf_path), "contrat-{$client->id}.pdf");
+        if (!$client->contract_pdf_path || !Storage::disk('public')->exists($client->contract_pdf_path)) {
+            return back()->with('error', 'Aucun contrat généré pour ce client.');
+        }
+
+        return Storage::disk('public')->download($client->contract_pdf_path, "Contrat-{$client->id}.pdf");
     }
 
     /**
-     * (Optional) Download the signed file if/when you save it later from a webhook.
+     * Download the signed contract (filled by webhook after signature).
      */
     public function downloadSigned(Client $client)
     {
-        abort_unless($client->signed_pdf_path && Storage::exists($client->signed_pdf_path), 404, 'PDF signé introuvable');
-        return response()->download(Storage::path($client->signed_pdf_path), "contrat-signe-{$client->id}.pdf");
+        if (!$client->contract_signed_pdf_path || !Storage::disk('public')->exists($client->contract_signed_pdf_path)) {
+            return back()->with('error', 'Aucun contrat signé disponible pour ce client.');
+        }
+
+        return Storage::disk('public')->download($client->contract_signed_pdf_path, "Contrat-Signe-{$client->id}.pdf");
     }
 }
