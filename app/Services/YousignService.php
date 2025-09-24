@@ -13,11 +13,11 @@ class YousignService
 
     public function __construct()
     {
-        $this->base  = (string) (config('services.yousign.base_url') ?: 'https://api-sandbox.yousign.com');
-        $this->token = (string)  config('services.yousign.api_key');
-
+        $this->base  = (string) (config('services.yousign.base_url') ?: env('YOUSIGN_BASE_URL', 'https://api-sandbox.yousign.com'));
+        $this->token = (string) (config('services.yousign.api_key')  ?: env('YOUSIGN_API_KEY'));
+    
         if (!$this->token) {
-            throw new RuntimeException('YOUSIGN_API_KEY is missing.');
+            throw new \RuntimeException('YOUSIGN_API_KEY is missing.');
         }
     }
 
