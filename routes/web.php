@@ -177,8 +177,11 @@ Route::post('/clients/{client}/resend-signature', [ContractController::class, 'r
     Route::post('/clients/{client}/send-signature', [ClientSignatureController::class, 'send'])
     ->name('clients.send_signature');
 
+    Route::post('/webhooks/yousign', YousignWebhookController::class)
+    ->name('webhooks.yousign');
 
-    
+
+
     // Bons de commande
     Route::resource('bons-de-commande', BonDeCommandeController::class)
         ->parameters(['bons-de-commande' => 'bon']);

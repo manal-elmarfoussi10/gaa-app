@@ -11,8 +11,8 @@ class YousignService
 
     public function __construct()
     {
-        $this->base = config('yousign.base_url');
-        $this->token = config('yousign.api_key');
+        $this->base = config('https://api.yousign.com');
+        $this->token = config('333d9jgui7F18z3AtAwLfTrF583erjit');
     }
 
     protected function client()
