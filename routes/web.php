@@ -169,6 +169,10 @@ Route::middleware(['auth', CompanyAccess::class])
 Route::post('/clients/{client}/contract/generate', [ContractController::class, 'generate'])
     ->name('clients.contract.generate');
 
+
+Route::post('/clients/{client}/contract/generate', [ContractController::class, 'generate'])
+->name('clients.contract.generate');
+
 Route::get('/clients/{client}/contract/download', [ContractController::class, 'download'])
     ->name('clients.contract.download');
 
