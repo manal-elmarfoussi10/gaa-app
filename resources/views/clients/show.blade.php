@@ -33,7 +33,7 @@
     </div>
   </div>
 
-  {{-- Signature (GS Auto) --}}
+ {{-- Signature (GS Auto) --}}
 <div class="bg-white rounded-xl shadow-md p-6 mb-8" id="signature-block">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div class="min-w-0">
@@ -66,22 +66,23 @@
   
         @if($client->signed_at)
           <p class="text-xs text-gray-500 mt-1">
-            Signé le {{ \Illuminate\Support\Carbon::parse($client->signed_at)->format('d/m/Y H:i') }}
+            Signé le {{ optional($client->signed_at)->format('d/m/Y H:i') }}
           </p>
         @endif
       </div>
   
-      {{-- ACTIONS --}}
+      {{-- Actions --}}
       <div class="flex flex-wrap items-center gap-2">
-        {{-- Générer/Régénérer --}}
+        {{-- Generate / Regenerate --}}
         <form method="POST" action="{{ route('clients.contract.generate', $client) }}">
           @csrf
-          <button type="submit" class="inline-flex items-center bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          <button type="submit"
+                  class="inline-flex items-center bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
             {{ $client->contract_pdf_path ? 'Régénérer le contrat' : 'Générer le contrat' }}
           </button>
         </form>
   
-        {{-- Télécharger (non signé) --}}
+        {{-- Download (unsigned) --}}
         @if($client->contract_pdf_path)
           <a href="{{ route('clients.contract.download', $client) }}"
              class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">
@@ -89,7 +90,7 @@
           </a>
         @endif
   
-        {{-- Envoyer / Renvoyer --}}
+        {{-- Send / Resend --}}
         @php $canSend = (bool) $client->contract_pdf_path; @endphp
   
         @if(!$client->statut_gsauto || $client->statut_gsauto === 'draft')
@@ -104,7 +105,8 @@
         @elseif(in_array($client->statut_gsauto, ['sent','viewed']))
           <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}">
             @csrf
-            <button type="submit" class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">
+            <button type="submit"
+                    class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">
               Renvoyer
             </button>
           </form>
@@ -115,14 +117,15 @@
         @elseif($client->statut_gsauto === 'failed')
           <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}">
             @csrf
-            <button type="submit" class="inline-flex items-center bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+            <button type="submit"
+                    class="inline-flex items-center bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
               Renvoyer (échec)
             </button>
           </form>
         @endif
   
-        {{-- Télécharger le contrat signé (use the correct column name) --}}
-        @if($client->signed_pdf_path)
+        {{-- Download signed (uses your accessor fallback) --}}
+        @if($client->contract_signed_pdf_path)
           <a href="{{ route('clients.contract.download_signed', $client->id) }}"
              class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
             Télécharger le contrat signé
@@ -133,10 +136,14 @@
   
     {{-- Alerts --}}
     @if(session('success'))
-      <div class="mt-4 bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded">{{ session('success') }}</div>
+      <div class="mt-4 bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded">
+        {{ session('success') }}
+      </div>
     @endif
     @if(session('error'))
-      <div class="mt-4 bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded">{{ session('error') }}</div>
+      <div class="mt-4 bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded">
+        {{ session('error') }}
+      </div>
     @endif
   </div>
   
@@ -149,7 +156,6 @@
     </script>
   @endif
 
-  
   {{-- Statut du dossier --}}
   <div class="bg-white rounded-xl shadow-md p-6 mb-8">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center">

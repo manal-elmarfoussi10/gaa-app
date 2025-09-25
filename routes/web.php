@@ -187,9 +187,7 @@ Route::middleware(['auth', CompanyAccess::class])
         Route::post('/clients/{client}/send-signature', [\App\Http\Controllers\ClientSignatureController::class, 'send'])
     ->name('clients.send_signature');
 
- Route::post('/webhooks/yousign', [YousignWebhookController::class, 'handle'])
-    ->withoutMiddleware([VerifyCsrfToken::class])
-    ->name('webhooks.yousign');
+
 
     Route::post('/clients/{client}/signature/refresh', function (App\Models\Client $client, App\Services\YousignService $ys) {
         if (!$client->yousign_request_id) return back();
@@ -363,5 +361,9 @@ Route::middleware(['auth','support'])
 
     
     });
+
+    Route::post('/webhooks/yousign', [YousignWebhookController::class, 'handle'])
+    ->withoutMiddleware([VerifyCsrfToken::class])   // no CSRF
+    ->name('webhooks.yousign');
 
 require __DIR__.'/auth.php';
