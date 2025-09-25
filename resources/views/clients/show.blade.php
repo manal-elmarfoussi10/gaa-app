@@ -130,16 +130,12 @@
         @endif
   
         {{-- Download signed (if webhook saved it) --}}
-        @if($client->signed_pdf_path)
-          <a href="{{ route('clients.contract.download_signed', $client) }}"
-             class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-            Télécharger signé
-          </a>
-        @elseif($client->statut_gsauto === 'signed')
-          <span class="text-xs text-gray-500">PDF signé en attente (webhook)</span>
-        @endif
-      </div>
-    </div>
+        @if($client->contract_signed_pdf_path)
+        <a href="{{ route('clients.contract.download_signed', $client->id) }}"
+           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+           Télécharger le contrat signé
+        </a>
+      @endif
   
     {{-- Alerts --}}
     @if(session('success'))

@@ -72,4 +72,21 @@ class YousignService
             ->throw()
             ->json();
     }
+
+    public function getSignatureRequest(string $id): array
+{
+    return $this->client()->get("/signature_requests/{$id}")->throw()->json();
+}
+
+public function downloadSignedPdf(string $signatureRequestId): string
+{
+    // If Yousign exposes a “files” link on the SR, follow it and GET the PDF bytes.
+    // In many setups you first list "exported files" for the SR and then GET the file.
+    // Minimal example against a direct export endpoint:
+    $resp = $this->client()
+        ->get("/signature_requests/{$signatureRequestId}/download") // adjust to your account’s export route
+        ->throw();
+
+    return $resp->body(); // raw PDF bytes
+}
 }
