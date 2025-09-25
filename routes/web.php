@@ -363,7 +363,7 @@ Route::middleware(['auth','support'])
     });
 
     Route::post('/webhooks/yousign', [YousignWebhookController::class, 'handle'])
-    ->withoutMiddleware([VerifyCsrfToken::class])   // no CSRF
+    ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('webhooks.yousign');
 
 require __DIR__.'/auth.php';
