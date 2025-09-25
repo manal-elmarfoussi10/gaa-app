@@ -95,4 +95,15 @@ public function interventions()
     {
         return trim(($this->prenom ?? '').' '.($this->nom_assure ?? ''));
     }
+
+    public function getContractSignedPdfPathAttribute($value)
+{
+    // prefer new column; fall back to legacy if present
+    return $value ?? $this->attributes['signed_pdf_path'] ?? null;
+}
+
+public function getYousignRequestIdAttribute($value)
+{
+    return $value ?? $this->attributes['yousign_signature_request_id'] ?? null;
+}
 }

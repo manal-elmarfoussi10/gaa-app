@@ -186,7 +186,7 @@ Route::middleware(['auth', CompanyAccess::class])
 
         Route::post('/clients/{client}/send-signature', [\App\Http\Controllers\ClientSignatureController::class, 'send'])
     ->name('clients.send_signature');
-
+    
     Route::post('/webhooks/yousign', [YousignWebhookController::class, 'handle'])
     ->withoutMiddleware(VerifyCsrfToken::class)
     ->name('webhooks.yousign');
