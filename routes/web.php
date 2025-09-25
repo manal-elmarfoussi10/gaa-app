@@ -8,6 +8,7 @@ use App\Http\Middleware\SuperAdminAccess;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ClientSignatureController;
 use App\Http\Controllers\Webhooks\YousignWebhookController;
+use App\Http\Middleware\VerifyCsrfToken;
 
 
 // ===============================
@@ -186,8 +187,9 @@ Route::middleware(['auth', CompanyAccess::class])
         Route::post('/clients/{client}/send-signature', [\App\Http\Controllers\ClientSignatureController::class, 'send'])
     ->name('clients.send_signature');
 
-    Route::post('/webhooks/yousign', [YousignWebhookController::class, 'handle'])
-    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // or add to $except
+    Route::post('/webhooks/yousign', YousignWebhookController::class)
+    ->withoutMiddleware([VerifyCsrfToken::class])   // <-- no CSRF
+    ->name('webhooks.yousign');// or add to $except
 
     Route::post('/clients/{client}/signature/refresh', function (App\Models\Client $client, App\Services\YousignService $ys) {
         if (!$client->yousign_request_id) return back();
