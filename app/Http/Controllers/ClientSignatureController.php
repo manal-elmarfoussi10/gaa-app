@@ -9,38 +9,59 @@ use Illuminate\Support\Facades\Storage;
 
 class ClientSignatureController extends Controller
 {
-    public function send(Request $request, Client $client, \App\Services\YousignService $yousign)
-{
-    // Ensure a contract exists
-    if (!$client->contract_pdf_path || !\Storage::exists($client->contract_pdf_path)) {
-        // Build it now (reusing the same code as ContractController)
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('contracts.contract', [
-            'client' => $client,
-            'today'  => now(),
-        ])->setPaper('a4');
+    public function send(Request $request, Client $client, YousignService $ys)
+    {
+        // Ensure a PDF exists; generate elsewhere if you prefer
+        if (!$client->contract_pdf_path || !Storage::disk('public')->exists($client->contract_pdf_path)) {
+            return back()->with('error', 'Aucun contrat PDF généré pour ce client.');
+        }
 
-        $relative = "contracts/{$client->id}.pdf";
-        \Storage::put($relative, $pdf->output());
-        $client->contract_pdf_path = $relative;
+        $absPath = Storage::disk('public')->path($client->contract_pdf_path);
+
+        // 1) Create the signature request
+        $sr = $ys->createSignatureRequest(
+            "Contrat #{$client->id} - " . trim(($client->prenom ?? '').' '.($client->nom ?? '')),
+            'email' // or 'none' if you plan to embed, per docs
+        );
+
+        // 2) Upload the PDF
+        $doc = $ys->uploadDocument($sr['id'], $absPath, true); // true = parse anchors if you put them in the PDF
+
+        // 3) Add the signer using THIS client's info
+        $payload = [
+            'info' => [
+                'first_name'   => $client->prenom ?? ($client->nom ?? 'Client'),
+                'last_name'    => $client->nom ?? '-',
+                'email'        => $client->email,          // <- client’s email here
+                'phone_number' => $client->telephone ?? null, // optional
+                'locale'       => config('services.yousign.locale', 'fr'),
+            ],
+            'signature_level'               => 'electronic_signature',
+            'signature_authentication_mode' => 'otp_email', // 'no_otp' also works in sandbox
+            // If you did NOT use smart anchors in the PDF, add manual fields:
+            // 'fields' => [[
+            //     'document_id' => $doc['id'],
+            //     'type'        => 'signature',
+            //     'page'        => 1,
+            //     'x'           => 400,
+            //     'y'           => 650,
+            //     'width'       => 180,
+            // ]],
+        ];
+        $ys->addSigner($sr['id'], $payload);
+
+        // 4) Activate
+        $ys->activate($sr['id']);
+
+        // Save request id & status on the client
+        $client->yousign_request_id = $sr['id'];
+        $client->statut_gsauto      = 'sent';
         $client->save();
+
+        return back()
+            ->with('success', 'Document envoyé au client pour signature.')
+            ->with('open_signature', true);
     }
-
-    $absolute = \Storage::path($client->contract_pdf_path);
-
-    $resp = $yousign->sendContract($absolute, [
-        'email'      => $client->email ?: 'demo@example.com',
-        'first_name' => $client->prenom ?: 'Prénom',
-        'last_name'  => $client->nom_assure ?: 'Nom',
-    ], name: "Contrat {$client->prenom} {$client->nom_assure}");
-
-    $client->update([
-        'statut_gsauto'                 => 'sent',
-        'yousign_signature_request_id'  => $resp['signature_request']['id'] ?? null,
-        'yousign_document_id'           => $resp['document']['id'] ?? null,
-    ]);
-
-    return back()->with('success', 'Document envoyé au client pour signature.')->with('open_signature', true);
-}
 
     public function resend(Request $request, Client $client, YousignService $yousign)
     {

@@ -182,6 +182,9 @@ Route::middleware(['auth', CompanyAccess::class])
     Route::post('/clients/{client}/resend-signature', [\App\Http\Controllers\ContractController::class, 'resend'])
         ->name('clients.resend_signature');
 
+        Route::post('/clients/{client}/send-signature', [\App\Http\Controllers\ClientSignatureController::class, 'send'])
+    ->name('clients.send_signature');
+
     // Bons de commande
     Route::resource('bons-de-commande', BonDeCommandeController::class)
         ->parameters(['bons-de-commande' => 'bon']);
