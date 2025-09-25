@@ -8,7 +8,11 @@ use App\Http\Middleware\SuperAdminAccess;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ClientSignatureController;
 use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Controllers\Webhooks\YousignWebhookController;
 
+Route::post('/webhooks/yousign', [YousignWebhookController::class, 'handle'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]) // CSRF not needed for external POST
+    ->name('webhooks.yousign');
 
 
 // ===============================
