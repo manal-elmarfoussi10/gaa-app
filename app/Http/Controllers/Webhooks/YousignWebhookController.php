@@ -6,83 +6,86 @@ use App\Models\Client;
 use App\Services\YousignService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\Response;
 
 class YousignWebhookController extends Controller
 {
     public function handle(Request $request, YousignService $ys)
     {
-        // --- Verify signature (spec requires X-Yousign-Signature-256) ---
-        $rawBody   = $request->getContent(); // raw!
-        $headerSig = $request->header('X-Yousign-Signature-256');
-        $secret    = config('services.yousign.webhook_secret');
+        // 1) Verify signature (use RAW body, no timestamp)
+        $payload       = $request->getContent(); // RAW body
+        $headerSig     = $request->header('X-Yousign-Signature-256'); // exact header name
+        $secret        = config('services.yousign.webhook_secret');   // raw secret, no "sha256="
 
         if (!$headerSig || !$secret) {
-            return response('Missing signature/secret', Response::HTTP_BAD_REQUEST);
+            return response('Missing header/secret', 400);
         }
 
-        $computed = 'sha256=' . hash_hmac('sha256', $rawBody, $secret);
-        if (!hash_equals($computed, $headerSig)) {
-            return response('Invalid signature', Response::HTTP_FORBIDDEN);
+        $computed = 'sha256=' . hash_hmac('sha256', $payload, $secret);
+        if (! hash_equals($computed, $headerSig)) {
+            // Optional: Log once while testing
+            Log::warning('Yousign webhook signature mismatch', [
+                'received' => $headerSig,
+                'computed' => $computed,
+            ]);
+            return response('Invalid signature', 403);
         }
 
-        // --- Parse event & SR id ---
+        // 2) Parse event + ids
         $event = $request->input('event');
-        $srId  = data_get($request->input('data'), 'signature_request.id')
-              ?: data_get($request->input('data'), 'id')
-              ?: data_get($request->all(), 'signature_request_id');
+        $data  = $request->input('data', []);
+
+        // SR id may appear in a few shapes depending on event
+        $srId = data_get($data, 'signature_request.id')
+             ?: data_get($data, 'signature_request_id')
+             ?: data_get($data, 'id');
 
         if (!$event || !$srId) {
-            return response('Invalid payload', Response::HTTP_BAD_REQUEST);
+            return response('Invalid payload', 400);
         }
 
-        // --- Find our client (we saved yousign_request_id when creating SR) ---
-        $client = Client::where('yousign_request_id', $srId)->first();
-        if (!$client) {
-            Log::warning('[Yousign] client not found for SR', compact('event','srId'));
+        // 3) Find client by our stored request id (support both column names)
+        $client = Client::where('yousign_request_id', $srId)
+                        ->orWhere('yousign_signature_request_id', $srId)
+                        ->first();
+
+        if (! $client) {
+            Log::info('Yousign webhook for unknown SR', ['event' => $event, 'srId' => $srId]);
             return response()->noContent();
         }
 
-        // --- Update status by event ---
-        switch ($event) {
-            case 'signature_request.activated':
-                $client->statut_gsauto = 'sent';
-                $client->save();
-                break;
-
-            case 'signer.link_opened':
-                $client->statut_gsauto = 'viewed';
-                $client->save();
-                break;
-
-            case 'signer.done':
-                // optional: mark “partially signed” if there are multiple signers
-                $client->statut_gsauto = 'viewed'; // or keep current; final will be done below
-                $client->save();
-                break;
-
-            case 'signature_request.done':
-                // final: everyone signed → download signed PDF
-                try {
-                    $pdf = $ys->downloadSignedDocuments($srId); // binary
-                    $dir = "contracts/{$client->id}";
-                    Storage::disk('public')->makeDirectory($dir);
-                    Storage::disk('public')->put("$dir/contract-signed.pdf", $pdf);
-
-                    $client->contract_signed_pdf_path = "$dir/contract-signed.pdf";
-                    $client->statut_gsauto            = 'signed';
-                    $client->signed_at                 = now();
-                    $client->save();
-                } catch (\Throwable $e) {
-                    Log::error('[Yousign] downloadSignedDocuments failed', [
-                        'srId' => $srId,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-                break;
+        // 4) Map events
+        if ($event === 'signature_request.activated') {
+            $client->statut_gsauto = 'sent';
+            $client->save();
         }
 
-        return response()->noContent();
+        if ($event === 'signer.link_opened') {
+            $client->statut_gsauto = 'viewed';
+            $client->save();
+        }
+
+        if ($event === 'signer.done' || $event === 'signature_request.done') {
+            try {
+                $pdf = $ys->downloadSignedDocuments($srId);
+                $dir  = "contracts/{$client->id}";
+                $file = "contract-signed.pdf";
+                \Storage::disk('public')->makeDirectory($dir);
+                \Storage::disk('public')->put("{$dir}/{$file}", $pdf);
+
+                // support either column name
+                if (\Schema::hasColumn('clients', 'contract_signed_pdf_path')) {
+                    $client->contract_signed_pdf_path = "{$dir}/{$file}";
+                } else {
+                    $client->signed_pdf_path = "{$dir}/{$file}";
+                }
+                $client->statut_gsauto = 'signed';
+                $client->signed_at = now();
+                $client->save();
+            } catch (\Throwable $e) {
+                Log::error('Failed to download signed PDF', ['srId' => $srId, 'err' => $e->getMessage()]);
+            }
+        }
+
+        return response()->noContent(); // 204
     }
 }
