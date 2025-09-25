@@ -188,7 +188,7 @@ Route::middleware(['auth', CompanyAccess::class])
     ->name('clients.send_signature');
 
     Route::post('/webhooks/yousign', [YousignWebhookController::class, 'handle'])
-    ->withoutMiddleware([VerifyCsrfToken::class])   // avoid 419 from Yousign
+    ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('webhooks.yousign');
 
     Route::post('/clients/{client}/signature/refresh', function (App\Models\Client $client, App\Services\YousignService $ys) {
