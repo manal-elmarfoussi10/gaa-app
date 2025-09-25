@@ -7,13 +7,9 @@ use App\Http\Middleware\CompanyAccess;
 use App\Http\Middleware\SuperAdminAccess;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ClientSignatureController;
-use App\Http\Middleware\VerifyCsrfToken;
-use App\Http\Controllers\Webhooks\YousignWebhookController;
 
 // ✅ Webhook (no auth, no CSRF)
-Route::post('/webhooks/yousign', [YousignWebhookController::class, 'handle'])
-    ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class)
-    ->name('webhooks.yousign');
+
 
 // ===============================
 // Superadmin area controllers
