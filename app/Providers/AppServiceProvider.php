@@ -32,14 +32,7 @@ class AppServiceProvider extends ServiceProvider
         return base_path('public_html');
     });
 
-    $this->routes(function () {
-        Route::middleware('api')
-            ->prefix('api')
-            ->group(base_path('routes/api.php'));
-
-        Route::middleware('web')
-            ->group(base_path('routes/web.php'));
-    });
+ 
 
     // 🛠️ Appliquer aussi DOMPDF_CHROOT manuellement
     config(['dompdf.defines.DOMPDF_CHROOT' => base_path('public_html')]);
