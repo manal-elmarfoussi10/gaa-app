@@ -32,15 +32,13 @@
       </a>
     </div>
   </div>
-
-  {{-- Signature (GS Auto) --}}
-  <div class="bg-white rounded-xl shadow-md p-6 mb-8" id="signature-block">
+{{-- Signature (GS Auto) --}}
+<div class="bg-white rounded-xl shadow-md p-6 mb-8" id="signature-block">
     <div class="flex items-start justify-between gap-4">
       <div>
         <h2 class="text-lg font-semibold text-gray-800 flex items-center">
           Signature électronique (GS Auto)
           @if($client->statut_gsauto)
-            {{-- pill style consistent with the “Statut du dossier” pill --}}
             <span class="ml-3 text-xs font-medium px-3 py-1 rounded-full
               @class([
                 'bg-gray-100 text-gray-800'   => $client->statut_gsauto === 'draft',
@@ -53,17 +51,17 @@
             </span>
           @endif
         </h2>
-
+  
         <p class="text-sm text-gray-600 mt-1">
           Générez d’abord le contrat PDF, puis envoyez-le au client pour signature.
         </p>
-
+  
         @if($client->signed_at)
           <p class="text-xs text-gray-500 mt-1">
             Signé le {{ \Illuminate\Support\Carbon::parse($client->signed_at)->format('d/m/Y H:i') }}
           </p>
         @endif
-
+  
         @if($client->yousign_signature_request_id)
           <p class="text-xs text-gray-400 mt-1">
             Yousign SR: {{ $client->yousign_signature_request_id }}
@@ -71,7 +69,7 @@
           </p>
         @endif
       </div>
-
+  
       {{-- ACTIONS --}}
       <div class="flex flex-wrap items-center gap-2 justify-end">
         {{-- Generate / Regenerate --}}
@@ -82,18 +80,18 @@
             {{ $client->contract_pdf_path ? 'Régénérer le contrat' : 'Générer le contrat' }}
           </button>
         </form>
-
+  
         {{-- Download (non-signed) --}}
         @if($client->contract_pdf_path)
           <a href="{{ route('clients.contract.download', $client) }}"
              class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">
             Télécharger le contrat
           </a>
-        @endif>
-
+        @endif
+  
         {{-- Send / Resend --}}
         @php $canSend = (bool) $client->contract_pdf_path; @endphp
-
+  
         @if(!$client->statut_gsauto || $client->statut_gsauto === 'draft')
           <form method="POST" action="{{ route('clients.send_signature', $client->id) }}">
             @csrf
@@ -128,7 +126,7 @@
             </button>
           </form>
         @endif
-
+  
         {{-- Download signed --}}
         @if($client->contract_signed_pdf_path)
           <a href="{{ route('clients.contract.download_signed', $client->id) }}"
@@ -138,7 +136,7 @@
         @endif
       </div>
     </div>
-
+  
     {{-- Alerts --}}
     @if(session('success'))
       <div class="mt-4 bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded">
@@ -151,7 +149,7 @@
       </div>
     @endif
   </div>
-
+  
   @if(session('open_signature'))
     <script>
       document.addEventListener('DOMContentLoaded', () => {
