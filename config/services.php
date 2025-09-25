@@ -30,11 +30,10 @@ return [
 
     'yousign' => [
         'api_key'  => env('YOUSIGN_API_KEY'),
-        'mode'     => env('YOUSIGN_MODE', 'sandbox'),
-        'base_url' => env('YOUSIGN_BASE_URL', 'https://api-sandbox.yousign.com/v3'),
-        'webhook'  => [
-            'secret' => env('YOUSIGN_WEBHOOK_SECRET'),
-        ],
+        'base_url' => env('YOUSIGN_BASE_URL', 'https://api-sandbox.yousign.app/v3'),
+        // optional
+        'timezone' => env('YOUSIGN_TZ', 'Europe/Paris'),
+        'locale'   => env('YOUSIGN_LOCALE', 'fr'),
     ],
 
     'slack' => [

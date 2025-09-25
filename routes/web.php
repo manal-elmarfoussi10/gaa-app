@@ -166,35 +166,21 @@ Route::middleware(['auth', CompanyAccess::class])
     Route::get('/expenses/export/pdf', [ExpenseController::class, 'exportPDF'])->name('expenses.export.pdf');
 
 // ---- CONTRACT ACTIONS ----
-Route::post('/clients/{client}/contract/generate', [ContractController::class, 'generate'])
-    ->name('clients.contract.generate');
+    // Contract PDF + e-sign
+    Route::post('/clients/{client}/contract/generate', [\App\Http\Controllers\ContractController::class, 'generate'])
+        ->name('clients.contract.generate');
 
+    Route::get('/clients/{client}/contract/download', [\App\Http\Controllers\ContractController::class, 'download'])
+        ->name('clients.contract.download');
 
-Route::post('/clients/{client}/contract/generate', [ContractController::class, 'generate'])
-->name('clients.contract.generate');
+    Route::get('/clients/{client}/contract/download-signed', [\App\Http\Controllers\ContractController::class, 'downloadSigned'])
+        ->name('clients.contract.download_signed');
 
-Route::get('/clients/{client}/contract/download', [ContractController::class, 'download'])
-    ->name('clients.contract.download');
+    Route::post('/clients/{client}/send-signature', [\App\Http\Controllers\ContractController::class, 'send'])
+        ->name('clients.send_signature');
 
-Route::get('/clients/{client}/contract/download-signed', [ContractController::class, 'downloadSigned'])
-    ->name('clients.contract.download_signed');
-
-// ---- SIGNATURE ACTIONS ----
-Route::post('/clients/{client}/send-signature', [ClientSignatureController::class, 'send'])
-    ->name('clients.send_signature');
-
-Route::post('/clients/{client}/resend-signature', [ClientSignatureController::class, 'resend'])
-    ->name('clients.resend_signature');
-
-// ---- WEBHOOK (Yousign callback) ----
-Route::post('/webhooks/yousign', YousignWebhookController::class)
-    ->name('webhooks.yousign');
-
-// ---- DEBUG CONFIG (optional) ----
-Route::get('/__cfg/yousign', fn () => [
-    'base' => config('services.yousign.base_url'),
-    'key'  => config('services.yousign.api_key') ? 'present' : 'missing',
-]);
+    Route::post('/clients/{client}/resend-signature', [\App\Http\Controllers\ContractController::class, 'resend'])
+        ->name('clients.resend_signature');
 
     // Bons de commande
     Route::resource('bons-de-commande', BonDeCommandeController::class)
