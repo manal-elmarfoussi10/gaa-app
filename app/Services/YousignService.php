@@ -89,4 +89,13 @@ public function downloadSignedPdf(string $signatureRequestId): string
 
     return $resp->body(); // raw PDF bytes
 }
+
+public function downloadSignedDocuments(string $signatureRequestId): string
+{
+    // GET /signature_requests/{id}/documents/download
+    return $this->client()
+        ->get("/signature_requests/{$signatureRequestId}/documents/download")
+        ->throw()
+        ->body();
+}
 }

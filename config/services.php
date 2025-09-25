@@ -34,6 +34,7 @@ return [
         // optional
         'timezone' => env('YOUSIGN_TZ', 'Europe/Paris'),
         'locale'   => env('YOUSIGN_LOCALE', 'fr'),
+        'webhook_secret' => env('YOUSIGN_WEBHOOK_SECRET'),
     ],
 
     'slack' => [

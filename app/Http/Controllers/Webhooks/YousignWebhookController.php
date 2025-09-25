@@ -1,70 +1,103 @@
 <?php
 
-// app/Http/Controllers/Webhooks/YousignWebhookController.php
-namespace App\Http\Controllers\Webhooks;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Services\YousignService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response;
 
 class YousignWebhookController extends Controller
 {
-    public function __invoke(Request $request, YousignService $ys)
+    public function handle(Request $request, YousignService $ys)
     {
-        $payload = $request->json()->all();
-        Log::info('Yousign webhook', $payload);
+        // 1) Verify signature (required by Yousign)
+        $payload   = $request->getContent();
+        $timestamp = $request->header('X-Yousign-Timestamp');
+        $signature = $request->header('X-Yousign-Signature-256');
 
-        // (optional) verify the signature header against your YOUSIGN_WEBHOOK_SECRET
-        // $request->header('X-Yousign-Signature') …
-
-        // Yousign v3 typically sends an event type and the signature_request id
-        $type = data_get($payload, 'type'); // e.g. "signature_request.completed"
-        $srId = data_get($payload, 'data.id')            // some payloads
-             ?? data_get($payload, 'signature_request')  // others
-             ?? null;
-
-        if (!$srId) {
-            return response()->json(['ok' => true]); // nothing to do
+        if (!$timestamp || !$signature) {
+            return response('Missing headers', Response::HTTP_BAD_REQUEST);
         }
 
+        // Optional replay protection (5 min)
+        if (abs(time() - (int)$timestamp) > 300) {
+            return response('Stale timestamp', Response::HTTP_BAD_REQUEST);
+        }
+
+        $secret = config('services.yousign.webhook_secret');
+        $signed = $timestamp.'.'.$payload;
+        $computed = 'sha256='.hash_hmac('sha256', $signed, $secret);
+
+        // constant-time compare
+        if (! hash_equals($computed, $signature)) {
+            return response('Invalid signature', Response::HTTP_FORBIDDEN);
+        }
+
+        // 2) Parse event
+        $event = $request->input('event');
+        $data  = $request->input('data', []);
+        $srId  = data_get($data, 'id')             // some events carry id at root
+              ?: data_get($data, 'signature_request.id')
+              ?: data_get($data, 'signature_request_id');
+
+        if (!$event || !$srId) {
+            return response('Invalid payload', Response::HTTP_BAD_REQUEST);
+        }
+
+        // 3) Find our Client. We saved yousign_request_id when sending.
+        /** @var Client|null $client */
         $client = Client::where('yousign_request_id', $srId)->first();
-        if (!$client) {
-            return response()->json(['ok' => true]); // unknown SR, ignore
+
+        if (! $client) {
+            // Fallback: try to map by metadata if you set SR metadata, or just log.
+            Log::warning('Yousign webhook: client not found', compact('event','srId'));
+            return response()->noContent();
         }
 
-        // Mark intermediate states if you like
-        if (in_array($type, [
-            'signature_request.activated',
-            'signature_request.viewed',
-            'signature_request.reminded',
-        ], true)) {
-            $client->update(['statut_gsauto' => 'sent']);
-            return response()->json(['ok' => true]);
+        // 4) Map events to statuses
+        switch ($event) {
+            case 'signature_request.activated':
+                $client->statut_gsauto = 'sent';
+                $client->save();
+                break;
+
+            case 'signer.link_opened':
+                $client->statut_gsauto = 'viewed';
+                $client->save();
+                break;
+
+            case 'signer.done':
+            case 'signature_request.done':
+                // Download signed PDF and store it
+                try {
+                    $pdfBinary = $ys->downloadSignedDocuments($srId);
+
+                    $dir  = "contracts/{$client->id}";
+                    $file = "contract-signed.pdf";
+                    Storage::disk('public')->makeDirectory($dir);
+                    Storage::disk('public')->put("{$dir}/{$file}", $pdfBinary);
+
+                    $client->contract_signed_pdf_path = "{$dir}/{$file}";
+                    $client->statut_gsauto = 'signed';
+                    $client->signed_at = now();
+                    $client->save();
+                } catch (\Throwable $e) {
+                    Log::error('Failed to download signed doc', [
+                        'srId' => $srId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+                break;
+
+            default:
+                // no-op for other events
+                break;
         }
 
-        // Final: completed = signed by everyone
-        if (in_array($type, ['signature_request.completed','signature_request.done'], true)) {
-
-            // 1) store status
-            $client->statut_gsauto = 'signed';
-            $client->signed_at     = now();
-
-            // 2) (optional) download the signed PDF and store it
-            try {
-                $bytes = $ys->downloadSignedPdf($srId); // add this in the service (below)
-                $path  = "contracts/{$client->id}/contract-signed.pdf";
-                Storage::disk('public')->put($path, $bytes);
-                $client->contract_signed_pdf_path = $path;
-            } catch (\Throwable $e) {
-                Log::warning('Could not fetch signed PDF from Yousign', ['sr' => $srId, 'e' => $e->getMessage()]);
-            }
-
-            $client->save();
-        }
-
-        return response()->json(['ok' => true]);
+        // 5) Always answer fast with 204 so Yousign doesn't retry
+        return response()->noContent();
     }
 }

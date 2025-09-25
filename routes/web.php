@@ -186,8 +186,8 @@ Route::middleware(['auth', CompanyAccess::class])
         Route::post('/clients/{client}/send-signature', [\App\Http\Controllers\ClientSignatureController::class, 'send'])
     ->name('clients.send_signature');
 
-    Route::post('/webhooks/yousign', YousignWebhookController::class)
-    ->name('webhooks.yousign');
+    Route::post('/webhooks/yousign', [YousignWebhookController::class, 'handle'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // or add to $except
 
     Route::post('/clients/{client}/signature/refresh', function (App\Models\Client $client, App\Services\YousignService $ys) {
         if (!$client->yousign_request_id) return back();
@@ -202,7 +202,7 @@ Route::middleware(['auth', CompanyAccess::class])
         return back()->with('open_signature', true);
     })->name('clients.signature.refresh');
 
-    
+
     // Bons de commande
     Route::resource('bons-de-commande', BonDeCommandeController::class)
         ->parameters(['bons-de-commande' => 'bon']);
