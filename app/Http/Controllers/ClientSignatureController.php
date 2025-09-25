@@ -15,40 +15,59 @@ class ClientSignatureController extends Controller
      */
     public function send(Request $request, Client $client, YousignService $ys)
     {
-        // Basic guardrails
+        // Guardrails
         if (!$client->email) {
             return back()->with('error', "Le client n'a pas d'e-mail.");
         }
-        if (!$client->contract_pdf_path || !Storage::disk('public')->exists($client->contract_pdf_path)) {
+        if (
+            !$client->contract_pdf_path ||
+            !Storage::disk('public')->exists($client->contract_pdf_path)
+        ) {
             return back()->with('error', 'Aucun contrat PDF généré pour ce client.');
         }
 
-        // Absolute path to the PDF we already generated
+        // Absolute path to the generated PDF
         $absPath = Storage::disk('public')->path($client->contract_pdf_path);
 
-        // 1) Create a signature request
-        $title = trim("Contrat #{$client->id} - " . trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? '')));
-        $sr = $ys->createRequest($title);
+        // 1) Create the signature request
+        $name = "Contrat #{$client->id} - " . trim(($client->prenom ?? '') . ' ' . ($client->nom ?? ''));
+        $sr = $ys->createSignatureRequest($name, 'email');   // returns array with 'id'
         $signatureRequestId = $sr['id'];
 
-        // 2) Upload the PDF document
-        $doc = $ys->uploadDocument($signatureRequestId, $absPath);
-        $documentId = $doc['id'];
+        // 2) Upload the PDF
+        // set the 3rd arg to true only if you placed smart anchors in the PDF
+        $doc = $ys->uploadDocument($signatureRequestId, $absPath, true);
 
-        // 3) Add the signer (use the current client's info)
-        $ys->addSigner($signatureRequestId, $documentId, [
-            'prenom' => $client->prenom ?? $client->nom_assure ?? 'Client',
-            'nom'    => $client->nom_assure ?? $client->nom ?? '-',
-            'email'  => $client->email,
-            'phone'  => $client->telephone ?? null, // optional
-        ]);
+        // 3) Add the signer (the service will drop phone_number if not E.164)
+        $payload = [
+            'info' => [
+                'first_name'   => $client->prenom ?: 'Client',
+                'last_name'    => $client->nom ?: '-',
+                'email'        => $client->email,
+                'phone_number' => $client->telephone ?? null, // optional
+                'locale'       => config('services.yousign.locale', 'fr'),
+            ],
+            'signature_level'               => 'electronic_signature',
+            'signature_authentication_mode' => 'no_otp', // or 'otp_email'
+            // If you did NOT use smart anchors, specify fields explicitly:
+            // 'fields' => [[
+            //     'document_id' => $doc['id'],
+            //     'type'        => 'signature',
+            //     'page'        => 1,
+            //     'x'           => 100,
+            //     'y'           => 100,
+            //     'width'       => 85,
+            //     'height'      => 40,
+            // ]],
+        ];
+        $ys->addSigner($signatureRequestId, $payload);
 
-        // 4) Activate the request (triggers the email to the signer)
+        // 4) Activate the request (triggers the email)
         $ys->activate($signatureRequestId);
 
         // Persist Yousign state on the client
         $client->update([
-            'yousign_request_id' => $signatureRequestId,   // make sure this column exists
+            'yousign_request_id' => $signatureRequestId,
             'statut_gsauto'      => 'sent',
         ]);
 
@@ -58,9 +77,7 @@ class ClientSignatureController extends Controller
     }
 
     /**
-     * (Optional) Resend / re-activate logic.
-     * Yousign v3 doesn’t have a special “resend” endpoint; usually you send reminders or re-activate.
-     * Here we simply try to re-activate if we have the request id.
+     * Resend / re-activate.
      */
     public function resend(Request $request, Client $client, YousignService $ys)
     {
@@ -68,7 +85,6 @@ class ClientSignatureController extends Controller
             return back()->with('error', "Aucune signature Yousign n'est associée à ce client.");
         }
 
-        // Re-activate the existing request (safe in sandbox)
         $ys->activate($client->yousign_request_id);
 
         return back()
