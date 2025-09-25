@@ -9,65 +9,65 @@ use Illuminate\Support\Facades\Storage;
 
 class ClientSignatureController extends Controller
 {
-    /**
-     * Send the client's contract for e-signature via Yousign.
-     * Requires that $client->contract_pdf_path already exists on the public disk.
-     */
     public function send(Request $request, Client $client, YousignService $ys)
     {
-        // Guardrails
         if (!$client->email) {
             return back()->with('error', "Le client n'a pas d'e-mail.");
         }
-        if (
-            !$client->contract_pdf_path ||
-            !Storage::disk('public')->exists($client->contract_pdf_path)
-        ) {
+        if (!$client->contract_pdf_path || !Storage::disk('public')->exists($client->contract_pdf_path)) {
             return back()->with('error', 'Aucun contrat PDF généré pour ce client.');
         }
 
-        // Absolute path to the generated PDF
         $absPath = Storage::disk('public')->path($client->contract_pdf_path);
 
-        // 1) Create the signature request
-        $name = "Contrat #{$client->id} - " . trim(($client->prenom ?? '') . ' ' . ($client->nom ?? ''));
-        $sr = $ys->createSignatureRequest($name, 'email');   // returns array with 'id'
-        $signatureRequestId = $sr['id'];
+        // 1) Create SR
+        $title = "Contrat #{$client->id} - " . trim(($client->prenom ?? '').' '.($client->nom ?? ''));
+        $sr = $ys->createSignatureRequest($title, 'email'); // -> ['id' => 'sr_xxx']
 
-        // 2) Upload the PDF
-        // set the 3rd arg to true only if you placed smart anchors in the PDF
-        $doc = $ys->uploadDocument($signatureRequestId, $absPath, true);
+        // 2) Upload PDF (set to true only if your PDF actually contains anchors)
+        $doc = $ys->uploadDocument($sr['id'], $absPath, false); // returns ['id' => 'doc_xxx']
 
-        // 3) Add the signer (the service will drop phone_number if not E.164)
+        // 3) Add signer — we add a field so the signer “has somewhere to sign”
+        // Adjust page/x/y/width/height for your template.
+        $first = $client->prenom ?: 'Client';
+        $last  = $client->nom ?: '-';
+
+        // Optional phone validation to E.164 (Yousign expects +336..., etc.)
+        $phone = $client->telephone;
+        if ($phone && !preg_match('/^\+\d{6,15}$/', $phone)) {
+            $phone = null; // drop it if not valid; otherwise the API rejects it
+        }
+
         $payload = [
             'info' => [
-                'first_name'   => $client->prenom ?: 'Client',
-                'last_name'    => $client->nom ?: '-',
+                'first_name'   => $first,
+                'last_name'    => $last,
                 'email'        => $client->email,
-                'phone_number' => $client->telephone ?? null, // optional
-                'locale'       => config('services.yousign.locale', 'fr'),
+                'phone_number' => $phone,               // optional, only if valid E.164
+                'locale'       => 'fr',
             ],
+            // If you are NOT using anchors, you must provide at least one field:
+            'fields' => [[
+                'document_id' => $doc['id'],
+                'type'        => 'signature',
+                'page'        => 1,
+                'x'           => 100,   // example coordinates
+                'y'           => 100,
+                'width'       => 85,
+                'height'      => 40,
+            ]],
             'signature_level'               => 'electronic_signature',
-            'signature_authentication_mode' => 'no_otp', // or 'otp_email'
-            // If you did NOT use smart anchors, specify fields explicitly:
-            // 'fields' => [[
-            //     'document_id' => $doc['id'],
-            //     'type'        => 'signature',
-            //     'page'        => 1,
-            //     'x'           => 100,
-            //     'y'           => 100,
-            //     'width'       => 85,
-            //     'height'      => 40,
-            // ]],
+            'signature_authentication_mode' => 'no_otp',  // or 'otp_email'
         ];
-        $ys->addSigner($signatureRequestId, $payload);
 
-        // 4) Activate the request (triggers the email)
-        $ys->activate($signatureRequestId);
+        $ys->addSigner($sr['id'], $payload);
 
-        // Persist Yousign state on the client
+        // 4) Activate (send emails)
+        $ys->activate($sr['id']);
+
+        // persist
         $client->update([
-            'yousign_request_id' => $signatureRequestId,
+            'yousign_request_id' => $sr['id'],
             'statut_gsauto'      => 'sent',
         ]);
 
@@ -76,9 +76,6 @@ class ClientSignatureController extends Controller
             ->with('open_signature', true);
     }
 
-    /**
-     * Resend / re-activate.
-     */
     public function resend(Request $request, Client $client, YousignService $ys)
     {
         if (!$client->yousign_request_id) {
