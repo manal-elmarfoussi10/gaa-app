@@ -10,7 +10,9 @@ use App\Http\Controllers\ClientSignatureController;
 use App\Http\Controllers\Webhooks\YousignWebhookController;
 use App\Http\Middleware\VerifyCsrfToken;
 
-
+Route::post('/webhooks/yousign', [YousignWebhookController::class, 'handle'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+    ->name('webhooks.yousign');
 // ===============================
 // Superadmin area controllers
 // ===============================
@@ -362,8 +364,6 @@ Route::middleware(['auth','support'])
     
     });
 
-    Route::post('/webhooks/yousign', [YousignWebhookController::class, 'handle'])
-    ->withoutMiddleware([VerifyCsrfToken::class])
-    ->name('webhooks.yousign');
+ 
 
 require __DIR__.'/auth.php';
