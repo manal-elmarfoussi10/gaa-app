@@ -39,20 +39,18 @@
       <div class="min-w-0">
         <h2 class="text-lg font-semibold text-gray-800 flex items-center">
           Signature électronique (GS Auto)
-          @if($client->statut_gsauto)
-            <span class="ml-3 text-xs font-medium px-3 py-1 rounded-full
-              @class([
-                'bg-gray-100 text-gray-800'   => $client->statut_gsauto === 'draft',
-                'bg-amber-100 text-amber-800' => $client->statut_gsauto === 'sent',
-                'bg-blue-100 text-blue-800'   => $client->statut_gsauto === 'viewed',
-                'bg-green-100 text-green-800' => $client->statut_gsauto === 'signed',
-                'bg-red-100 text-red-800'     => $client->statut_gsauto === 'failed',
-              ])">
-              {{ strtoupper($client->statut_gsauto) }}
-            </span>
-          @endif
+          @if($client->statut_signature !== null)
+    <span class="ml-3 text-xs font-medium px-3 py-1 rounded-full
+        {{ $client->statut_signature == 1 ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }}">
+        {{ $client->statut_signature == 1 ? 'SIGNÉ' : 'EN ATTENTE' }}
+    </span>
+@endif
         </h2>
-  
+        @if($client->signed_at)
+        <p class="text-sm text-gray-500 mt-1">
+            Signé le : {{ \Carbon\Carbon::parse($client->signed_at)->format('d/m/Y H:i') }}
+        </p>
+    @endif
         <p class="text-sm text-gray-600 mt-1 truncate">
           Générez d’abord le contrat PDF, puis envoyez-le au client pour signature.
         </p>
