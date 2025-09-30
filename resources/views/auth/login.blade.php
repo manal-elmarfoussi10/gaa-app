@@ -9,6 +9,7 @@
     <div class="flex justify-center mb-8">
         <img src="{{ asset('images/GS.png') }}" alt="GS Auto" class="h-24 w-auto">
     </div>
+    <h2 class="text-2xl font-bold text-center text-gray-900 mb-1">hey test</h2>
 
     <h2 class="text-2xl font-bold text-center text-gray-900 mb-1">Connexion à votre compte</h2>
     <p class="text-gray-500 text-center mb-8">Connectez-vous pour accéder à la plateform.</p>
