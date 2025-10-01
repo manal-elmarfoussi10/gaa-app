@@ -49,9 +49,17 @@ class ClientController extends Controller
     public function show($id)
     {
         $client = Client::with([
-            'factures.avoirs',
-            'devis',
+            // Commercial docs
+            'devis',                                // id, numero, totals, created_at
+            'factures' => function ($q) {           // facture + quick sum of its avoirs
+                $q->with(['avoirs'])                // full avoirs if you list them
+                  ->withSum('avoirs as total_avoirs', 'montant');
+            },
+    
+            // Media
             'photos',
+    
+            // Conversations + nested users/replies
             'conversations' => function ($q) {
                 $q->with([
                     'creator',
@@ -59,17 +67,21 @@ class ClientController extends Controller
                         $query->with([
                             'senderUser',
                             'receiverUser',
-                            'replies' => function ($r) {
-                                $r->with('senderUser');
-                            }
+                            'replies' => fn ($r) => $r->with('senderUser','receiverUser'),
                         ]);
-                    }
+                    },
                 ])->orderBy('created_at', 'desc');
-            }
+            },
         ])->findOrFail($id);
-
+    
+        // (optional) guard by company if you want extra safety beyond middleware
+        if (auth()->user()->role !== User::ROLE_SUPERADMIN &&
+            (int)$client->company_id !== (int)auth()->user()->company_id) {
+            abort(403, 'Accès refusé (mauvaise entreprise).');
+        }
+    
         $users = User::where('company_id', auth()->user()->company_id)->get();
-
+    
         return view('clients.show', compact('client', 'users'));
     }
 

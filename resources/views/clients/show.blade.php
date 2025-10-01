@@ -322,6 +322,172 @@
     </div>
   </div>
 
+
+  {{-- === Pièces commerciales : Devis / Factures / Avoirs === --}}
+@php
+// Make sure the controller loaded: $client->load('devis','factures.avoirs')
+$avoirs = $client->factures?->flatMap->avoirs ?? collect();
+@endphp
+
+<div class="bg-white rounded-xl shadow-md p-6 mb-8">
+<div class="flex items-center justify-between mb-4">
+  <h2 class="text-lg font-semibold text-gray-800">Pièces commerciales</h2>
+</div>
+
+{{-- Tabs header --}}
+<div class="flex gap-2 mb-4">
+  <button type="button" data-tab="tab-devis"
+    class="tab-btn px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-sm font-medium">Devis ({{ $client->devis->count() }})</button>
+  <button type="button" data-tab="tab-factures"
+    class="tab-btn px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-sm font-medium">Factures ({{ $client->factures->count() }})</button>
+  <button type="button" data-tab="tab-avoirs"
+    class="tab-btn px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-sm font-medium">Avoirs ({{ $avoirs->count() }})</button>
+</div>
+
+{{-- Devis --}}
+<div id="tab-devis" class="tab-panel">
+  <div class="overflow-x-auto rounded-lg border">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Numéro</th>
+          <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Total HT</th>
+          <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Total TTC</th>
+          <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 bg-white">
+        @forelse($client->devis as $d)
+          <tr>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
+              {{ optional($d->created_at)->format('d/m/Y') }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-cyan-700">
+              {{ $d->numero ?? ('Devis #'.$d->id) }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+              {{ number_format($d->total_ht ?? 0, 2, ',', ' ') }} €
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+              {{ number_format($d->total_ttc ?? 0, 2, ',', ' ') }} €
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+              <a href="#"
+                 class="js-open-preview text-blue-600 hover:underline"
+                 data-url="{{ route('devis.preview', $d->id) }}">
+                Voir
+              </a>
+            </td>
+          </tr>
+        @empty
+          <tr><td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500">Aucun devis.</td></tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{{-- Factures --}}
+<div id="tab-factures" class="tab-panel hidden">
+  <div class="overflow-x-auto rounded-lg border">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Numéro</th>
+          <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">HT</th>
+          <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">TTC</th>
+          <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 bg-white">
+        @forelse($client->factures as $f)
+          <tr>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
+              {{ optional($f->created_at)->format('d/m/Y') }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-cyan-700">
+              {{ $f->numero ?? ('Facture #'.$f->id) }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+              {{ number_format($f->total_ht ?? 0, 2, ',', ' ') }} €
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+              {{ number_format($f->total_ttc ?? 0, 2, ',', ' ') }} €
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+              <a href="#"
+                 class="js-open-preview text-blue-600 hover:underline"
+                 data-url="{{ route('factures.preview', $f->id) }}">
+                Voir
+              </a>
+            </td>
+          </tr>
+        @empty
+          <tr><td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500">Aucune facture.</td></tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{{-- Avoirs --}}
+<div id="tab-avoirs" class="tab-panel hidden">
+  <div class="overflow-x-auto rounded-lg border">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Facture associée</th>
+          <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Montant</th>
+          <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 bg-white">
+        @forelse($avoirs as $a)
+          <tr>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
+              {{ optional($a->created_at)->format('d/m/Y') }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm">
+              {{ optional($a->facture)->numero ? 'Facture '.$a->facture->numero : ('#'.$a->facture_id) }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+              {{ number_format($a->montant ?? 0, 2, ',', ' ') }} €
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+              <a href="#"
+                 class="js-open-preview text-blue-600 hover:underline"
+                 data-url="{{ route('avoirs.preview', $a->id) }}">
+                Voir
+              </a>
+            </td>
+          </tr>
+        @empty
+          <tr><td colspan="4" class="px-4 py-6 text-center text-sm text-gray-500">Aucun avoir.</td></tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+{{-- Modal preview (iframe) --}}
+<div id="docPreviewModal" class="fixed inset-0 z-50 hidden">
+<div class="absolute inset-0 bg-black/60"></div>
+<div class="relative mx-auto mt-8 w-11/12 max-w-5xl bg-white rounded-xl shadow-2xl">
+  <div class="flex items-center justify-between px-4 py-3 border-b">
+    <h3 class="font-semibold text-gray-800">Aperçu du document</h3>
+    <button type="button" class="js-close-preview p-2 rounded hover:bg-gray-100">&times;</button>
+  </div>
+  <div class="p-4">
+    <iframe id="docPreviewFrame" src="about:blank" class="w-full h-[75vh] border rounded-lg"></iframe>
+  </div>
+</div>
+</div>
+
+
   {{-- Documents --}}
   <div class="bg-white rounded-xl shadow-md p-6 mb-8">
     <div class="flex items-center justify-between mb-4">
@@ -582,6 +748,50 @@
 @endsection
 
 @section('scripts')
+
+<script>
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(id)?.classList.remove('hidden');
+      // style active
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-cyan-600','text-white'));
+      btn.classList.add('bg-cyan-600','text-white');
+    });
+  });
+  // Set first tab active by default
+  document.querySelector('.tab-btn')?.click();
+
+  // Preview modal
+  const modal  = document.getElementById('docPreviewModal');
+  const frame  = document.getElementById('docPreviewFrame');
+  const closeB = modal?.querySelector('.js-close-preview');
+
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('.js-open-preview');
+    if (!a) return;
+    e.preventDefault();
+    const url = a.getAttribute('data-url');
+    if (!url) return;
+    frame.src = url;
+    modal.classList.remove('hidden');
+  });
+
+  closeB?.addEventListener('click', () => {
+    modal.classList.add('hidden');
+    frame.src = 'about:blank';
+  });
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+      frame.src = 'about:blank';
+    }
+  });
+</script>
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const btnOpen   = document.getElementById('newConversationBtn');
