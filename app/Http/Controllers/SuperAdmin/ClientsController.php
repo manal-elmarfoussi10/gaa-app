@@ -16,17 +16,18 @@ class ClientsController extends Controller
 {
     /**
      * Affiche le dossier client (dashboard support).
+     * Bypass des global scopes; soft-deletes inclus si le modèle les utilise.
      */
     public function show($id)
     {
         $this->authorizeSupport();
 
-        // Disable debugbar (avoid polluting PDF/iframe)
+        // Désactiver debugbar si présent (évite le bruit dans PDFs/iframes)
         if (class_exists(\Barryvdh\Debugbar\Facades\Debugbar::class)) {
             \Barryvdh\Debugbar\Facades\Debugbar::disable();
         }
 
-        // Defensive column selection
+        // Liste défensive des colonnes (inclure les colonnes "fichiers" si utilisées)
         $candidateCols = [
             'id','company_id','prenom','nom_assure','plaque',
             'email','telephone','adresse','kilometrage','type_vitrage',
@@ -42,7 +43,7 @@ class ClientsController extends Controller
         $existingCols = Schema::getColumnListing('clients');
         $selectCols   = array_values(array_intersect($candidateCols, $existingCols));
 
-        // Query without global scopes; include soft-deleted
+        // Query sans global scopes; inclure soft-deleted si applicable
         $query = Client::query()->withoutGlobalScopes();
         if (in_array(SoftDeletes::class, class_uses_recursive(Client::class), true)) {
             $query->withTrashed();
@@ -51,6 +52,7 @@ class ClientsController extends Controller
         $client = $query
             ->when($selectCols, fn ($q) => $q->select($selectCols))
             ->with([
+                // ⚠️ Toujours inclure les FKs dans select() (client_id / facture_id) pour hydrater la relation
                 'factures' => fn($q) => $q
                     ->select('id','client_id','numero','total_ht','total_ttc','created_at')
                     ->latest()->limit(100),
@@ -59,7 +61,9 @@ class ClientsController extends Controller
                 'devis' => fn($q) => $q
                     ->select('id','client_id','numero','total_ht','total_ttc','created_at')
                     ->latest()->limit(100),
+
                 'photos' => fn($q) => $q->latest()->limit(20),
+
                 'conversations' => function ($q) {
                     $q->with([
                         'creator:id,name',
@@ -89,7 +93,7 @@ class ClientsController extends Controller
 
         $statutLabel = $this->deriveStatutLabel($client);
 
-        // Users list (same company if possible)
+        // Liste utilisateurs (même company que le client si possible)
         $companyIdForUsers = $client->company_id ?? auth()->user()->company_id;
         $users = User::query()
             ->withoutGlobalScopes()
@@ -111,7 +115,7 @@ class ClientsController extends Controller
     }
 
     /**
-     * Export dossier complet en PDF
+     * Export dossier complet en PDF (scope-free).
      */
     public function exportPdf($id)
     {
@@ -131,60 +135,32 @@ class ClientsController extends Controller
     }
 
     /**
-     * === PREVIEWs (inline PDF for iframe) ===
+     * === Préviews intégrées (PDF en inline pour l'iframe) ===
      */
+
     public function previewDevis(Devis $devis)
     {
         $this->authorizeSupport();
 
-        $devis->load(['items', 'company', 'client.company']);
-        $company = $devis->company ?? $devis->client?->company;
-
-        return Pdf::loadView('devis.pdf', compact('devis','company'))
-            ->stream("devis_{$devis->id}.pdf");
+        // Adapte le nom de la vue à ce que tu as : 'devis.pdf' ou autre
+        $pdf = Pdf::loadView('devis.pdf', compact('devis'));
+        return $pdf->stream("devis_{$devis->id}.pdf");
     }
 
     public function previewFacture(Facture $facture)
     {
         $this->authorizeSupport();
 
-        $facture->load(['items', 'company', 'client.company']);
-        $company = $facture->company ?? $facture->client?->company;
-
-        return Pdf::loadView('factures.pdf', compact('facture','company'))
-            ->stream("facture_{$facture->id}.pdf");
+        $pdf = Pdf::loadView('factures.pdf', compact('facture'));
+        return $pdf->stream("facture_{$facture->id}.pdf");
     }
 
     public function previewAvoir(Avoir $avoir)
     {
         $this->authorizeSupport();
 
-        $avoir->load(['facture.company','facture.client.company']);
-        $company = $avoir->facture->company ?? $avoir->facture->client?->company;
-
-        return Pdf::loadView('avoirs.pdf', compact('avoir','company'))
-            ->stream("avoir_{$avoir->id}.pdf");
-    }
-
-    /**
-     * === DOWNLOADs (force download) ===
-     */
-    public function downloadFacture(Facture $facture)
-    {
-        $facture->load(['items', 'company', 'client.company']);
-        $company = $facture->company ?? $facture->client?->company;
-
-        $pdf = Pdf::loadView('factures.pdf', compact('facture', 'company'));
-        return $pdf->download('facture-'.$facture->numero.'.pdf');
-    }
-
-    public function downloadDevis(Devis $devis)
-    {
-        $devis->load(['items', 'company', 'client.company']);
-        $company = $devis->company ?? $devis->client?->company;
-
-        $pdf = Pdf::loadView('devis.pdf', compact('devis', 'company'));
-        return $pdf->download('devis-'.$devis->numero.'.pdf');
+        $pdf = Pdf::loadView('avoirs.pdf', compact('avoir'));
+        return $pdf->stream("avoir_{$avoir->id}.pdf");
     }
 
     /**
@@ -198,4 +174,6 @@ class ClientsController extends Controller
             403
         );
     }
+
+    
 }
