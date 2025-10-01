@@ -200,7 +200,9 @@ session([
         'payment_iban'       => $facture->payment_iban,
         'payment_bic'        => $facture->payment_bic,
         'penalty_rate'       => $facture->penalty_rate,
-        'due_date'           => $facture->due_date?->toDateString() ?? $facture->due_date,
+        'due_date'           => $facture->due_date
+        ? \Carbon\Carbon::parse($facture->due_date)->toDateString()
+        : null,
         'payment_terms_text' => $facture->payment_terms_text,
         'company_name'       => ($company->commercial_name ?? $company->name ?? 'Votre société'),
     ]
