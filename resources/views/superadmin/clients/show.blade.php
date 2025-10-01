@@ -718,65 +718,15 @@ $avoirs = $client->factures?->flatMap->avoirs ?? collect();
 
 
 
-@section('scripts')
-
-<script>
-  // Tabs
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-tab');
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-      document.getElementById(id)?.classList.remove('hidden');
-      // style active
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-cyan-600','text-white'));
-      btn.classList.add('bg-cyan-600','text-white');
-    });
-  });
-  // Set first tab active by default
-  document.querySelector('.tab-btn')?.click();
-
-  // Preview modal
-  const modal  = document.getElementById('docPreviewModal');
-  const frame  = document.getElementById('docPreviewFrame');
-  const closeB = modal?.querySelector('.js-close-preview');
-
-  document.addEventListener('click', (e) => {
-    const a = e.target.closest('.js-open-preview');
-    if (!a) return;
-    e.preventDefault();
-    const url = a.getAttribute('data-url');
-    if (!url) return;
-    frame.src = url;
-    modal.classList.remove('hidden');
-  });
-
-  closeB?.addEventListener('click', () => {
-    modal.classList.add('hidden');
-    frame.src = 'about:blank';
-  });
-  modal?.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
-      frame.src = 'about:blank';
-    }
-  });
-</script>
-
-
-@endsection
-
-
-
-
 @push('scripts')
 <script>
 (function () {
-  // Bind once, even with Turbo/Livewire navigations
-  function bindOnce() {
-    if (document.body.dataset.boundTabs === '1') return;
-    document.body.dataset.boundTabs = '1';
+  // Bind once per render
+  let bound = false;
+  function bind() {
+    if (bound) return; bound = true;
 
-    // --- Tabs (delegated) ---
+    // --- Tabs (event delegation so it works after partial reloads) ---
     document.addEventListener('click', function (e) {
       const btn = e.target.closest('.tab-btn');
       if (!btn) return;
@@ -784,79 +734,68 @@ $avoirs = $client->factures?->flatMap->avoirs ?? collect();
       const id = btn.getAttribute('data-tab');
       if (!id) return;
 
-      // hide all panels
+      // hide all, show target
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-      // show target
-      const panel = document.getElementById(id);
-      if (panel) panel.classList.remove('hidden');
+      document.getElementById(id)?.classList.remove('hidden');
 
-      // toggle active styles
+      // active styles
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-cyan-600','text-white'));
       btn.classList.add('bg-cyan-600','text-white');
     });
+
+    // Activate first tab on first load
+    const first = document.querySelector('.tab-btn');
+    if (first) {
+      first.classList.add('bg-cyan-600','text-white');
+      document.getElementById(first.getAttribute('data-tab'))?.classList.remove('hidden');
+    }
 
     // --- Preview modal (delegated) ---
     const modal = document.getElementById('docPreviewModal');
     const frame = document.getElementById('docPreviewFrame');
 
     document.addEventListener('click', function (e) {
-      const a = e.target.closest('.js-open-preview');
-      if (a) {
+      const open = e.target.closest('.js-open-preview');
+      if (open) {
         e.preventDefault();
-        const url = a.getAttribute('data-url');
+        const url = open.getAttribute('data-url');
         if (url && modal && frame) {
           frame.src = url;
           modal.classList.remove('hidden');
         }
       }
-      if (e.target.closest('.js-close-preview')) {
+      if (e.target.closest('.js-close-preview') || e.target === modal) {
         modal?.classList.add('hidden');
-        if (frame) frame.src = 'about:blank';
-      }
-      // click outside content closes
-      if (e.target === modal) {
-        modal.classList.add('hidden');
         if (frame) frame.src = 'about:blank';
       }
     });
 
-    // set first tab active ONCE per page render
-    const first = document.querySelector('.tab-btn');
-    if (first) first.click();
+    // New conversation toggler
+    const btnOpen   = document.getElementById('newConversationBtn');
+    const formWrap  = document.getElementById('newConversationForm');
+    const btnCancel = document.getElementById('cancelNewConversation');
+    const subject   = document.getElementById('subject');
+
+    if (btnOpen && formWrap) {
+      btnOpen.addEventListener('click', () => {
+        formWrap.classList.toggle('hidden');
+        if (!formWrap.classList.contains('hidden')) setTimeout(() => subject?.focus(), 0);
+      });
+    }
+    btnCancel?.addEventListener('click', () => formWrap?.classList.add('hidden'));
   }
 
-  // Bind on first load + common SPA events
-  document.addEventListener('DOMContentLoaded', bindOnce);
-  document.addEventListener('turbo:load', bindOnce);
-  document.addEventListener('livewire:navigated', bindOnce);
+  // cover classic, Turbo, Livewire
+  document.addEventListener('DOMContentLoaded', bind);
+  document.addEventListener('turbo:load', bind);
+  document.addEventListener('livewire:navigated', bind);
 })();
 </script>
 @endpush
 
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const btnOpen   = document.getElementById('newConversationBtn');
-  const formWrap  = document.getElementById('newConversationForm');
-  const btnCancel = document.getElementById('cancelNewConversation');
-  const subject   = document.getElementById('subject');
 
-  if (!btnOpen || !formWrap) return;
 
-  btnOpen.addEventListener('click', function () {
-    formWrap.classList.toggle('hidden');
-    if (!formWrap.classList.contains('hidden')) {
-      setTimeout(() => subject && subject.focus(), 0);
-    }
-  });
-
-  if (btnCancel) {
-    btnCancel.addEventListener('click', function () {
-      formWrap.classList.add('hidden');
-    });
-  }
-});
-</script>
 
 <style>
     .container { max-width: 1200px; }
