@@ -174,4 +174,29 @@ class ClientsController extends Controller
             403
         );
     }
+
+        // ---------- FACTURES ----------
+     
+    
+        public function downloadFacture(Facture $facture)
+        {
+            $facture->load(['items', 'company', 'client.company']);
+            $company = $facture->company ?? $facture->client?->company;
+    
+            $pdf = Pdf::loadView('factures.pdf', compact('facture', 'company'));
+            return $pdf->download('facture-'.$facture->numero.'.pdf');
+        }
+    
+        // ---------- DEVIS ----------
+     
+    
+        public function downloadDevis(Devis $devis)
+        {
+            $devis->load(['items', 'company', 'client.company']);
+            $company = $devis->company ?? $devis->client?->company;
+    
+            $pdf = Pdf::loadView('devis.pdf', compact('devis', 'company'));
+            return $pdf->download('devis-'.$devis->numero.'.pdf');
+        }
+    
 }
