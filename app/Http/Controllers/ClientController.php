@@ -231,17 +231,24 @@ class ClientController extends Controller
 
     public function exportPdf(Client $client)
     {
-        // Load avoirs via factures to avoid the hasManyThrough join
+        // Load avoirs THROUGH factures to avoid the ambiguous company_id
         $client->load([
-            'factures.avoirs',  // <-- key change
+            'factures' => function ($q) {
+                $q->with(['avoirs']);   // you can add other nested relations here if needed
+            },
             'devis',
             'photos',
-            // add other simple relations here if needed
         ]);
     
-        $pdf = Pdf::loadView('clients.pdf', compact('client'));
-        $filename = 'client_'.$client->id.'_'.now()->format('Ymd_His').'.pdf';
+        // (optional) if your Blade expects $client->avoirs, build a flat collection:
+        $allAvoirs = $client->factures->flatMap->avoirs;
     
+        $pdf = Pdf::loadView('clients.pdf', [
+            'client'    => $client,
+            'allAvoirs' => $allAvoirs, // use this in the view instead of $client->avoirs
+        ]);
+    
+        $filename = 'client_'.$client->id.'_'.now()->format('Ymd_His').'.pdf';
         return $pdf->download($filename);
     }
 
