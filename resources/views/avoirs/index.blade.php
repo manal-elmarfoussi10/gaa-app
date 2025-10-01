@@ -92,7 +92,6 @@
                     @foreach ($avoirs as $avoir)
                     @php
                         $client = $avoir->facture?->client;
-                        $rdv    = $client?->rdvs?->first();
                     @endphp
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 col-date">
