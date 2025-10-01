@@ -330,27 +330,31 @@
 </div>
 
 <script>
+    const resetBtn = document.getElementById('resetPaymentDefaults');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        const d = {
+          method:  @json($defaults['payment_method'] ?? ''),
+          iban:    @json($defaults['payment_iban'] ?? ''),
+          bic:     @json($defaults['payment_bic'] ?? ''),
+          penalty: @json($defaults['penalty_rate'] ?? ''),
+          due:     @json($defaults['due_date'] ?? ''),
+          text:    @json($defaults['payment_terms_text'] ?? '')
+        };
+        document.querySelector('[name="payment_method"]').value     = d.method || '';
+        document.querySelector('[name="payment_iban"]').value       = d.iban   || '';
+        document.querySelector('[name="payment_bic"]').value        = d.bic    || '';
+        document.querySelector('[name="penalty_rate"]').value       = d.penalty|| '';
+        document.querySelector('[name="due_date"]').value           = d.due    || '';
+        document.querySelector('[name="payment_terms_text"]').value = d.text   || '';
+      });
+    }
+    </script>
+    
+<script>
 
     // ---- Reset payment terms to controller defaults ----
-const resetBtn = document.getElementById('resetPaymentDefaults');
-if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-        const defaults = {
-            method:  @json($defaults['payment_method'] ?? ''),
-            iban:    @json($defaults['payment_iban'] ?? ''),
-            bic:     @json($defaults['payment_bic'] ?? ''),
-            penalty: @json($defaults['penalty_rate'] ?? ''),
-            due:     @json($defaults['due_date'] ?? ''),
-            text:    @json($defaults['payment_terms_text'] ?? '')
-        };
-        document.querySelector('[name="payment_method"]').value     = defaults.method || '';
-        document.querySelector('[name="payment_iban"]').value       = defaults.iban   || '';
-        document.querySelector('[name="payment_bic"]').value        = defaults.bic    || '';
-        document.querySelector('[name="penalty_rate"]').value       = defaults.penalty|| '';
-        document.querySelector('[name="due_date"]').value           = defaults.due    || '';
-        document.querySelector('[name="payment_terms_text"]').value = defaults.text   || '';
-    });
-}
+
 
 document.addEventListener('DOMContentLoaded', function () {
 

@@ -33,12 +33,10 @@ class FactureController extends Controller
         $devis    = Devis::all();
         $produits = Produit::all();
     
-        $company  = auth()->user()->company;
-        $defaults = $this->defaultPaymentTerms($company); // prefill the form
+        $defaults = $this->paymentDefaultsFromCompany(); // <—
     
-        return view('factures.create', compact('clients', 'devis', 'produits', 'defaults', 'company'));
+        return view('factures.create', compact('clients', 'devis', 'produits', 'defaults'));
     }
-
     /** Normalize "1,5" → 1.5; trims spaces */
     protected function num($v, $fallback = 0.0): float
     {
@@ -191,22 +189,9 @@ public function edit(Facture $facture)
     $devis    = Devis::all();
     $produits = Produit::all();
 
-    $company  = auth()->user()->company;
-    $defaults = [
-        'payment_method'     => $facture->payment_method,
-        'payment_iban'       => $facture->payment_iban,
-        'payment_bic'        => $facture->payment_bic,
-        'penalty_rate'       => $facture->penalty_rate,
-        'due_date'           => $facture->due_date,
-        'payment_terms_text' => $facture->payment_terms_text,
-    ];
+    $defaults = $this->paymentDefaultsFromCompany(); // <—
 
-    // Fill blanks with company defaults
-    foreach ($this->defaultPaymentTerms($company, $facture->due_date) as $k => $v) {
-        if (empty($defaults[$k])) $defaults[$k] = $v;
-    }
-
-    return view('factures.edit', compact('facture', 'clients', 'devis', 'produits', 'defaults', 'company'));
+    return view('factures.edit', compact('facture', 'clients', 'devis', 'produits', 'defaults'));
 }
 
     
@@ -454,34 +439,34 @@ protected function allocateCompanyMonthNumero(int $companyId, string $date): str
     /**
  * Build sane defaults for payment terms from the company profile.
  */
-private function defaultPaymentTerms(?\App\Models\Company $company, ?string $dueDate = null): array
+private function paymentDefaultsFromCompany(): array
 {
-    $companyName = $company?->name ?? 'Votre Société';
-    $iban        = $company?->iban;
-    $bic         = $company?->bic;
-    $mode        = $company?->methode_paiement ?: 'Virement bancaire';
-    $penalty     = $company?->penalty_rate; // e.g. 10 (%)
+    $company = auth()->user()->company;
 
-    $due = $dueDate
-        ? \Carbon\Carbon::parse($dueDate)
-        : now()->addDays(30);
+    $name   = $company->commercial_name ?: $company->name ?: 'Votre société';
+    $iban   = $company->iban ?? '';
+    $bic    = $company->bic ?? '';
+    $method = $company->payment_method ?? 'Virement bancaire';
+    $penalty= $company->penalty_rate ?? '';
+    $due    = now()->addDays(30); // default +30j
 
-    $lines = [];
-    $lines[] = "Par {$mode} ou chèque à l'ordre de {$companyName}";
-    if ($bic)  { $lines[] = "Code B.I.C : {$bic}"; }
-    if ($iban) { $lines[] = "Code I.B.A.N : {$iban}"; }
-    $lines[]   = "La présente facture sera payable au plus tard le : " . $due->format('d/m/Y');
-    $lines[]   = "Passé ce délai, sans obligation d’envoi d’une relance, une pénalité sera appliquée"
-               . ($penalty ? " ({$penalty}%)" : "") . " conformément au Code de commerce.";
-    $lines[]   = "Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.";
+    // Build the printable text block with the *company name* and banking info
+    $text  = "Par virement bancaire ou chèque à l'ordre de {$name}\n";
+    if ($bic)  { $text .= "Code B.I.C : {$bic}\n"; }
+    if ($iban) { $text .= "Code I.B.A.N : {$iban}\n"; }
+    $text .= "La présente facture sera payable au plus tard le : ".$due->format('d/m/Y')."\n";
+    $text .= "Passé ce délai, sans obligation d’envoi d’une relance, une pénalité sera appliquée conformément au Code de commerce.\n";
+    $text .= "Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.";
 
     return [
-        'payment_method'     => $mode,
+        'payment_method'     => $method,
         'payment_iban'       => $iban,
         'payment_bic'        => $bic,
         'penalty_rate'       => $penalty,
         'due_date'           => $due->toDateString(),
-        'payment_terms_text' => implode("\n", $lines),
+        'payment_terms_text' => $text,
+        // Also give the name in case you need it in the Blade
+        'company_name'       => $name,
     ];
 }
 }
