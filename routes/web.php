@@ -142,9 +142,8 @@ Route::get('/devis/{id}/preview', [DevisController::class, 'previewPdf'])
     Route::get('/factures/export/pdf', [FactureController::class, 'exportFacturesPDF'])->name('factures.export.pdf');
     Route::get('/factures/{id}/pdf', [FactureController::class, 'downloadPdf'])->name('factures.download.pdf');
     Route::match(['get', 'post'], '/factures/{facture}/acquitter', [FactureController::class, 'acquitter'])->name('factures.acquitter');
+    Route::get('/avoirs/{id}/preview', [AvoirController::class, 'previewPdf'])->name('avoirs.preview');         // modal
 
-    Route::get('/factures/{id}/preview', [FactureController::class, 'previewPdf'])
-    ->name('factures.preview');
 
 
     // Paiements

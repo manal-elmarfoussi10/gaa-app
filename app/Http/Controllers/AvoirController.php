@@ -16,10 +16,9 @@ class AvoirController extends Controller
      */
     public function index()
     {
-        // We need the facture with its client (may be null for prospect),
-        // plus facture->paiements and facture->avoirs for totals.
+        // Load everything we display to avoid N+1 and null surprises
         $avoirs = Avoir::with([
-            'facture.client',
+            'facture.client',    // client may be null (prospect)
             'facture.paiements',
             'facture.avoirs',
         ])->latest()->get();
@@ -28,7 +27,7 @@ class AvoirController extends Controller
     }
 
     /**
-     * Create form (optionally preselected facture via query ?facture_id=).
+     * Create form (optional facture preselection).
      */
     public function create(Request $request)
     {
@@ -44,7 +43,7 @@ class AvoirController extends Controller
     }
 
     /**
-     * Create form when routed like /avoirs/create/{facture}.
+     * Create form via /avoirs/create/{facture}.
      */
     public function createFromFacture(Facture $facture)
     {
@@ -55,7 +54,7 @@ class AvoirController extends Controller
     }
 
     /**
-     * Store a new avoir with hard validation against remaining balance.
+     * Store a new avoir with validation against remaining balance.
      */
     public function store(Request $request)
     {
@@ -87,18 +86,12 @@ class AvoirController extends Controller
         return redirect()->route('factures.index')->with('success', 'Avoir enregistré.');
     }
 
-    /**
-     * Show one avoir (optional).
-     */
     public function show(Avoir $avoir)
     {
         $avoir->load('facture.client');
         return view('avoirs.show', compact('avoir'));
     }
 
-    /**
-     * Edit form.
-     */
     public function edit(Avoir $avoir)
     {
         $avoir->load('facture.client', 'facture.paiements', 'facture.avoirs');
@@ -107,10 +100,6 @@ class AvoirController extends Controller
         return view('avoirs.edit', compact('avoir', 'factures'));
     }
 
-    /**
-     * Update an avoir with validation against the up-to-date remaining balance.
-     * (Allows keeping the same amount, so we add back this avoir’s current value.)
-     */
     public function update(Request $request, Avoir $avoir)
     {
         $request->validate([
@@ -121,7 +110,7 @@ class AvoirController extends Controller
 
         $facture = Facture::with(['paiements', 'avoirs'])->findOrFail($request->facture_id);
 
-        // Reste disponible si on « retire » d’abord l’avoir que l’on édite
+        // Recompute reste ignoring the current avoir so we can keep same amount
         $totalPaye  = (float) $facture->paiements->sum('montant');
         $totalAvoir = (float) $facture->avoirs->where('id', '!=', $avoir->id)->sum('montant');
         $reste      = round((float) $facture->total_ttc - $totalPaye - $totalAvoir, 2);
@@ -142,26 +131,17 @@ class AvoirController extends Controller
         return redirect()->route('avoirs.index')->with('success', 'Avoir modifié avec succès.');
     }
 
-    /**
-     * Delete an avoir.
-     */
     public function destroy(Avoir $avoir)
     {
         $avoir->delete();
         return redirect()->route('avoirs.index')->with('success', 'Avoir supprimé.');
     }
 
-    /**
-     * Export list to Excel.
-     */
     public function exportExcel()
     {
         return Excel::download(new AvoirsExport, 'avoirs.xlsx');
     }
 
-    /**
-     * Export list to PDF.
-     */
     public function exportPDF()
     {
         $avoirs = Avoir::with('facture.client')->get();
@@ -170,7 +150,7 @@ class AvoirController extends Controller
     }
 
     /**
-     * Export a single avoir to PDF.
+     * Download a single avoir PDF (file).
      */
     public function export_PDF(Avoir $avoir)
     {
@@ -179,5 +159,22 @@ class AvoirController extends Controller
 
         $pdf = Pdf::loadView('avoirs.single_pdf', compact('avoir', 'company'));
         return $pdf->download("avoir_{$avoir->id}.pdf");
+    }
+
+    /**
+     * Stream a single avoir PDF for modal preview.
+     */
+    public function previewPdf($id)
+    {
+        $avoir   = Avoir::with(['facture.client', 'facture.items'])->findOrFail($id);
+        $company = auth()->user()->company ?? null;
+
+        // Use the SINGLE avoir template (same layout as download)
+        $pdf = Pdf::loadView('avoirs.single_pdf', [
+            'avoir'   => $avoir,
+            'company' => $company,
+        ]);
+
+        return $pdf->stream("avoir_{$avoir->id}.pdf");
     }
 }
