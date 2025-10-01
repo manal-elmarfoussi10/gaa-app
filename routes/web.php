@@ -304,6 +304,12 @@ Route::prefix('superadmin')
 
     Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
 
+
+
+    Route::get('/files/peek/{type}/{id}', [SAFilesController::class, 'peek'])
+        ->where(['type' => 'clients|devis|factures|avoirs', 'id' => '\d+'])
+        ->name('files.peek');
+
     // Companies
     Route::resource('companies', SuperAdminCompanyController::class)
         ->only(['index','create','store','show','edit','update','destroy']);
@@ -325,9 +331,7 @@ Route::prefix('superadmin')
     // Messages (global inbox)
     Route::resource('messages', SAMessageController::class)->only(['index','show','destroy'])->names('messages');
 
-    Route::get('/peek/{type}/{id}', [FilesController::class, 'peek'])
-    ->where(['type' => 'clients|devis|factures|avoirs', 'id' => '\d+'])
-    ->name('peek');
+   
 
     // Emails (superadmin)
     Route::prefix('emails')->name('emails.')->controller(SAEmailController::class)->group(function () {
