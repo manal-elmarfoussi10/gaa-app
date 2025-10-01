@@ -510,20 +510,25 @@ private function paymentDefaultsFromCompany(): array
 
 public function previewPdf($id)
 {
-    $facture = \App\Models\Facture::with([
-        'client',
-        'items',
-        'devis:id,prospect_name,prospect_email,prospect_phone'
-    ])->findOrFail($id);
+    $facture = Facture::with(['client', 'items', 'devis:id,prospect_name,prospect_email,prospect_phone'])
+        ->findOrFail($id);
 
-    $company = auth()->user()->company;
+    $user    = auth()->user();
+    $company = $user->company ?? (object) [
+        'name'    => 'Votre Société',
+        'address' => 'Adresse non définie',
+        'phone'   => '',
+        'email'   => '',
+        'logo'    => null,
+    ];
 
     $logoBase64 = null;
-    if ($company?->logo) {
-        $path = storage_path('app/public/' . $company->logo);
-        if (is_file($path)) {
-            $type = pathinfo($path, PATHINFO_EXTENSION);
-            $logoBase64 = 'data:image/'.$type.';base64,'.base64_encode(file_get_contents($path));
+    if ($company->logo) {
+        $logoPath = storage_path('app/public/' . $company->logo);
+        if (file_exists($logoPath)) {
+            $type       = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $data       = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
         }
     }
 
@@ -533,6 +538,7 @@ public function previewPdf($id)
         'logoBase64' => $logoBase64,
     ]);
 
+    // Inline (preview) output
     return $pdf->stream("facture_{$facture->numero}.pdf");
 }
 
