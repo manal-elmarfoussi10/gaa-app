@@ -1,3 +1,4 @@
+{{-- resources/views/superadmin/files/index.blade.php --}}
 @extends('layout')
 @section('title','Fichiers & Exports')
 
@@ -91,8 +92,11 @@
                 <th class="p-4 text-left font-semibold uppercase text-xs tracking-wider">{{ $label }}</th>
               @endforeach
 
-              {{-- Extra "Action" column only for Clients --}}
-              @if(($filters['type'] ?? 'clients') === 'clients')
+              @php
+                $currentType = $filters['type'] ?? 'clients';
+                $showAction  = in_array($currentType, ['clients','devis','factures','avoirs'], true);
+              @endphp
+              @if($showAction)
                 <th class="p-4 text-left font-semibold uppercase text-xs tracking-wider">Action</th>
               @endif
             </tr>
@@ -102,7 +106,6 @@
             @php
               $isPaginator = $results instanceof \Illuminate\Pagination\LengthAwarePaginator;
               $rows = $isPaginator ? $results : collect($results);
-              $currentType = $filters['type'] ?? 'clients';
             @endphp
 
             @forelse($rows as $row)
@@ -114,23 +117,29 @@
                   </td>
                 @endforeach
 
-                {{-- “Voir” button only for Clients --}}
-                @if($currentType === 'clients')
+                @if($showAction)
                   <td class="p-4">
-                    <a href="{{ route('superadmin.clients.show', $row->id) }}"
-                       class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.523 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10z" clip-rule="evenodd" />
-                      </svg>
-                      Voir
-                    </a>
+                    @if(in_array($currentType, ['devis','factures','avoirs','clients']))
+                      <button
+                        type="button"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 js-peek"
+                        data-type="{{ $currentType }}"
+                        data-id="{{ $row->id }}"
+                        data-url="{{ route('superadmin.files.peek', ['type'=>$currentType, 'id'=>$row->id]) }}"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.523 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10z" clip-rule="evenodd" />
+                        </svg>
+                        Voir
+                      </button>
+                    @endif
                   </td>
                 @endif
               </tr>
             @empty
               <tr>
-                <td class="p-8 text-center text-gray-500" colspan="{{ count($columns) + (($filters['type'] ?? 'clients') === 'clients' ? 1 : 0) }}">
+                <td class="p-8 text-center text-gray-500" colspan="{{ count($columns) + ($showAction ? 1 : 0) }}">
                   Aucune donnée.
                 </td>
               </tr>
@@ -140,7 +149,7 @@
           @if($isPaginator)
             <tfoot>
               <tr>
-                <td class="px-4 py-3 bg-gray-50 border-t" colspan="{{ count($columns) + (($filters['type'] ?? 'clients') === 'clients' ? 1 : 0) }}">
+                <td class="px-4 py-3 bg-gray-50 border-t" colspan="{{ count($columns) + ($showAction ? 1 : 0) }}">
                   {{ $results->links() }}
                 </td>
               </tr>
@@ -153,6 +162,22 @@
   </div>
 </div>
 
+{{-- Simple Modal --}}
+<div id="peekModal" class="fixed inset-0 z-[100] hidden">
+  <div class="absolute inset-0 bg-black/40"></div>
+  <div class="absolute inset-0 flex items-start md:items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-3 border-b">
+        <h3 class="font-semibold text-gray-800" id="peekTitle">Aperçu</h3>
+        <button type="button" class="p-2 rounded hover:bg-gray-100" id="peekClose">&times;</button>
+      </div>
+      <div id="peekBody" class="p-4">
+        <div class="text-gray-500">Chargement…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
   .btn-primary{
     background:#FF6B00;color:#fff;font-weight:600;
@@ -161,5 +186,41 @@
   }
   .btn-primary:hover{background:#D45A00;transform:translateY(-1px)}
 </style>
-<script>lucide.createIcons();</script>
+<script>
+  lucide.createIcons();
+
+  (function() {
+    const modal = document.getElementById('peekModal');
+    const body  = document.getElementById('peekBody');
+    const title = document.getElementById('peekTitle');
+    const closeBtn = document.getElementById('peekClose');
+
+    const open = () => modal.classList.remove('hidden');
+    const close = () => modal.classList.add('hidden');
+
+    closeBtn.addEventListener('click', close);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal || e.target.classList.contains('bg-black/40')) close();
+    });
+
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.js-peek');
+      if (!btn) return;
+
+      const url  = btn.dataset.url;
+      const type = btn.dataset.type;
+      title.textContent = 'Aperçu ' + (type.charAt(0).toUpperCase() + type.slice(1));
+      body.innerHTML = '<div class="text-gray-500">Chargement…</div>';
+      open();
+
+      try {
+        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+        const html = await res.text();
+        body.innerHTML = html;
+      } catch (_) {
+        body.innerHTML = '<div class="text-red-600">Erreur de chargement.</div>';
+      }
+    });
+  })();
+</script>
 @endsection

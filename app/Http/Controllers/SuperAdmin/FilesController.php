@@ -770,4 +770,48 @@ class FilesController extends Controller
                 };
         }
     }
+
+    // app/Http/Controllers/SuperAdmin/FilesController.php
+
+public function peek(Request $request, string $type, int $id)
+{
+    $user = auth()->user();
+    abort_unless($user && in_array($user->role, [User::ROLE_SUPERADMIN, User::ROLE_CLIENT_SERVICE], true), 403);
+
+    // Load a single item with minimal relations for a fast modal
+    switch ($type) {
+        case 'devis':
+            $item = $this->q(\App\Models\Devis::class)
+                ->with(['client' => fn($q)=>$q->withoutGlobalScopes()
+                    ->select('id','nom_assure','prenom','email','telephone','company_id')])
+                ->findOrFail($id);
+            break;
+
+        case 'factures':
+            $item = $this->q(\App\Models\Facture::class)
+                ->with([
+                    'client'    => fn($q)=>$q->withoutGlobalScopes()
+                        ->select('id','nom_assure','prenom','email','telephone','company_id'),
+                    'avoirs:id,facture_id,montant,montant_ht,created_at',
+                ])
+                ->findOrFail($id);
+            break;
+
+        case 'avoirs':
+            $item = $this->q(\App\Models\Avoir::class)
+                ->with(['facture.client' => fn($q)=>$q->withoutGlobalScopes()
+                    ->select('id','nom_assure','prenom','email','telephone','company_id')])
+                ->findOrFail($id);
+            break;
+
+        default:
+            abort(404);
+    }
+
+    // Return the small HTML fragment used inside the modal
+    return view('superadmin.files.peek', [
+        'type' => $type,
+        'item' => $item,
+    ]);
+}
 }
