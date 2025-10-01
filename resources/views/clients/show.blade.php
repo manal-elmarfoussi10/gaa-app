@@ -70,67 +70,64 @@
       </div>
   
       {{-- Actions --}}
-      <div class="flex flex-wrap items-center gap-2">
-        {{-- Generate / Regenerate --}}
-        <form method="POST" action="{{ route('clients.contract.generate', $client) }}">
-          @csrf
-          <button type="submit"
-                  class="inline-flex items-center bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-            {{ $client->contract_pdf_path ? 'Régénérer le contrat' : 'Générer le contrat' }}
-          </button>
-        </form>
-  
-        {{-- Download (unsigned) --}}
-        @if($client->contract_pdf_path)
-          <a href="{{ route('clients.contract.download', $client) }}"
-             class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">
-            Télécharger le contrat
-          </a>
-        @endif
-  
-        {{-- Send / Resend --}}
-        @php $canSend = (bool) $client->contract_pdf_path; @endphp
-  
-        @if(!$client->statut_gsauto || $client->statut_gsauto === 'draft')
-          <form method="POST" action="{{ route('clients.send_signature', $client->id) }}">
-            @csrf
-            <button type="submit"
-                    class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium {{ $canSend ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-orange-200 text-white/70 cursor-not-allowed' }}"
-                    {{ $canSend ? '' : 'disabled' }}>
-              Envoyer pour signature
-            </button>
-          </form>
-        @elseif(in_array($client->statut_gsauto, ['sent','viewed']))
-          <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}">
-            @csrf
-            <button type="submit"
-                    class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">
-              Renvoyer
-            </button>
-          </form>
-        @elseif($client->statut_gsauto === 'signed')
-          <span class="inline-flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-lg text-sm">
-            Déjà signé
-          </span>
-        @elseif($client->statut_gsauto === 'failed')
-          <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}">
-            @csrf
-            <button type="submit"
-                    class="inline-flex items-center bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-              Renvoyer (échec)
-            </button>
-          </form>
-        @endif
-  
-        {{-- Download signed (uses your accessor fallback) --}}
-        @if($client->contract_signed_pdf_path)
-          <a href="{{ route('clients.contract.download_signed', $client->id) }}"
-             class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-            Télécharger le contrat signé
-          </a>
-        @endif
-      </div>
-    </div>
+<div class="flex flex-wrap items-center gap-3">
+  {{-- Generate / Regenerate --}}
+  <form method="POST" action="{{ route('clients.contract.generate', $client) }}" class="inline-flex">
+    @csrf
+    <button type="submit"
+            class="inline-flex items-center bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+      {{ $client->contract_pdf_path ? 'Régénérer le contrat' : 'Générer le contrat' }}
+    </button>
+  </form>
+
+  {{-- Download (unsigned) --}}
+  @if($client->contract_pdf_path)
+    <a href="{{ route('clients.contract.download', $client) }}"
+       class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">
+      Télécharger le contrat
+    </a>
+  @endif
+
+  {{-- Send / Resend --}}
+  @php $canSend = (bool) $client->contract_pdf_path; @endphp
+
+  @if(!$client->statut_gsauto || $client->statut_gsauto === 'draft')
+    <form method="POST" action="{{ route('clients.send_signature', $client->id) }}" class="inline-flex">
+      @csrf
+      <button type="submit"
+              class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium {{ $canSend ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-orange-200 text-white/70 cursor-not-allowed' }}"
+              {{ $canSend ? '' : 'disabled' }}>
+        Envoyer pour signature
+      </button>
+    </form>
+  @elseif(in_array($client->statut_gsauto, ['sent','viewed']))
+    <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}" class="inline-flex">
+      @csrf
+      <button type="submit"
+              class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">
+        Renvoyer
+      </button>
+    </form>
+  @elseif($client->statut_gsauto === 'signed')
+    <span class="inline-flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-lg text-sm">Déjà signé</span>
+  @elseif($client->statut_gsauto === 'failed')
+    <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}" class="inline-flex">
+      @csrf
+      <button type="submit"
+              class="inline-flex items-center bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        Renvoyer (échec)
+      </button>
+    </form>
+  @endif
+
+  {{-- Download signed --}}
+  @if($client->contract_signed_pdf_path)
+    <a href="{{ route('clients.contract.download_signed', $client->id) }}"
+       class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+      Télécharger le contrat signé
+    </a>
+  @endif
+</div>
   
     {{-- Alerts --}}
     @if(session('success'))
