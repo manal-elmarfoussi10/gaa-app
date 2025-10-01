@@ -158,6 +158,7 @@ Route::get('/devis/{id}/preview', [DevisController::class, 'previewPdf'])
     Route::get('/avoirs/{avoir}/pdf', [AvoirController::class, 'exportPDF'])->name('avoirs.pdf');
     Route::get('/avoirs/create/from-facture/{facture}', [AvoirController::class, 'createFromFacture'])->name('avoirs.create.fromFacture');
     Route::resource('avoirs', AvoirController::class);
+    Route::get('/avoirs/{id}/preview', [AvoirController::class,'previewPdf'])->name('avoirs.preview');
 
     // Resources
     Route::resources([
