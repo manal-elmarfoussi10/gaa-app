@@ -132,6 +132,9 @@ Route::middleware(['auth', CompanyAccess::class])
     Route::get('/devis/export/pdf', [DevisController::class, 'exportPDF'])->name('devis.export.pdf');
     Route::post('/devis/{devis}/generate-facture', [DevisController::class, 'generateFacture'])->name('devis.generate.facture');
     Route::get('/devis/{id}/pdf', [DevisController::class, 'downloadSinglePdf'])->name('devis.download.pdf');
+    // Inline preview (for the modal iframe)
+Route::get('/devis/{id}/preview', [DevisController::class, 'previewPdf'])
+->name('devis.preview');
 
     // Factures
     Route::resource('factures', FactureController::class);

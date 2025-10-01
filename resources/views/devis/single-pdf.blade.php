@@ -10,7 +10,7 @@
         .devis-info { text-align:right; }
         .devis-info h2 { margin:0; font-size:20px; color:#0ea5e9; }
         .client-info { margin-bottom:20px; font-size:12px; line-height:1.5; }
-        .prestations-title { font-weight:bold; margin:20px 0 10px; text-transform:uppercase; color:#0f172a; }
+        .section-title { font-weight:bold; margin:20px 0 10px; text-transform:uppercase; color:#0f172a; }
         table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:20px; }
         table th, table td { border-bottom:1px solid #ccc; padding:8px; text-align:left; }
         table th { background:#e0f2fe; font-weight:bold; color:#0c4a6e; }
@@ -19,7 +19,8 @@
         .footer { font-size:11px; margin-top:40px; text-align:center; border-top:1px solid #e2e8f0; padding-top:10px; color:#64748b; }
         .signature { margin-top:40px; }
         .signature div { width:45%; display:inline-block; text-align:center; margin-top:40px; border-top:1px dashed #94a3b8; padding-top:10px; }
-        .bank-info { font-size:11px; margin-top:10px; line-height:1.5; }
+        .bank-info { font-size:11px; margin-top:10px; line-height:1.6; }
+        .muted { color:#64748b; }
     </style>
 </head>
 <body>
@@ -47,11 +48,10 @@
         {{ $devis->client->adresse }}<br>
         {{ $devis->client->code_postal }} {{ $devis->client->ville }}<br>
 
-        {{-- Infos véhicule complémentaires --}}
         @php
             $plaque = trim((string)($devis->client->plaque ?? ''));
-            $kmVal = $devis->client->kilometrage ?? null;
-            $kmAff = is_null($kmVal) || $kmVal === '' ? null
+            $kmVal  = $devis->client->kilometrage ?? null;
+            $kmAff  = is_null($kmVal) || $kmVal === '' ? null
                     : (is_numeric($kmVal) ? number_format((float)$kmVal, 0, ',', ' ') : (string)$kmVal);
         @endphp
 
@@ -63,7 +63,6 @@
             <span><strong>Kilométrage :</strong> {{ $kmAff }} km</span>
         @endif
     @else
-        {{-- Prospect (pas de fiche client) --}}
         @if(!empty($devis->prospect_name))
             <strong>{{ $devis->prospect_name }}</strong><br>
             @if(!empty($devis->prospect_email)) {{ $devis->prospect_email }}<br>@endif
@@ -72,25 +71,25 @@
     @endif
 </div>
 
-<div class="prestations-title">Détails des prestations</div>
+<div class="section-title">Détails des prestations</div>
 <table>
     <thead>
-    <tr>
-        <th>Description</th>
-        <th>Prix unitaire</th>
-        <th>Qté</th>
-        <th>Montant HT</th>
-    </tr>
+        <tr>
+            <th>Description</th>
+            <th>Prix unitaire</th>
+            <th>Qté</th>
+            <th>Montant HT</th>
+        </tr>
     </thead>
     <tbody>
-    @foreach($devis->items as $item)
-        <tr>
-            <td>{{ $item->produit }}</td>
-            <td>{{ number_format($item->prix_unitaire, 2, ',', ' ') }} €</td>
-            <td>{{ rtrim(rtrim(number_format((float)$item->quantite, 2, ',', ' '), '0'), ',') }}</td>
-            <td>{{ number_format($item->total_ht, 2, ',', ' ') }} €</td>
-        </tr>
-    @endforeach
+        @foreach($devis->items as $item)
+            <tr>
+                <td>{{ $item->produit }}</td>
+                <td>{{ number_format($item->prix_unitaire, 2, ',', ' ') }} €</td>
+                <td>{{ rtrim(rtrim(number_format((float)$item->quantite, 2, ',', ' '), '0'), ',') }}</td>
+                <td>{{ number_format($item->total_ht, 2, ',', ' ') }} €</td>
+            </tr>
+        @endforeach
     </tbody>
 </table>
 
@@ -109,11 +108,21 @@
     </tr>
 </table>
 
+{{-- MODALITÉS DE PAIEMENT --}}
+<div class="section-title">Modalités de paiement</div>
 <div class="bank-info">
-    <p>Modalités de règlement : Par virement bancaire ou chèque à l’ordre de {{ $company->commercial_name ?? $company->name }}</p>
-    <p>IBAN : {{ $company->iban ?? '...' }}<br>
-       BIC : {{ $company->bic ?? '...' }}</p>
-    <p>Ce devis est valable jusqu'au {{ \Carbon\Carbon::parse($devis->date_validite)->format('d/m/Y') }}</p>
+    <p>
+        Par virement bancaire ou chèque à l’ordre de
+        <strong>{{ $company->commercial_name ?? $company->name }}</strong>.
+    </p>
+    <p>
+        IBAN : {{ $company->iban ?: '—' }}<br>
+        BIC&nbsp;&nbsp;&nbsp;: {{ $company->bic  ?: '—' }}
+    </p>
+    <p class="muted">
+        Ce devis est valable jusqu’au
+        <strong>{{ \Carbon\Carbon::parse($devis->date_validite)->format('d/m/Y') }}</strong>.
+    </p>
 </div>
 
 <div class="signature">

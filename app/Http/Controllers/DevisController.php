@@ -315,4 +315,19 @@ public function downloadSinglePdf($id)
         'company' => $company,
     ])->download($fileName);
 }
+
+public function previewPdf($id)
+{
+    $devis   = Devis::with(['client', 'items'])->findOrFail($id);
+    $company = auth()->user()->company;
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('devis.single-pdf', [
+        'devis'   => $devis,
+        'company' => $company,
+    ]);
+
+    // Stream inline so it can render inside an <iframe>
+    return $pdf->stream('devis_' . ($devis->numero ?? $devis->id) . '.pdf');
+}
+
 }
