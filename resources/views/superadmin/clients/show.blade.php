@@ -751,49 +751,72 @@ $avoirs = $client->factures?->flatMap->avoirs ?? collect();
 @endpush
 
 
+@push('scripts')
 <script>
-    // Tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-tab');
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-        document.getElementById(id)?.classList.remove('hidden');
-        // style active
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-cyan-600','text-white'));
-        btn.classList.add('bg-cyan-600','text-white');
-      });
+(function () {
+  // Bind once, even with Turbo/Livewire navigations
+  function bindOnce() {
+    if (document.body.dataset.boundTabs === '1') return;
+    document.body.dataset.boundTabs = '1';
+
+    // --- Tabs (delegated) ---
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+
+      const id = btn.getAttribute('data-tab');
+      if (!id) return;
+
+      // hide all panels
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      // show target
+      const panel = document.getElementById(id);
+      if (panel) panel.classList.remove('hidden');
+
+      // toggle active styles
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-cyan-600','text-white'));
+      btn.classList.add('bg-cyan-600','text-white');
     });
-    // Set first tab active by default
-    document.querySelector('.tab-btn')?.click();
-  
-    // Preview modal
-    const modal  = document.getElementById('docPreviewModal');
-    const frame  = document.getElementById('docPreviewFrame');
-    const closeB = modal?.querySelector('.js-close-preview');
-  
-    document.addEventListener('click', (e) => {
+
+    // --- Preview modal (delegated) ---
+    const modal = document.getElementById('docPreviewModal');
+    const frame = document.getElementById('docPreviewFrame');
+
+    document.addEventListener('click', function (e) {
       const a = e.target.closest('.js-open-preview');
-      if (!a) return;
-      e.preventDefault();
-      const url = a.getAttribute('data-url');
-      if (!url) return;
-      frame.src = url;
-      modal.classList.remove('hidden');
-    });
-  
-    closeB?.addEventListener('click', () => {
-      modal.classList.add('hidden');
-      frame.src = 'about:blank';
-    });
-    modal?.addEventListener('click', (e) => {
+      if (a) {
+        e.preventDefault();
+        const url = a.getAttribute('data-url');
+        if (url && modal && frame) {
+          frame.src = url;
+          modal.classList.remove('hidden');
+        }
+      }
+      if (e.target.closest('.js-close-preview')) {
+        modal?.classList.add('hidden');
+        if (frame) frame.src = 'about:blank';
+      }
+      // click outside content closes
       if (e.target === modal) {
         modal.classList.add('hidden');
-        frame.src = 'about:blank';
+        if (frame) frame.src = 'about:blank';
       }
     });
-  </script>
 
-  
+    // set first tab active ONCE per page render
+    const first = document.querySelector('.tab-btn');
+    if (first) first.click();
+  }
+
+  // Bind on first load + common SPA events
+  document.addEventListener('DOMContentLoaded', bindOnce);
+  document.addEventListener('turbo:load', bindOnce);
+  document.addEventListener('livewire:navigated', bindOnce);
+})();
+</script>
+@endpush
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const btnOpen   = document.getElementById('newConversationBtn');
