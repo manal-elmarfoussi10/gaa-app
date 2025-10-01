@@ -159,7 +159,6 @@ class FilesController extends Controller
                 $columns = [
                     'date_facture' => 'Date',
                     'client'       => 'Client',
-                    'titre'        => 'Titre',
                     'total_ht'     => 'Total HT',
                     'total_ttc'    => 'Total TTC',
                     'is_paid'      => 'Payée',
@@ -254,7 +253,6 @@ class FilesController extends Controller
                     'client'        => 'Client',
                     'facture'       => 'Facture',
                     'montant'       => 'Montant',
-                    'methode'       => 'Méthode',
                 ];
 
                 $dateCol  = Schema::hasColumn('paiements','date') ? 'date'
@@ -310,7 +308,6 @@ class FilesController extends Controller
                     'end_time'   => 'Fin',
                     'client'     => 'Client',
                     'poseur'     => 'Poseur',
-                    'title'      => 'Titre',
                     'status'     => 'Statut',
                 ];
 
@@ -407,11 +404,9 @@ class FilesController extends Controller
             case 'purchase_orders': {
                 $columns = [
                     'date'          => 'Date',
-                    'numero'        => 'Numéro',
                     'fournisseur'   => 'Fournisseur',
                     'total_ht'      => 'Total HT',
                     'total_ttc'     => 'Total TTC',
-                    'status'        => 'Statut',
                 ];
 
                 $dateCol = Schema::hasColumn('bon_de_commandes','date') ? 'date' : 'created_at';
@@ -472,9 +467,7 @@ class FilesController extends Controller
                 $columns = [
                     'created_at' => 'Date',
                     'designation'=> 'Produit',
-                    'reference'  => 'Référence',
                     'prix_ht'    => 'Prix HT',
-                    'stock'      => 'Stock',
                 ];
 
                 $query = $this->q(Produit::class)->latest('created_at');
@@ -667,7 +660,6 @@ class FilesController extends Controller
                 return match ($key) {
                     'date_facture' => $row->date_facture ? Carbon::parse($row->date_facture)->format('d/m/Y') : '',
                     'client'       => $clientNameFor($row),
-                    'titre'        => $row->titre ?? '',
                     'total_ht'     => $money($row->total_ht),
                     'total_ttc'    => $money($row->total_ttc),
                     'is_paid'      => $row->is_paid ? 'Oui' : 'Non',
