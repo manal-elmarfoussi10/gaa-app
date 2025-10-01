@@ -110,7 +110,20 @@ public function store(Request $request)
         ?? (int) $request->input('company_id');
 
     // Build defaults if some payment fields are empty
-    $defaults = $this->defaultPaymentTerms($company, $request->input('due_date'));
+    $defaults = $this->paymentDefaultsFromCompany();
+if ($request->filled('due_date')) {
+    // rebuild text so the printed "payable au plus tard le" matches the chosen due date
+    $d = \Carbon\Carbon::parse($request->input('due_date'));
+    $name = $defaults['company_name'];
+    $text  = "Par virement bancaire ou chèque à l'ordre de {$name}\n";
+    if ($defaults['payment_bic'])  { $text .= "Code B.I.C : {$defaults['payment_bic']}\n"; }
+    if ($defaults['payment_iban']) { $text .= "Code I.B.A.N : {$defaults['payment_iban']}\n"; }
+    $text .= "La présente facture sera payable au plus tard le : ".$d->format('d/m/Y')."\n";
+    $text .= "Passé ce délai, sans obligation d’envoi d’une relance, une pénalité sera appliquée conformément au Code de commerce.\n";
+    $text .= "Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.";
+    $defaults['payment_terms_text'] = $text;
+    $defaults['due_date'] = $d->toDateString();
+}
 
     $facture               = new Facture();
     $facture->client_id    = $request->client_id;   // may be null (prospect)

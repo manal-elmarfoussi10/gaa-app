@@ -330,27 +330,62 @@
 </div>
 
 <script>
-    const resetBtn = document.getElementById('resetPaymentDefaults');
-    if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        const d = {
-          method:  @json($defaults['payment_method'] ?? ''),
-          iban:    @json($defaults['payment_iban'] ?? ''),
-          bic:     @json($defaults['payment_bic'] ?? ''),
-          penalty: @json($defaults['penalty_rate'] ?? ''),
-          due:     @json($defaults['due_date'] ?? ''),
-          text:    @json($defaults['payment_terms_text'] ?? '')
-        };
-        document.querySelector('[name="payment_method"]').value     = d.method || '';
-        document.querySelector('[name="payment_iban"]').value       = d.iban   || '';
-        document.querySelector('[name="payment_bic"]').value        = d.bic    || '';
-        document.querySelector('[name="penalty_rate"]').value       = d.penalty|| '';
-        document.querySelector('[name="due_date"]').value           = d.due    || '';
-        document.querySelector('[name="payment_terms_text"]').value = d.text   || '';
-      });
-    }
-    </script>
+    /** === Live sync "Modalités & conditions" → Textarea === */
+    (function () {
+      const companyName = @json($defaults['company_name'] ?? 'Votre société');
     
+      const els = {
+        method: document.querySelector('[name="payment_method"]'),
+        iban:   document.querySelector('[name="payment_iban"]'),
+        bic:    document.querySelector('[name="payment_bic"]'),
+        due:    document.querySelector('[name="due_date"]'),
+        text:   document.querySelector('[name="payment_terms_text"]'),
+      };
+    
+      if (!els.method || !els.text) return; // section not on this page
+    
+      function frDate(yyyy_mm_dd) {
+        // yyyy-mm-dd -> dd/mm/yyyy (keeps manual dd/mm/yyyy as-is)
+        if (!yyyy_mm_dd) return '';
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(yyyy_mm_dd)) return yyyy_mm_dd;
+        const d = new Date(yyyy_mm_dd);
+        if (isNaN(d)) return '';
+        const dd = String(d.getDate()).padStart(2,'0');
+        const mm = String(d.getMonth()+1).padStart(2,'0');
+        const yy = d.getFullYear();
+        return `${dd}/${mm}/${yy}`;
+      }
+    
+      function renderTerms() {
+        const method = (els.method.value || 'Virement bancaire').trim();
+        const iban   = (els.iban.value   || '').trim();
+        const bic    = (els.bic.value    || '').trim();
+        const due    = frDate(els.due.value || '');
+    
+        const lines = [];
+        lines.push(`Par ${method.toLowerCase()} ou chèque à l'ordre de ${companyName}`);
+        if (bic)  lines.push(`Code B.I.C : ${bic}`);
+        if (iban) lines.push(`Code I.B.A.N : ${iban}`);
+        if (due)  lines.push(`La présente facture sera payable au plus tard le : ${due}`);
+        lines.push(`Passé ce délai, sans obligation d’envoi d’une relance, une pénalité sera appliquée conformément au Code de commerce.`);
+        lines.push(`Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.`);
+    
+        els.text.value = lines.join('\n');
+      }
+    
+      // Update on each field change
+      ['input','change'].forEach(evt => {
+        els.method.addEventListener(evt, renderTerms);
+        els.iban.addEventListener(evt, renderTerms);
+        els.bic.addEventListener(evt, renderTerms);
+        els.due.addEventListener(evt, renderTerms);
+      });
+    
+      // First paint (so defaults appear immediately)
+      renderTerms();
+    })();
+    </script>
+
 <script>
 
     // ---- Reset payment terms to controller defaults ----
