@@ -750,6 +750,50 @@ $avoirs = $client->factures?->flatMap->avoirs ?? collect();
 </script>
 @endpush
 
+
+<script>
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-tab');
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        document.getElementById(id)?.classList.remove('hidden');
+        // style active
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-cyan-600','text-white'));
+        btn.classList.add('bg-cyan-600','text-white');
+      });
+    });
+    // Set first tab active by default
+    document.querySelector('.tab-btn')?.click();
+  
+    // Preview modal
+    const modal  = document.getElementById('docPreviewModal');
+    const frame  = document.getElementById('docPreviewFrame');
+    const closeB = modal?.querySelector('.js-close-preview');
+  
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('.js-open-preview');
+      if (!a) return;
+      e.preventDefault();
+      const url = a.getAttribute('data-url');
+      if (!url) return;
+      frame.src = url;
+      modal.classList.remove('hidden');
+    });
+  
+    closeB?.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      frame.src = 'about:blank';
+    });
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+        frame.src = 'about:blank';
+      }
+    });
+  </script>
+
+  
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const btnOpen   = document.getElementById('newConversationBtn');
