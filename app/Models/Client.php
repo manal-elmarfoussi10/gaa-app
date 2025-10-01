@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Rdv;
-use App\Models\company;
+use App\Models\Company;
 use App\Models\ConversationThread;
 use App\Models\Email;
 use App\Models\Concerns\CompanyScoped; 
