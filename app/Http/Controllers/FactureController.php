@@ -507,4 +507,39 @@ private function paymentDefaultsFromCompany(): array
         'company_name'       => $name,
     ];
 }
+
+public function previewPdf($id)
+{
+    $facture = Facture::with(['client', 'items', 'devis:id,prospect_name,prospect_email,prospect_phone'])
+        ->findOrFail($id);
+
+    $user    = auth()->user();
+    $company = $user->company ?? (object) [
+        'name'    => 'Votre Société',
+        'address' => 'Adresse non définie',
+        'phone'   => '',
+        'email'   => '',
+        'logo'    => null,
+    ];
+
+    $logoBase64 = null;
+    if ($company->logo) {
+        $path = storage_path('app/public/'.$company->logo);
+        if (file_exists($path)) {
+            $type       = pathinfo($path, PATHINFO_EXTENSION);
+            $data       = file_get_contents($path);
+            $logoBase64 = 'data:image/'.$type.';base64,'.base64_encode($data);
+        }
+    }
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('factures.pdf', [
+        'facture'    => $facture,
+        'company'    => $company,
+        'logoBase64' => $logoBase64,
+    ])->setPaper('a4');
+
+    // inline (no download)
+    return $pdf->stream("facture_{$facture->numero}.pdf", ['Attachment' => false]);
+}
+
 }

@@ -96,13 +96,11 @@
                             $statusClass = $reste == 0 ? 'bg-green-100 text-green-800' : ($paye > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
                             $statusText  = $reste == 0 ? 'Acquittée' : ($paye > 0 ? 'Partiellement payée' : 'Non acquittée');
 
-                            // Dossier display: Client -> Facture prospect -> Devis prospect -> '-'
                             $displayName = optional($facture->client)->nom_assure
                                            ?? ($facture->prospect_name ?: null)
                                            ?? optional($facture->devis)->prospect_name
                                            ?? '-';
 
-                            // Subtitle to hint it is a prospect
                             $subtitle = optional($facture->client)->reference
                                          ?? ((!optional($facture->client)->id && ($facture->prospect_name || optional($facture->devis)->prospect_name)) ? 'Prospect' : '');
                         @endphp
@@ -148,7 +146,17 @@
                             </td>
 
                             <td class="px-6 py-4 whitespace-nowrap text-sm col-actions">
-                                <div class="sm:items-center gap-3">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <!-- Voir (preview modal) -->
+                                    <a href="#"
+                                       class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 view-pdf-btn"
+                                       data-url="{{ route('factures.preview', $facture->id) }}?t={{ optional($facture->updated_at)->timestamp }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M10 3C5.5 3 1.73 6.11.46 10c1.27 3.89 5.04 7 9.54 7s8.27-3.11 9.54-7C18.27 6.11 14.5 3 10 3zm0 12a5 5 0 110-10 5 5 0 010 10zm0-2.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
+                                        </svg>
+                                        Voir
+                                    </a>
+
                                     @if ($reste > 0)
                                         <a href="{{ route('paiements.create', ['facture_id' => $facture->id]) }}" class="flex items-center gap-1 text-green-600 hover:text-green-800">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -173,7 +181,7 @@
                                 <div class="flex flex-col items-center justify-center">
                                     <div class="bg-gray-100 p-5 rounded-full mb-4">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
                                         </svg>
                                     </div>
                                     <p class="mt-2 text-lg font-medium text-gray-700">Aucune facture trouvée</p>
@@ -194,7 +202,30 @@
     </div>
 </div>
 
+<!-- PDF Preview Modal -->
+<div id="pdfModal" class="fixed inset-0 bg-black/50 z-[200] hidden">
+  <div class="absolute inset-0" aria-hidden="true"></div>
+
+  <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+              bg-white rounded-xl shadow-2xl w-[95vw] h-[90vh] max-w-5xl overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b">
+      <h3 class="font-semibold text-gray-800">Aperçu de la facture</h3>
+      <div class="flex items-center gap-3">
+        <a id="pdfOpenNewTab" target="_blank"
+           class="text-sm text-blue-600 hover:text-blue-800 underline hidden">Ouvrir dans un onglet</a>
+        <button id="pdfCloseBtn" class="p-1.5 rounded hover:bg-gray-100" aria-label="Fermer">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M6.28 5.22a.75.75 0 011.06 0L10 7.94l2.66-2.72a.75.75 0 111.08 1.04L11.06 9l2.68 2.74a.75.75 0 11-1.08 1.04L10 10.06l-2.66 2.72a.75.75 0 11-1.08-1.04L8.94 9 6.28 6.26a.75.75 0 010-1.04z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <iframe id="pdfFrame" src="about:blank" class="w-full h-[calc(90vh-48px)]" frameborder="0"></iframe>
+  </div>
+</div>
+
 <script>
+    // ----- Column menu -----
     function toggleColumnMenu() {
         const menu = document.getElementById('columnMenu');
         menu.classList.toggle('hidden');
@@ -203,7 +234,7 @@
     document.addEventListener('click', function(e) {
         const columnMenu = document.getElementById('columnMenu');
         const button = document.querySelector('button[onclick="toggleColumnMenu()"]');
-        if (!columnMenu.contains(e.target) && !button.contains(e.target)) {
+        if (columnMenu && !columnMenu.contains(e.target) && button && !button.contains(e.target)) {
             columnMenu.classList.add('hidden');
         }
     });
@@ -228,6 +259,33 @@
                 cell.style.display = isVisible ? '' : 'none';
             });
         });
+    });
+
+    // ----- PDF preview modal -----
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.view-pdf-btn');
+      if (btn) {
+        e.preventDefault();
+        const url = btn.dataset.url;
+        document.getElementById('pdfFrame').src = url;
+        const openTab = document.getElementById('pdfOpenNewTab');
+        openTab.href = url;
+        openTab.classList.remove('hidden');
+        document.getElementById('pdfModal').classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('pdfCloseBtn').addEventListener('click', () => {
+      document.getElementById('pdfModal').classList.add('hidden');
+      document.getElementById('pdfFrame').src = 'about:blank';
+    });
+
+    // click outside to close
+    document.getElementById('pdfModal').addEventListener('click', (e) => {
+      const box = e.currentTarget.querySelector('iframe').parentElement;
+      if (!box.contains(e.target)) {
+        document.getElementById('pdfCloseBtn').click();
+      }
     });
 </script>
 @endsection
