@@ -32,8 +32,11 @@ class FactureController extends Controller
         $clients  = Client::all();
         $devis    = Devis::all();
         $produits = Produit::all();
-
-        return view('factures.create', compact('clients', 'devis', 'produits'));
+    
+        $company  = auth()->user()->company;
+        $defaults = $this->defaultPaymentTerms($company); // prefill the form
+    
+        return view('factures.create', compact('clients', 'devis', 'produits', 'defaults', 'company'));
     }
 
     /** Normalize "1,5" → 1.5; trims spaces */
@@ -70,7 +73,7 @@ protected function buildClientMonthYearNumber(?int $clientId, string $date): str
 }
 
  
- public function store(Request $request)
+public function store(Request $request)
 {
     $validated = $request->validate([
         'client_id'      => 'nullable|exists:clients,id|required_without:prospect_name',
@@ -82,6 +85,7 @@ protected function buildClientMonthYearNumber(?int $clientId, string $date): str
         'titre'          => 'nullable|string|max:255',
         'date_facture'   => 'required|date',
 
+        // Items
         'items'                 => 'required|array|min:1',
         'items.*.produit'       => 'required|string|max:255',
         'items.*.description'   => 'nullable|string',
@@ -89,28 +93,49 @@ protected function buildClientMonthYearNumber(?int $clientId, string $date): str
         'items.*.prix_unitaire' => 'required|numeric|min:0',
         'items.*.taux_tva'      => 'required|numeric|min:0',
         'items.*.remise'        => 'nullable|numeric|min:0|max:100',
+
+        // Payment terms
+        'payment_method'     => 'nullable|string|max:255',
+        'payment_iban'       => 'nullable|string|max:255',
+        'payment_bic'        => 'nullable|string|max:255',
+        'penalty_rate'       => 'nullable|numeric',
+        'payment_terms_text' => 'nullable|string',
+        'due_date'           => 'nullable|date',
     ]);
 
-    // Resolve company (works even if client_id is null = prospect)
-    $companyId = auth()->user()->company_id
-        ?? optional(Client::find($request->client_id))->company_id
-        ?? optional(Devis::find($request->devis_id))->company_id
+    // Resolve company (works for client or prospect)
+    $company = auth()->user()->company
+        ?? optional(Client::find($request->client_id))->company
+        ?? optional(Devis::find($request->devis_id))->company;
+
+    $companyId = $company?->id
         ?? (int) $request->input('company_id');
 
+    // Build defaults if some payment fields are empty
+    $defaults = $this->defaultPaymentTerms($company, $request->input('due_date'));
+
     $facture               = new Facture();
-    $facture->client_id    = $request->client_id;      // may be null for prospect
+    $facture->client_id    = $request->client_id;   // may be null (prospect)
     $facture->devis_id     = $request->devis_id;
     $facture->titre        = $request->titre;
     $facture->date_facture = $request->date_facture;
     $facture->company_id   = $companyId;
 
-    // Numero SSMMYYYY unique per company+month (works for prospects)
+    // Numero SSMMYYYY unique per company+month
     $facture->numero = $this->allocateCompanyMonthNumero($companyId, $facture->date_facture);
 
-    // Prospect fields (kept even when client_id is null)
+    // Prospect snapshot
     $facture->prospect_name  = $request->prospect_name;
     $facture->prospect_email = $request->prospect_email;
     $facture->prospect_phone = $request->prospect_phone;
+
+    // Save payment terms (use form value if provided, else defaults)
+    $facture->payment_method     = $request->input('payment_method',     $defaults['payment_method']);
+    $facture->payment_iban       = $request->input('payment_iban',       $defaults['payment_iban']);
+    $facture->payment_bic        = $request->input('payment_bic',        $defaults['payment_bic']);
+    $facture->penalty_rate       = $request->input('penalty_rate',       $defaults['penalty_rate']);
+    $facture->payment_terms_text = $request->input('payment_terms_text', $defaults['payment_terms_text']);
+    $facture->due_date           = $request->input('due_date',           $defaults['due_date']);
 
     // Totals
     $totalHT  = 0.0;
@@ -159,17 +184,33 @@ protected function buildClientMonthYearNumber(?int $clientId, string $date): str
     return redirect()->route('factures.index')->with('success', 'Facture créée avec succès.');
 }
 
-    public function edit(Facture $facture)
-    {
-        $clients  = Client::all();
-        $devis    = Devis::all();
-        $produits = Produit::all();
 
-        return view('factures.edit', compact('facture', 'clients', 'devis', 'produits'));
+public function edit(Facture $facture)
+{
+    $clients  = Client::all();
+    $devis    = Devis::all();
+    $produits = Produit::all();
+
+    $company  = auth()->user()->company;
+    $defaults = [
+        'payment_method'     => $facture->payment_method,
+        'payment_iban'       => $facture->payment_iban,
+        'payment_bic'        => $facture->payment_bic,
+        'penalty_rate'       => $facture->penalty_rate,
+        'due_date'           => $facture->due_date,
+        'payment_terms_text' => $facture->payment_terms_text,
+    ];
+
+    // Fill blanks with company defaults
+    foreach ($this->defaultPaymentTerms($company, $facture->due_date) as $k => $v) {
+        if (empty($defaults[$k])) $defaults[$k] = $v;
     }
 
+    return view('factures.edit', compact('facture', 'clients', 'devis', 'produits', 'defaults', 'company'));
+}
+
     
-    public function update(Request $request, $id)
+public function update(Request $request, $id)
 {
     $validated = $request->validate([
         'client_id'               => 'nullable|exists:clients,id',
@@ -183,6 +224,14 @@ protected function buildClientMonthYearNumber(?int $clientId, string $date): str
         'items.*.prix_unitaire'   => 'required|numeric|min:0',
         'items.*.taux_tva'        => 'nullable',
         'items.*.remise'          => 'nullable|numeric|min:0|max:100',
+
+        // Payment terms
+        'payment_method'     => 'nullable|string|max:255',
+        'payment_iban'       => 'nullable|string|max:255',
+        'payment_bic'        => 'nullable|string|max:255',
+        'penalty_rate'       => 'nullable|numeric',
+        'payment_terms_text' => 'nullable|string',
+        'due_date'           => 'nullable|date',
     ]);
 
     $facture = Facture::findOrFail($id);
@@ -190,7 +239,7 @@ protected function buildClientMonthYearNumber(?int $clientId, string $date): str
     $oldDate    = $facture->date_facture;
     $oldCompany = (int) $facture->company_id;
 
-    $facture->client_id    = $request->client_id;          // may still be null (prospect)
+    $facture->client_id    = $request->client_id;
     $facture->devis_id     = $request->devis_id;
     $facture->titre        = $request->titre;
     $facture->date_facture = $request->date_facture;
@@ -202,7 +251,15 @@ protected function buildClientMonthYearNumber(?int $clientId, string $date): str
             ?? (int) $request->input('company_id');
     }
 
-    // Re-allocate number if date or company changed, or if it was empty
+    // Payment terms (overwrite with new form values)
+    $facture->payment_method     = $request->input('payment_method');
+    $facture->payment_iban       = $request->input('payment_iban');
+    $facture->payment_bic        = $request->input('payment_bic');
+    $facture->penalty_rate       = $request->input('penalty_rate');
+    $facture->payment_terms_text = $request->input('payment_terms_text');
+    $facture->due_date           = $request->input('due_date');
+
+    // Re-allocate number if date or company changed, or if empty
     if (empty($facture->numero)
         || $oldDate !== $facture->date_facture
         || $oldCompany !== (int) $facture->company_id) {
@@ -393,4 +450,38 @@ protected function allocateCompanyMonthNumero(int $companyId, string $date): str
 
         return redirect()->route('factures.index')->with('success', 'Facture acquittée.');
     }
+
+    /**
+ * Build sane defaults for payment terms from the company profile.
+ */
+private function defaultPaymentTerms(?\App\Models\Company $company, ?string $dueDate = null): array
+{
+    $companyName = $company?->name ?? 'Votre Société';
+    $iban        = $company?->iban;
+    $bic         = $company?->bic;
+    $mode        = $company?->methode_paiement ?: 'Virement bancaire';
+    $penalty     = $company?->penalty_rate; // e.g. 10 (%)
+
+    $due = $dueDate
+        ? \Carbon\Carbon::parse($dueDate)
+        : now()->addDays(30);
+
+    $lines = [];
+    $lines[] = "Par {$mode} ou chèque à l'ordre de {$companyName}";
+    if ($bic)  { $lines[] = "Code B.I.C : {$bic}"; }
+    if ($iban) { $lines[] = "Code I.B.A.N : {$iban}"; }
+    $lines[]   = "La présente facture sera payable au plus tard le : " . $due->format('d/m/Y');
+    $lines[]   = "Passé ce délai, sans obligation d’envoi d’une relance, une pénalité sera appliquée"
+               . ($penalty ? " ({$penalty}%)" : "") . " conformément au Code de commerce.";
+    $lines[]   = "Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.";
+
+    return [
+        'payment_method'     => $mode,
+        'payment_iban'       => $iban,
+        'payment_bic'        => $bic,
+        'penalty_rate'       => $penalty,
+        'due_date'           => $due->toDateString(),
+        'payment_terms_text' => implode("\n", $lines),
+    ];
+}
 }
