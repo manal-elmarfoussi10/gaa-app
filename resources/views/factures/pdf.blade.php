@@ -16,10 +16,9 @@
         table th { background: #e0f2fe; font-weight: bold; color: #0c4a6e; }
         .totals { width: 50%; margin-left: auto; margin-top: 20px; }
         .totals td { padding: 6px 8px; }
+        .section-title { font-weight: 600; margin: 24px 0 8px; color: #0f172a; }
+        .terms-box { border: 1px solid #e2e8f0; background: #f8fafc; padding: 12px 14px; border-radius: 6px; line-height: 1.55; white-space: pre-wrap; }
         .footer { font-size: 11px; margin-top: 40px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; color: #64748b; }
-        .signature { margin-top: 40px; }
-        .signature div { width: 45%; display: inline-block; text-align: center; margin-top: 40px; border-top: 1px dashed #94a3b8; padding-top: 10px; }
-        .bank-info { font-size: 11px; margin-top: 10px; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -37,12 +36,36 @@
     $addr2 = $client ? trim(($client->code_postal ?? '').' '.($client->ville ?? '')) : null;
 
     $km = $client && filled($client->kilometrage) ? (int) $client->kilometrage : null;
+
+    // Payment terms rendering
+    $companyName = $company->commercial_name ?? $company->name ?? 'Votre société';
+    $method      = $facture->payment_method ?: 'Virement bancaire';
+    $iban        = $facture->payment_iban ?: ($company->iban ?? '');
+    $bic         = $facture->payment_bic  ?: ($company->bic  ?? '');
+    $penalty     = $facture->penalty_rate;
+    $dueDate     = $facture->due_date ? \Carbon\Carbon::parse($facture->due_date)->format('d/m/Y') : null;
+
+    // Prefer the custom text if present; otherwise compose a nice default.
+    $termsText = trim((string) $facture->payment_terms_text);
+    if ($termsText === '') {
+        $lines = [];
+        $lines[] = "Par {$method} à l'ordre de {$companyName}";
+        if ($bic)  { $lines[] = "Code B.I.C : {$bic}"; }
+        if ($iban) { $lines[] = "Code I.B.A.N : {$iban}"; }
+        if ($dueDate) {
+            $lines[] = "La présente facture sera payable au plus tard le : {$dueDate}";
+        }
+        $lines[] = "Passé ce délai, sans obligation d’envoi d’une relance, une pénalité sera appliquée conformément au Code de commerce."
+                 . ($penalty !== null && $penalty !== '' ? " Taux des pénalités de retard : {$penalty}%." : "");
+        $lines[] = "Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.";
+        $termsText = implode("\n", $lines);
+    }
 @endphp
 
 <div class="header">
     <div class="company-info">
         @if($company)
-            <strong>{{ $company->commercial_name ?? $company->name }}</strong><br>
+            <strong>{{ $companyName }}</strong><br>
             {{ $company->address }}<br>
             {{ $company->postal_code }} {{ $company->city }}<br>
             {{ $company->email }}<br>
@@ -106,20 +129,18 @@
     </tr>
 </table>
 
-<div class="bank-info">
-    <p>Modalités de règlement : Par virement bancaire ou chèque à l’ordre de {{ $company->commercial_name ?? $company->name }}</p>
-    <p>IBAN : {{ $company->iban ?? '...' }}<br>
-       BIC : {{ $company->bic ?? '...' }}</p>
-</div>
+{{-- Modalités & conditions de règlement --}}
+<div class="section-title">Modalités & conditions de règlement</div>
+<div class="terms-box">{!! nl2br(e($termsText)) !!}</div>
 
-<div class="signature">
-    <div>Bon pour accord</div>
-    <div>{{ $company->commercial_name ?? $company->name }}</div>
-</div>
+{{-- (Removed the “Bon pour accord” block per your request) --}}
 
 <div class="footer">
-    {{ $company->commercial_name ?? $company->name }} — SIRET: {{ $company->siret }} — TVA: {{ $company->tva }}<br>
-    Code APE: {{ $company->ape }} — RCS: {{ $company->rcs_number }} {{ $company->rcs_city }}
+    {{ $companyName }}
+    @if($company?->siret) — SIRET: {{ $company->siret }} @endif
+    @if($company?->tva) — TVA: {{ $company->tva }} @endif
+    @if($company?->ape) — Code APE: {{ $company->ape }} @endif
+    @if($company?->rcs_number) — RCS: {{ $company->rcs_number }} {{ $company->rcs_city }} @endif
 </div>
 
 </body>
