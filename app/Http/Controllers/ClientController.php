@@ -231,10 +231,17 @@ class ClientController extends Controller
 
     public function exportPdf(Client $client)
     {
-        $client->load(['factures', 'avoirs', 'devis', 'photos']);
+        // Load avoirs via factures to avoid the hasManyThrough join
+        $client->load([
+            'factures.avoirs',  // <-- key change
+            'devis',
+            'photos',
+            // add other simple relations here if needed
+        ]);
+    
         $pdf = Pdf::loadView('clients.pdf', compact('client'));
         $filename = 'client_'.$client->id.'_'.now()->format('Ymd_His').'.pdf';
-
+    
         return $pdf->download($filename);
     }
 
