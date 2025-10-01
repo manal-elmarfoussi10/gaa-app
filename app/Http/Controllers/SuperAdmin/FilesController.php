@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;  
 
 use App\Models\User;
 
@@ -814,6 +815,45 @@ public function peek(Request $request, string $type, int $id)
         'item' => $item,
     ]);
 }
+
+public function previewDevis($id)
+{
+    $devis   = Devis::with(['client','items'])->findOrFail($id);
+    $company = auth()->user()->company;
+
+    return Pdf::loadView('devis.single-pdf', compact('devis','company'))
+              ->stream('devis_'.($devis->numero ?? $devis->id).'.pdf');
+}
+
+public function previewFacture($id)
+{
+    $facture = Facture::with(['client','items','devis:id,prospect_name,prospect_email,prospect_phone'])->findOrFail($id);
+    $company = auth()->user()->company ?? (object)[
+        'name'=>'Votre Société','address'=>'Adresse non définie','phone'=>'','email'=>'','logo'=>null,
+    ];
+
+    $logoBase64 = null;
+    if ($company->logo && file_exists(storage_path('app/public/'.$company->logo))) {
+        $p = storage_path('app/public/'.$company->logo);
+        $logoBase64 = 'data:image/'.pathinfo($p, PATHINFO_EXTENSION).';base64,'.base64_encode(file_get_contents($p));
+    }
+
+    return Pdf::loadView('factures.pdf', [
+        'facture'=>$facture,
+        'company'=>$company,
+        'logoBase64'=>$logoBase64,
+    ])->stream('facture_'.($facture->numero ?? $facture->id).'.pdf');
+}
+
+public function previewAvoir($id)
+{
+    $avoir   = Avoir::with(['facture.client','facture.items'])->findOrFail($id);
+    $company = auth()->user()->company;
+
+    return Pdf::loadView('avoirs.single_pdf', compact('avoir','company'))
+              ->stream('avoir_'.$avoir->id.'.pdf');
+}
+
 
 public function preview(string $type, int $id)
 {
