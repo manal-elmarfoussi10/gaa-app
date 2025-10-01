@@ -91,7 +91,6 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase col-ttc">TTC</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase col-facture">Facture associé</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase col-annee">Année fiscale</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase col-rdv">Date de RDV</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -133,9 +132,7 @@
 
                         <td class="px-6 py-4 text-sm col-annee">{{ $avoir->created_at->year }}</td>
 
-                        <td class="px-6 py-4 text-sm col-rdv">
-                            {{ optional(optional($avoir->facture)->client)->rdvs->first()->start_time ?? '-' }}
-                        </td>
+                    
                     </tr>
                     @empty
                     <tr>
