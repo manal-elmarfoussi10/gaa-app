@@ -524,11 +524,11 @@ public function previewPdf($id)
 
     $logoBase64 = null;
     if ($company->logo) {
-        $path = storage_path('app/public/'.$company->logo);
-        if (file_exists($path)) {
-            $type       = pathinfo($path, PATHINFO_EXTENSION);
-            $data       = file_get_contents($path);
-            $logoBase64 = 'data:image/'.$type.';base64,'.base64_encode($data);
+        $logoPath = storage_path('app/public/' . $company->logo);
+        if (file_exists($logoPath)) {
+            $type       = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $data       = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
         }
     }
 
@@ -536,10 +536,10 @@ public function previewPdf($id)
         'facture'    => $facture,
         'company'    => $company,
         'logoBase64' => $logoBase64,
-    ])->setPaper('a4');
+    ]);
 
-    // inline (no download)
-    return $pdf->stream("facture_{$facture->numero}.pdf", ['Attachment' => false]);
+    // Inline (preview) output
+    return $pdf->stream("facture_{$facture->numero}.pdf");
 }
 
 }

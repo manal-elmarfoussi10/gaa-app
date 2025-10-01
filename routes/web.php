@@ -139,11 +139,11 @@ Route::middleware(['auth', CompanyAccess::class])
     Route::get('/factures/export/pdf', [FactureController::class, 'exportFacturesPDF'])->name('factures.export.pdf');
     Route::get('/factures/{id}/pdf', [FactureController::class, 'downloadPdf'])->name('factures.download.pdf');
     Route::match(['get', 'post'], '/factures/{facture}/acquitter', [FactureController::class, 'acquitter'])->name('factures.acquitter');
-// routes/web.php
-Route::get('/factures/{id}/preview', [\App\Http\Controllers\FactureController::class, 'previewPdf'])
-     ->name('factures.preview');
 
-     
+    Route::get('/factures/{id}/preview', [FactureController::class, 'previewPdf'])
+    ->name('factures.preview');
+
+
     // Paiements
     Route::get('/paiements/create/{facture?}', [PaiementController::class, 'create'])->name('paiements.create');
     Route::post('/paiements', [PaiementController::class, 'store'])->name('paiements.store');
