@@ -33,7 +33,8 @@ class FactureController extends Controller
         $devis    = Devis::all();
         $produits = Produit::all();
     
-        $defaults = $this->paymentDefaultsFromCompany(); // <—
+        $defaults = session('last_payment_terms') // last used this session
+            ?? $this->paymentDefaultsFromCompany(); // otherwise company defaults
     
         return view('factures.create', compact('clients', 'devis', 'produits', 'defaults'));
     }
@@ -191,6 +192,28 @@ if ($request->filled('due_date')) {
             'total_ht'      => $lineHT,
         ]);
     }
+
+    // Remember last used in session to prefill next time
+session([
+    'last_payment_terms' => [
+        'payment_method'     => $facture->payment_method,
+        'payment_iban'       => $facture->payment_iban,
+        'payment_bic'        => $facture->payment_bic,
+        'penalty_rate'       => $facture->penalty_rate,
+        'due_date'           => $facture->due_date?->toDateString() ?? $facture->due_date,
+        'payment_terms_text' => $facture->payment_terms_text,
+        'company_name'       => ($company->commercial_name ?? $company->name ?? 'Votre société'),
+    ]
+]);
+
+// Optional: user can decide to store these as company defaults
+if ($request->boolean('save_as_default') && $company) {
+    $company->payment_method = $facture->payment_method;
+    $company->iban           = $facture->payment_iban;
+    $company->bic            = $facture->payment_bic;
+    $company->penalty_rate   = $facture->penalty_rate;
+    $company->save();
+}
 
     return redirect()->route('factures.index')->with('success', 'Facture créée avec succès.');
 }

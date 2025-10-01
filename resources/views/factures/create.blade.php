@@ -305,6 +305,13 @@
         </div>
     </div>
 
+    <label class="inline-flex items-center gap-2 mt-3">
+        <input type="checkbox" name="save_as_default" value="1" class="rounded">
+        <span class="text-sm text-gray-700">
+          Enregistrer ces valeurs comme valeurs par défaut de l’entreprise
+        </span>
+      </label>
+
     <div class="mt-6">
         <label class="block mb-2 font-medium text-gray-700">Texte affiché sur la facture</label>
         <textarea name="payment_terms_text" rows="6"
@@ -330,59 +337,61 @@
 </div>
 
 <script>
-    /** === Live sync "Modalités & conditions" → Textarea === */
     (function () {
+      const ibanEl   = document.querySelector('[name="payment_iban"]');
+      const bicEl    = document.querySelector('[name="payment_bic"]');
+      const dueEl    = document.querySelector('[name="due_date"]');
+      const textEl   = document.querySelector('[name="payment_terms_text"]');
+    
+      // if user edits the textarea, stop auto updates
+      let userEdited = false;
+      if (textEl) {
+        textEl.addEventListener('input', () => userEdited = true);
+      }
+    
+      // company name comes from your controller defaults (create/edit already pass $defaults)
       const companyName = @json($defaults['company_name'] ?? 'Votre société');
     
-      const els = {
-        method: document.querySelector('[name="payment_method"]'),
-        iban:   document.querySelector('[name="payment_iban"]'),
-        bic:    document.querySelector('[name="payment_bic"]'),
-        due:    document.querySelector('[name="due_date"]'),
-        text:   document.querySelector('[name="payment_terms_text"]'),
-      };
-    
-      if (!els.method || !els.text) return; // section not on this page
-    
-      function frDate(yyyy_mm_dd) {
-        // yyyy-mm-dd -> dd/mm/yyyy (keeps manual dd/mm/yyyy as-is)
-        if (!yyyy_mm_dd) return '';
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(yyyy_mm_dd)) return yyyy_mm_dd;
-        const d = new Date(yyyy_mm_dd);
-        if (isNaN(d)) return '';
-        const dd = String(d.getDate()).padStart(2,'0');
-        const mm = String(d.getMonth()+1).padStart(2,'0');
-        const yy = d.getFullYear();
-        return `${dd}/${mm}/${yy}`;
+      function frDate(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        // Guard: invalid date -> return raw
+        return isNaN(d.getTime()) ? iso : d.toLocaleDateString('fr-FR');
       }
     
-      function renderTerms() {
-        const method = (els.method.value || 'Virement bancaire').trim();
-        const iban   = (els.iban.value   || '').trim();
-        const bic    = (els.bic.value    || '').trim();
-        const due    = frDate(els.due.value || '');
+      function buildFooter() {
+        const iban = (ibanEl?.value || '').trim();
+        const bic  = (bicEl?.value  || '').trim();
+        const due  = frDate(dueEl?.value || '');
     
-        const lines = [];
-        lines.push(`Par ${method.toLowerCase()} ou chèque à l'ordre de ${companyName}`);
-        if (bic)  lines.push(`Code B.I.C : ${bic}`);
-        if (iban) lines.push(`Code I.B.A.N : ${iban}`);
-        if (due)  lines.push(`La présente facture sera payable au plus tard le : ${due}`);
-        lines.push(`Passé ce délai, sans obligation d’envoi d’une relance, une pénalité sera appliquée conformément au Code de commerce.`);
-        lines.push(`Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.`);
-    
-        els.text.value = lines.join('\n');
+        let t = `Par virement bancaire ou chèque à l'ordre de ${companyName}\n`;
+        if (bic)  t += `Code B.I.C : ${bic}\n`;
+        if (iban) t += `Code I.B.A.N : ${iban}\n`;
+        if (due)  t += `La présente facture sera payable au plus tard le : ${due}\n`;
+        t += `Passé ce délai, sans obligation d’envoi d’une relance, une pénalité sera appliquée conformément au Code de commerce.\n`;
+        t += `Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.`;
+        return t;
       }
     
-      // Update on each field change
+      function maybeUpdate() {
+        if (!textEl || userEdited) return;
+        textEl.value = buildFooter();
+      }
+    
       ['input','change'].forEach(evt => {
-        els.method.addEventListener(evt, renderTerms);
-        els.iban.addEventListener(evt, renderTerms);
-        els.bic.addEventListener(evt, renderTerms);
-        els.due.addEventListener(evt, renderTerms);
+        ibanEl?.addEventListener(evt, maybeUpdate);
+        bicEl?.addEventListener(evt, maybeUpdate);
+        dueEl?.addEventListener(evt, maybeUpdate);
       });
     
-      // First paint (so defaults appear immediately)
-      renderTerms();
+      // If you have a "Remettre les valeurs par défaut" button, also reset the dirty flag:
+      document.getElementById('resetPaymentDefaults')?.addEventListener('click', () => {
+        userEdited = false;
+        maybeUpdate();
+      });
+    
+      // Initial fill (only if user hasn’t typed)
+      maybeUpdate();
     })();
     </script>
 
