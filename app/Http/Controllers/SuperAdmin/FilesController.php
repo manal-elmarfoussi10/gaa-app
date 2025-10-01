@@ -814,4 +814,68 @@ public function peek(Request $request, string $type, int $id)
         'item' => $item,
     ]);
 }
+
+public function preview(string $type, int $id)
+{
+    switch ($type) {
+        case 'devis': {
+            $devis   = Devis::withoutGlobalScopes()
+                        ->with(['client','items'])
+                        ->findOrFail($id);
+
+            // If you need a company, derive from the client when possible
+            $company = optional($devis->client)->company;
+
+            $pdf = Pdf::loadView('devis.single-pdf', [
+                'devis'   => $devis,
+                'company' => $company,
+            ]);
+
+            return $pdf->stream('devis_' . ($devis->numero ?? $devis->id) . '.pdf');
+        }
+
+        case 'factures': {
+            $facture = Facture::withoutGlobalScopes()
+                        ->with(['client','items','devis:id,prospect_name,prospect_email,prospect_phone'])
+                        ->findOrFail($id);
+
+            $company = optional($facture->client)->company;
+            $logoBase64 = null;
+            if ($company && $company->logo) {
+                $logoPath = storage_path('app/public/'.$company->logo);
+                if (file_exists($logoPath)) {
+                    $typeImg   = pathinfo($logoPath, PATHINFO_EXTENSION);
+                    $data      = file_get_contents($logoPath);
+                    $logoBase64 = 'data:image/'.$typeImg.';base64,'.base64_encode($data);
+                }
+            }
+
+            $pdf = Pdf::loadView('factures.pdf', [
+                'facture'    => $facture,
+                'company'    => $company,
+                'logoBase64' => $logoBase64,
+            ]);
+
+            return $pdf->stream('facture_'.($facture->numero ?? $facture->id).'.pdf');
+        }
+
+        case 'avoirs': {
+            $avoir = Avoir::withoutGlobalScopes()
+                        ->with(['facture.client','facture.items'])
+                        ->findOrFail($id);
+
+            $company = optional(optional($avoir->facture)->client)->company;
+
+            $pdf = Pdf::loadView('avoirs.single_pdf', [
+                'avoir'   => $avoir,
+                'company' => $company,
+            ]);
+
+            return $pdf->stream('avoir_'.$avoir->id.'.pdf');
+        }
+    }
+
+    abort(404);
+}
+
 }

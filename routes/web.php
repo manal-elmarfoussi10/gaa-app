@@ -310,6 +310,16 @@ Route::prefix('superadmin')
         ->where(['type' => 'clients|devis|factures|avoirs', 'id' => '\d+'])
         ->name('files.peek');
 
+        // SUPERADMIN — Files browse + CSV already present…
+Route::get('/files',  [\App\Http\Controllers\SuperAdmin\FilesController::class, 'index'])->name('files.index');
+Route::get('/files/export', [\App\Http\Controllers\SuperAdmin\FilesController::class, 'export'])->name('files.export');
+
+// NEW: preview a PDF in an <iframe> for the modal
+Route::get('/files/preview/{type}/{id}', [\App\Http\Controllers\SuperAdmin\FilesController::class, 'preview'])
+    ->where(['type' => 'devis|factures|avoirs', 'id' => '\d+'])
+    ->name('files.preview');
+
+    
     // Companies
     Route::resource('companies', SuperAdminCompanyController::class)
         ->only(['index','create','store','show','edit','update','destroy']);

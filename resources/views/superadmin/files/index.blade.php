@@ -119,20 +119,25 @@
 
                 @if($showAction)
                   <td class="p-4">
-                    @if(in_array($currentType, ['devis','factures','avoirs','clients']))
-                      <button
-                        type="button"
-                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 js-peek"
-                        data-type="{{ $currentType }}"
-                        data-id="{{ $row->id }}"
-                        data-url="{{ route('superadmin.files.peek', ['type'=>$currentType, 'id'=>$row->id]) }}"
-                      >
+                    @if(in_array($currentType, ['devis','factures','avoirs']))
+                      <button type="button"
+                              class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 preview-btn"
+                              data-url="{{ route('superadmin.files.preview', ['type'=>$currentType, 'id'=>$row->id]) }}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                           <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.523 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10z" clip-rule="evenodd" />
                         </svg>
                         Voir
                       </button>
+                    @elseif($currentType === 'clients')
+                      <a href="{{ route('superadmin.clients.show', $row->id) }}"
+                         class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.523 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10z" clip-rule="evenodd" />
+                        </svg>
+                        Voir
+                      </a>
                     @endif
                   </td>
                 @endif
@@ -162,17 +167,21 @@
   </div>
 </div>
 
-{{-- Simple Modal --}}
-<div id="peekModal" class="fixed inset-0 z-[100] hidden">
-  <div class="absolute inset-0 bg-black/40"></div>
-  <div class="absolute inset-0 flex items-start md:items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden">
+{{-- Preview Modal with iframe --}}
+<div id="previewModal" class="fixed inset-0 z-[999] hidden">
+  <div class="absolute inset-0 bg-black/50"></div>
+  <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-5xl rounded-2xl shadow-lg overflow-hidden">
       <div class="flex items-center justify-between px-4 py-3 border-b">
-        <h3 class="font-semibold text-gray-800" id="peekTitle">Aperçu</h3>
-        <button type="button" class="p-2 rounded hover:bg-gray-100" id="peekClose">&times;</button>
+        <h3 class="text-lg font-semibold">Aperçu</h3>
+        <button id="previewClose" class="p-2 rounded hover:bg-gray-100">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </button>
       </div>
-      <div id="peekBody" class="p-4">
-        <div class="text-gray-500">Chargement…</div>
+      <div class="h-[75vh]">
+        <iframe id="previewFrame" src="about:blank" class="w-full h-full" frameborder="0"></iframe>
       </div>
     </div>
   </div>
@@ -189,38 +198,28 @@
 <script>
   lucide.createIcons();
 
-  (function() {
-    const modal = document.getElementById('peekModal');
-    const body  = document.getElementById('peekBody');
-    const title = document.getElementById('peekTitle');
-    const closeBtn = document.getElementById('peekClose');
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal  = document.getElementById('previewModal');
+    const frame  = document.getElementById('previewFrame');
+    const close  = document.getElementById('previewClose');
 
-    const open = () => modal.classList.remove('hidden');
-    const close = () => modal.classList.add('hidden');
+    document.querySelectorAll('.preview-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const url = btn.getAttribute('data-url');
+        frame.src  = url;
+        modal.classList.remove('hidden');
+      });
+    });
 
-    closeBtn.addEventListener('click', close);
+    const hide = () => {
+      frame.src = 'about:blank';
+      modal.classList.add('hidden');
+    };
+
+    close.addEventListener('click', hide);
     modal.addEventListener('click', (e) => {
-      if (e.target === modal || e.target.classList.contains('bg-black/40')) close();
+      if (e.target === modal.firstElementChild) hide();
     });
-
-    document.addEventListener('click', async (e) => {
-      const btn = e.target.closest('.js-peek');
-      if (!btn) return;
-
-      const url  = btn.dataset.url;
-      const type = btn.dataset.type;
-      title.textContent = 'Aperçu ' + (type.charAt(0).toUpperCase() + type.slice(1));
-      body.innerHTML = '<div class="text-gray-500">Chargement…</div>';
-      open();
-
-      try {
-        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
-        const html = await res.text();
-        body.innerHTML = html;
-      } catch (_) {
-        body.innerHTML = '<div class="text-red-600">Erreur de chargement.</div>';
-      }
-    });
-  })();
+  });
 </script>
 @endsection
