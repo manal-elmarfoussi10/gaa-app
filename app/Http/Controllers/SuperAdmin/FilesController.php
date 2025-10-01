@@ -8,10 +8,9 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
-use Barryvdh\DomPDF\Facade\Pdf;  
+use Barryvdh\DomPDF\Facade\Pdf;
 
 use App\Models\User;
-
 use App\Models\Client;
 use App\Models\Devis;
 use App\Models\Facture;
@@ -28,14 +27,12 @@ use App\Models\Stock;
 
 class FilesController extends Controller
 {
-    /** Build a base query. For support users (superadmin + client_service) remove global scopes. */
+    /** Base query; support roles bypass global scopes. */
     private function q(string $modelClass)
     {
         $user = auth()->user();
         $isSupport = $user && in_array($user->role, [User::ROLE_SUPERADMIN, User::ROLE_CLIENT_SERVICE], true);
-
-        return $isSupport ? $modelClass::query()->withoutGlobalScopes()
-                          : $modelClass::query();
+        return $isSupport ? $modelClass::query()->withoutGlobalScopes() : $modelClass::query();
     }
 
     public function index(Request $request)
@@ -68,7 +65,6 @@ class FilesController extends Controller
 
     public function export(Request $request)
     {
-        // allow only superadmin (add ROLE_CLIENT_SERVICE if needed)
         abort_unless(auth()->user() && auth()->user()->role === User::ROLE_SUPERADMIN, 403);
 
         $type = $request->input('type', 'clients');
@@ -83,8 +79,8 @@ class FilesController extends Controller
 
         $callback = function () use ($columns, $rows, $type) {
             $out = fopen('php://output', 'w');
-            fwrite($out, chr(0xEF).chr(0xBB).chr(0xBF));     // UTF-8 BOM
-            fputcsv($out, array_values($columns), ';');       // header
+            fwrite($out, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+            fputcsv($out, array_values($columns), ';');   // header
 
             foreach ($rows as $row) {
                 $line = [];
@@ -99,10 +95,9 @@ class FilesController extends Controller
         return Response::stream($callback, 200, $headers);
     }
 
-    /** Build columns + dataset for each type with filters. */
+    /** Build columns + dataset (with filters). */
     private function buildQuery(string $type, Request $request, bool $paginate): array
     {
-        // Accept multiple param names and parse dd/mm/yyyy
         $dateFromRaw = $this->firstNonNull($request, ['from','date_from','du']);
         $dateToRaw   = $this->firstNonNull($request, ['to','date_to','au']);
         [$dateFrom, $dateTo] = $this->parseDateRange($dateFromRaw, $dateToRaw);
@@ -110,12 +105,12 @@ class FilesController extends Controller
         $companyId  = $request->input('company_id');
         $q          = trim((string) $request->input('q', ''));
 
-        // choose existing product name column
         $productNameCol = Schema::hasColumn('produits','designation') ? 'designation'
                          : (Schema::hasColumn('produits','name') ? 'name'
                          : (Schema::hasColumn('produits','nom') ? 'nom' : null));
 
         switch ($type) {
+            // ================= DEVIS =================
             case 'devis': {
                 $columns = [
                     'created_at' => 'Date',
@@ -130,12 +125,12 @@ class FilesController extends Controller
                         $q->withoutGlobalScopes()
                           ->select('id','nom_assure','prenom','email','telephone','company_id');
                     }])
+                    ->select('*')
                     ->latest('created_at');
 
                 if ($companyId) {
                     $query->whereHas('client', function(Builder $c) use ($companyId) {
-                        $c->withoutGlobalScopes()
-                          ->where('company_id', $companyId);
+                        $c->withoutGlobalScopes()->where('company_id', $companyId);
                     });
                 }
 
@@ -144,6 +139,7 @@ class FilesController extends Controller
                 if ($q !== '') {
                     $query->where(function(Builder $b) use ($q) {
                         $b->where('titre','like',"%$q%")
+                          ->orWhere('prospect_name','like',"%$q%")
                           ->orWhereHas('client', function(Builder $c) use ($q) {
                               $c->withoutGlobalScopes()
                                 ->where('nom_assure','like',"%$q%")
@@ -158,6 +154,7 @@ class FilesController extends Controller
                 return [$columns, $results];
             }
 
+            // ================= FACTURES ==============
             case 'factures': {
                 $columns = [
                     'date_facture' => 'Date',
@@ -173,6 +170,7 @@ class FilesController extends Controller
                         $q->withoutGlobalScopes()
                           ->select('id','nom_assure','prenom','email','telephone','company_id');
                     }])
+                    ->select('*')
                     ->latest('date_facture');
 
                 if ($companyId) {
@@ -186,6 +184,7 @@ class FilesController extends Controller
                 if ($q !== '') {
                     $query->where(function(Builder $b) use ($q) {
                         $b->where('titre','like',"%$q%")
+                          ->orWhere('prospect_name','like',"%$q%")
                           ->orWhereHas('client', function(Builder $c) use ($q) {
                               $c->withoutGlobalScopes()
                                 ->where('nom_assure','like',"%$q%")
@@ -200,6 +199,7 @@ class FilesController extends Controller
                 return [$columns, $results];
             }
 
+            // ================= AVOIRS =================
             case 'avoirs': {
                 $columns = [
                     'created_at' => 'Date',
@@ -209,10 +209,13 @@ class FilesController extends Controller
                 ];
 
                 $query = $this->q(Avoir::class)
-                    ->with(['facture.client' => function($q){
-                        $q->withoutGlobalScopes()
-                          ->select('id','nom_assure','prenom','email','telephone','company_id');
-                    }])
+                    ->with([
+                        'facture' => fn($f) => $f->select('*'),
+                        'facture.client' => function($q){
+                            $q->withoutGlobalScopes()
+                              ->select('id','nom_assure','prenom','email','telephone','company_id');
+                        }
+                    ])
                     ->latest('created_at');
 
                 if ($companyId) {
@@ -227,7 +230,8 @@ class FilesController extends Controller
                     $query->where(function(Builder $b) use ($q) {
                         $b->where('montant','like',"%$q%")
                           ->orWhereHas('facture', function(Builder $f) use ($q) {
-                              $f->where('titre','like',"%$q%");
+                              $f->where('titre','like',"%$q%")
+                                ->orWhere('numero','like',"%$q%");
                           })
                           ->orWhereHas('facture.client', function(Builder $c) use ($q) {
                               $c->withoutGlobalScopes()
@@ -243,6 +247,7 @@ class FilesController extends Controller
                 return [$columns, $results];
             }
 
+            // ================= PAIEMENTS =============
             case 'paiements': {
                 $columns = [
                     'date_paiement' => 'Date',
@@ -256,10 +261,13 @@ class FilesController extends Controller
                            : (Schema::hasColumn('paiements','date_paiement') ? 'date_paiement' : 'created_at');
 
                 $query = $this->q(Paiement::class)
-                    ->with(['facture.client' => function($q){
-                        $q->withoutGlobalScopes()
-                          ->select('id','nom_assure','prenom','email','telephone','company_id');
-                    }])
+                    ->with([
+                        'facture' => fn($f) => $f->select('*'),
+                        'facture.client' => function($q){
+                            $q->withoutGlobalScopes()
+                              ->select('id','nom_assure','prenom','email','telephone','company_id');
+                        }
+                    ])
                     ->orderBy($dateCol, 'desc');
 
                 if ($companyId) {
@@ -276,7 +284,9 @@ class FilesController extends Controller
                           ->orWhere('methode_paiement','like',"%$q%")
                           ->orWhere('montant','like',"%$q%")
                           ->orWhereHas('facture', function(Builder $f) use ($q) {
-                              $f->where('titre','like',"%$q%");
+                              $f->where('titre','like',"%$q%")
+                                ->orWhere('numero','like',"%$q%")
+                                ->orWhere('prospect_name','like',"%$q%");
                           })
                           ->orWhereHas('facture.client', function(Builder $c) use ($q) {
                               $c->withoutGlobalScopes()
@@ -292,6 +302,7 @@ class FilesController extends Controller
                 return [$columns, $results];
             }
 
+            // ================= RDV ====================
             case 'rdv':
             case 'rdvs': {
                 $columns = [
@@ -340,6 +351,7 @@ class FilesController extends Controller
                 return [$columns, $results];
             }
 
+            // ============== DEPENSES ==================
             case 'depenses':
             case 'expenses': {
                 $columns = [
@@ -389,6 +401,7 @@ class FilesController extends Controller
                 return [$columns, $results];
             }
 
+            // ============ BONS DE COMMANDE ============
             case 'bons':
             case 'bons_de_commande':
             case 'purchase_orders': {
@@ -404,6 +417,7 @@ class FilesController extends Controller
                 $dateCol = Schema::hasColumn('bon_de_commandes','date') ? 'date' : 'created_at';
 
                 $query = $this->q(BonDeCommande::class)
+                    ->select('*') // keep numero
                     ->with(['fournisseur' => fn($q)=>$q->withoutGlobalScopes()->select('id','nom_societe','company_id')])
                     ->orderBy($dateCol,'desc');
 
@@ -425,6 +439,7 @@ class FilesController extends Controller
                 return [$columns, $results];
             }
 
+            // ================ FOURNISSEURS ============
             case 'fournisseurs': {
                 $columns = [
                     'created_at' => 'Date',
@@ -452,6 +467,7 @@ class FilesController extends Controller
                 return [$columns, $results];
             }
 
+            // ================= PRODUITS ===============
             case 'produits': {
                 $columns = [
                     'created_at' => 'Date',
@@ -471,9 +487,7 @@ class FilesController extends Controller
 
                 if ($q !== '') {
                     $query->where(function(Builder $b) use ($q, $productNameCol) {
-                        if ($productNameCol) {
-                            $b->where($productNameCol,'like',"%$q%");
-                        }
+                        if ($productNameCol) $b->where($productNameCol,'like',"%$q%");
                         $b->orWhere('reference','like',"%$q%");
                     });
                 }
@@ -482,6 +496,7 @@ class FilesController extends Controller
                 return [$columns, $results];
             }
 
+            // ================= POSEURS ================
             case 'poseurs': {
                 $columns = [
                     'created_at' => 'Date',
@@ -509,6 +524,7 @@ class FilesController extends Controller
                 return [$columns, $results];
             }
 
+            // ================= STOCKS =================
             case 'stocks': {
                 $columns = [
                     'created_at' => 'Date',
@@ -528,9 +544,7 @@ class FilesController extends Controller
                 $query = $this->q(Stock::class)
                     ->with(['produit' => function($q) use ($productSelect) {
                         $q->withoutGlobalScopes();
-                        if (!empty($productSelect)) {
-                            $q->select($productSelect);
-                        }
+                        if (!empty($productSelect)) $q->select($productSelect);
                     }])
                     ->latest('created_at');
 
@@ -546,14 +560,12 @@ class FilesController extends Controller
 
                 if ($q !== '') {
                     $query->where(function(Builder $b) use ($q, $productNameCol) {
-                        $b->where('location','like',"%$q%");
-                        $b->orWhereHas('produit', function(Builder $p) use ($q, $productNameCol) {
-                            $p->withoutGlobalScopes();
-                            if ($productNameCol) {
-                                $p->where($productNameCol,'like',"%$q%");
-                            }
-                            $p->orWhere('reference','like',"%$q%");
-                        });
+                        $b->where('location','like',"%$q%")
+                          ->orWhereHas('produit', function(Builder $p) use ($q, $productNameCol) {
+                              $p->withoutGlobalScopes();
+                              if ($productNameCol) $p->where($productNameCol,'like',"%$q%");
+                              $p->orWhere('reference','like',"%$q%");
+                          });
                     });
                 }
 
@@ -561,6 +573,7 @@ class FilesController extends Controller
                 return [$columns, $results];
             }
 
+            // ================= CLIENTS ================
             case 'clients':
             default: {
                 $columns = [
@@ -596,56 +609,54 @@ class FilesController extends Controller
         }
     }
 
-    /** Accept dd/mm/yyyy, return [startOfDay, endOfDay] Carbons or [null,null]. */
+    /** dd/mm/yyyy helpers */
     private function parseDateRange(?string $from, ?string $to): array
     {
         $f = $this->toCarbon($from, true);
         $t = $this->toCarbon($to, false);
-
         if ($f && !$t) $t = now()->endOfDay();
         if ($t && !$f) $f = Carbon::create(1970, 1, 1, 0, 0, 0);
-
         return [$f, $t];
     }
-
     private function toCarbon(?string $val, bool $start): ?Carbon
     {
         if (!$val) return null;
         $val = trim($val);
-        // support "dd/mm/yyyy" or ISO
-        if (preg_match('~^\d{2}/\d{2}/\d{4}$~', $val)) {
-            $c = Carbon::createFromFormat('d/m/Y', $val);
-        } else {
-            $c = Carbon::parse($val);
-        }
+        $c = preg_match('~^\d{2}/\d{2}/\d{4}$~', $val)
+            ? Carbon::createFromFormat('d/m/Y', $val)
+            : Carbon::parse($val);
         return $start ? $c->startOfDay() : $c->endOfDay();
     }
-
     private function firstNonNull(Request $r, array $keys): ?string
     {
-        foreach ($keys as $k) {
-            $v = $r->input($k);
-            if ($v !== null && $v !== '') return $v;
-        }
+        foreach ($keys as $k) { $v = $r->input($k); if ($v !== null && $v !== '') return $v; }
         return null;
     }
-
     private function applyDateRange(Builder $query, ?Carbon $from, ?Carbon $to, string $column): void
     {
         if ($from) $query->where($column, '>=', $from);
         if ($to)   $query->where($column, '<=', $to);
     }
 
-    /** Render a single cell for HTML or CSV. */
+    /** Cell rendering (HTML/CSV). */
     public static function renderCell(string $type, string $key, $row, bool $plain = false)
     {
         $money = fn($v) => number_format((float)($v ?? 0), 2, ',', ' ').' €';
+
+        // helper: client name with prospect fallback (for devis/facture)
+        $clientNameFor = function($entity) {
+            $client = $entity->client ?? null;
+            $name = trim(($client->nom_assure ?? '').' '.($client->prenom ?? ''));
+            if ($name !== '') return $name;
+            // fallback to prospect name if defined
+            return $entity->prospect_name ?? '';
+        };
 
         switch ($type) {
             case 'devis':
                 return match ($key) {
                     'created_at' => optional($row->created_at)->format('d/m/Y H:i'),
-                    'client'     => trim(($row->client->nom_assure ?? '').' '.($row->client->prenom ?? '')),
+                    'client'     => $clientNameFor($row),
                     'titre'      => $row->titre ?? '',
                     'total_ht'   => $money($row->total_ht),
                     'total_ttc'  => $money($row->total_ttc),
@@ -655,7 +666,7 @@ class FilesController extends Controller
             case 'factures':
                 return match ($key) {
                     'date_facture' => $row->date_facture ? Carbon::parse($row->date_facture)->format('d/m/Y') : '',
-                    'client'       => trim(($row->client->nom_assure ?? '').' '.($row->client->prenom ?? '')),
+                    'client'       => $clientNameFor($row),
                     'titre'        => $row->titre ?? '',
                     'total_ht'     => $money($row->total_ht),
                     'total_ttc'    => $money($row->total_ttc),
@@ -666,18 +677,24 @@ class FilesController extends Controller
             case 'avoirs':
                 return match ($key) {
                     'created_at' => optional($row->created_at)->format('d/m/Y H:i'),
-                    'client'     => trim(($row->facture->client->nom_assure ?? '').' '.($row->facture->client->prenom ?? '')),
-                    'facture'    => $row->facture->titre ?? '',
+                    'client'     => isset($row->facture) ? ($row->facture->client ? trim(($row->facture->client->nom_assure ?? '').' '.($row->facture->client->prenom ?? '')) : '') : '',
+                    'facture'    => $row->facture ? (($row->facture->titre ?? '') !== '' ? $row->facture->titre : ($row->facture->numero ?? '')) : '',
                     'montant'    => $money($row->montant ?? $row->montant_ht ?? null),
                     default      => '',
                 };
 
             case 'paiements': {
                 $date = $row->date ?? ($row->date_paiement ?? $row->created_at);
+                $clientLabel = '';
+                if ($row->facture) {
+                    $clientLabel = trim(($row->facture->client->nom_assure ?? '').' '.($row->facture->client->prenom ?? ''));
+                    if ($clientLabel === '') $clientLabel = ($row->facture->prospect_name ?? '');
+                }
+                $factureLabel = $row->facture ? (($row->facture->titre ?? '') !== '' ? $row->facture->titre : ($row->facture->numero ?? '')) : '';
                 return match ($key) {
                     'date_paiement' => $date ? Carbon::parse($date)->format('d/m/Y') : '',
-                    'client'        => trim(($row->facture->client->nom_assure ?? '').' '.($row->facture->client->prenom ?? '')),
-                    'facture'       => $row->facture->titre ?? '',
+                    'client'        => $clientLabel,
+                    'facture'       => $factureLabel,
                     'montant'       => $money($row->montant ?? $row->amount ?? null),
                     'methode'       => $row->methode ?? $row->methode_paiement ?? '',
                     default         => '',
@@ -772,150 +789,68 @@ class FilesController extends Controller
         }
     }
 
-    // app/Http/Controllers/SuperAdmin/FilesController.php
+    /**
+     * Small HTML fragment for the modal body.
+     * It embeds an iframe that points to the preview endpoint below.
+     */
+    public function peek(Request $request, string $type, int $id)
+    {
+        $user = auth()->user();
+        abort_unless($user && in_array($user->role, [User::ROLE_SUPERADMIN, User::ROLE_CLIENT_SERVICE], true), 403);
 
-public function peek(Request $request, string $type, int $id)
-{
-    $user = auth()->user();
-    abort_unless($user && in_array($user->role, [User::ROLE_SUPERADMIN, User::ROLE_CLIENT_SERVICE], true), 403);
-
-    // Load a single item with minimal relations for a fast modal
-    switch ($type) {
-        case 'devis':
-            $item = $this->q(\App\Models\Devis::class)
-                ->with(['client' => fn($q)=>$q->withoutGlobalScopes()
-                    ->select('id','nom_assure','prenom','email','telephone','company_id')])
-                ->findOrFail($id);
-            break;
-
-        case 'factures':
-            $item = $this->q(\App\Models\Facture::class)
-                ->with([
-                    'client'    => fn($q)=>$q->withoutGlobalScopes()
-                        ->select('id','nom_assure','prenom','email','telephone','company_id'),
-                    'avoirs:id,facture_id,montant,montant_ht,created_at',
-                ])
-                ->findOrFail($id);
-            break;
-
-        case 'avoirs':
-            $item = $this->q(\App\Models\Avoir::class)
-                ->with(['facture.client' => fn($q)=>$q->withoutGlobalScopes()
-                    ->select('id','nom_assure','prenom','email','telephone','company_id')])
-                ->findOrFail($id);
-            break;
-
-        default:
+        if (!in_array($type, ['devis','factures','avoirs'], true)) {
             abort(404);
-    }
-
-    // Return the small HTML fragment used inside the modal
-    return view('superadmin.files.peek', [
-        'type' => $type,
-        'item' => $item,
-    ]);
-}
-
-public function previewDevis($id)
-{
-    $devis   = Devis::with(['client','items'])->findOrFail($id);
-    $company = auth()->user()->company;
-
-    return Pdf::loadView('devis.single-pdf', compact('devis','company'))
-              ->stream('devis_'.($devis->numero ?? $devis->id).'.pdf');
-}
-
-public function previewFacture($id)
-{
-    $facture = Facture::with(['client','items','devis:id,prospect_name,prospect_email,prospect_phone'])->findOrFail($id);
-    $company = auth()->user()->company ?? (object)[
-        'name'=>'Votre Société','address'=>'Adresse non définie','phone'=>'','email'=>'','logo'=>null,
-    ];
-
-    $logoBase64 = null;
-    if ($company->logo && file_exists(storage_path('app/public/'.$company->logo))) {
-        $p = storage_path('app/public/'.$company->logo);
-        $logoBase64 = 'data:image/'.pathinfo($p, PATHINFO_EXTENSION).';base64,'.base64_encode(file_get_contents($p));
-    }
-
-    return Pdf::loadView('factures.pdf', [
-        'facture'=>$facture,
-        'company'=>$company,
-        'logoBase64'=>$logoBase64,
-    ])->stream('facture_'.($facture->numero ?? $facture->id).'.pdf');
-}
-
-public function previewAvoir($id)
-{
-    $avoir   = Avoir::with(['facture.client','facture.items'])->findOrFail($id);
-    $company = auth()->user()->company;
-
-    return Pdf::loadView('avoirs.single_pdf', compact('avoir','company'))
-              ->stream('avoir_'.$avoir->id.'.pdf');
-}
-
-
-public function preview(string $type, int $id)
-{
-    switch ($type) {
-        case 'devis': {
-            $devis   = Devis::withoutGlobalScopes()
-                        ->with(['client','items'])
-                        ->findOrFail($id);
-
-            // If you need a company, derive from the client when possible
-            $company = optional($devis->client)->company;
-
-            $pdf = Pdf::loadView('devis.single-pdf', [
-                'devis'   => $devis,
-                'company' => $company,
-            ]);
-
-            return $pdf->stream('devis_' . ($devis->numero ?? $devis->id) . '.pdf');
         }
 
-        case 'factures': {
-            $facture = Facture::withoutGlobalScopes()
-                        ->with(['client','items','devis:id,prospect_name,prospect_email,prospect_phone'])
-                        ->findOrFail($id);
+        $src = route('superadmin.files.preview', ['type'=>$type, 'id'=>$id]);
 
-            $company = optional($facture->client)->company;
-            $logoBase64 = null;
-            if ($company && $company->logo) {
-                $logoPath = storage_path('app/public/'.$company->logo);
-                if (file_exists($logoPath)) {
-                    $typeImg   = pathinfo($logoPath, PATHINFO_EXTENSION);
-                    $data      = file_get_contents($logoPath);
-                    $logoBase64 = 'data:image/'.$typeImg.';base64,'.base64_encode($data);
-                }
+        // Return a minimal snippet (no separate blade required)
+        return response()->make(
+            '<div class="h-[70vh]"><iframe src="' . e($src) . '" class="w-full h-full rounded-md border" loading="lazy"></iframe></div>'
+        );
+    }
+
+    /**
+     * Streams the actual PDF for the iframe.
+     * Uses your existing tenant PDF views so preview looks identical.
+     */
+    public function preview(string $type, int $id)
+    {
+        switch ($type) {
+            case 'devis': {
+                $devis   = Devis::withoutGlobalScopes()->with(['client','items'])->findOrFail($id);
+                $company = optional($devis->client)->company;
+                return Pdf::loadView('devis.single-pdf', ['devis'=>$devis,'company'=>$company])
+                          ->stream('devis_' . ($devis->numero ?? $devis->id) . '.pdf');
             }
+            case 'factures': {
+                $facture = Facture::withoutGlobalScopes()
+                            ->with(['client','items','devis:id,prospect_name,prospect_email,prospect_phone'])
+                            ->findOrFail($id);
 
-            $pdf = Pdf::loadView('factures.pdf', [
-                'facture'    => $facture,
-                'company'    => $company,
-                'logoBase64' => $logoBase64,
-            ]);
+                $company = optional($facture->client)->company;
+                $logoBase64 = null;
+                if ($company && $company->logo) {
+                    $logoPath = storage_path('app/public/'.$company->logo);
+                    if (file_exists($logoPath)) {
+                        $ext  = pathinfo($logoPath, PATHINFO_EXTENSION);
+                        $logoBase64 = 'data:image/'.$ext.';base64,'.base64_encode(file_get_contents($logoPath));
+                    }
+                }
 
-            return $pdf->stream('facture_'.($facture->numero ?? $facture->id).'.pdf');
+                return Pdf::loadView('factures.pdf', [
+                    'facture'    => $facture,
+                    'company'    => $company,
+                    'logoBase64' => $logoBase64,
+                ])->stream('facture_'.($facture->numero ?? $facture->id).'.pdf');
+            }
+            case 'avoirs': {
+                $avoir   = Avoir::withoutGlobalScopes()->with(['facture.client','facture.items'])->findOrFail($id);
+                $company = optional(optional($avoir->facture)->client)->company;
+                return Pdf::loadView('avoirs.single_pdf', ['avoir'=>$avoir,'company'=>$company])
+                          ->stream('avoir_'.$avoir->id.'.pdf');
+            }
         }
-
-        case 'avoirs': {
-            $avoir = Avoir::withoutGlobalScopes()
-                        ->with(['facture.client','facture.items'])
-                        ->findOrFail($id);
-
-            $company = optional(optional($avoir->facture)->client)->company;
-
-            $pdf = Pdf::loadView('avoirs.single_pdf', [
-                'avoir'   => $avoir,
-                'company' => $company,
-            ]);
-
-            return $pdf->stream('avoir_'.$avoir->id.'.pdf');
-        }
+        abort(404);
     }
-
-    abort(404);
-}
-
 }
