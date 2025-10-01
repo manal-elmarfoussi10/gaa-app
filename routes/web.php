@@ -319,11 +319,17 @@ Route::get('/files/preview/{type}/{id}', [\App\Http\Controllers\SuperAdmin\Files
     ->where(['type' => 'devis|factures|avoirs', 'id' => '\d+'])
     ->name('files.preview');
 
-    
+
     // Companies
     Route::resource('companies', SuperAdminCompanyController::class)
         ->only(['index','create','store','show','edit','update','destroy']);
 
+
+        Route::get('/devis/{devis}/preview',    [ClientsController::class, 'previewDevis'])->name('devis.preview');
+        Route::get('/factures/{facture}/preview',[ClientsController::class, 'previewFacture'])->name('factures.preview');
+        Route::get('/avoirs/{avoir}/preview',   [ClientsController::class, 'previewAvoir'])->name('avoirs.preview');
+
+        
     // Company users
     Route::get('companies/{company}/users/create', [SuperAdminUserController::class, 'create'])->name('companies.users.create');
     Route::post('companies/{company}/users', [SuperAdminUserController::class, 'store'])->name('companies.users.store');
