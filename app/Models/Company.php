@@ -40,7 +40,7 @@ class Company extends Model
         'tva_regime',
         'eco_contribution',
         'penalty_rate',
-        'methode_paiement',
+        'payment_method',
     ];
 
     public function users()
