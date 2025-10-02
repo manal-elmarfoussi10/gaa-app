@@ -241,26 +241,39 @@
                             @endif
                         </div>
 
-                        <!-- Signature / Cachet -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Signature / Cachet</label>
-                            <input type="file" name="signature_image" id="signatureInput" accept="image/*"
-                                   class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                          
+                            {{-- IMPORTANT: name must be signature_path to match controller/DB --}}
+                            <input
+                                type="file"
+                                name="signature_path"
+                                id="signatureInput"
+                                accept="image/*"
+                                class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4
+                                       file:rounded-md file:border-0 file:text-sm file:font-semibold
+                                       file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                          
                             <p class="text-xs text-gray-500 mt-1">PNG transparent conseillé, ~1 Mo max.</p>
-
+                          
                             <div class="mt-3">
-                                @if($company->signature_image)
-                                    <img src="{{ asset('storage/'.$company->signature_image) }}" alt="Signature actuelle" class="h-20 object-contain rounded border border-gray-200" id="signatureCurrent">
-                                @endif
-                                <img id="signaturePreview" class="h-20 object-contain rounded border border-gray-200 {{ $company->signature_image ? 'hidden' : 'hidden' }}" alt="Prévisualisation signature">
+                              @if($company->signature_path)
+                                <img
+                                  src="{{ asset('storage/'.$company->signature_path) }}"
+                                  alt="Signature actuelle"
+                                  class="h-20 object-contain rounded border border-gray-200"
+                                  id="signatureCurrent">
+                              @endif
+                          
+                              <img id="signaturePreview"
+                                   class="h-20 object-contain rounded border border-gray-200 hidden"
+                                   alt="Prévisualisation signature">
                             </div>
-
-                            @error('signature_image')
-                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                          
+                            @error('signature_path')
+                              <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                             @enderror
-                        </div>
-                    </div>
-                </div>
+                          </div>
 
                 <!-- Préférences -->
                 <div class="border-b border-gray-200 pb-8">
@@ -377,17 +390,16 @@
 </style>
 
 <script>
-  // Live preview for signature replacement
-  const sigInput = document.getElementById('signatureInput');
-  const sigPreview = document.getElementById('signaturePreview');
-  const sigCurrent = document.getElementById('signatureCurrent');
-
-  sigInput?.addEventListener('change', (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    sigPreview.src = URL.createObjectURL(f);
-    sigPreview.classList.remove('hidden');
-    if (sigCurrent) sigCurrent.classList.add('hidden');
-  });
-</script>
+    const sigInput   = document.getElementById('signatureInput');
+    const sigPreview = document.getElementById('signaturePreview');
+    const sigCurrent = document.getElementById('signatureCurrent');
+  
+    sigInput?.addEventListener('change', (e) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      sigPreview.src = URL.createObjectURL(f);
+      sigPreview.classList.remove('hidden');
+      if (sigCurrent) sigCurrent.classList.add('hidden');
+    });
+  </script>
 @endsection
