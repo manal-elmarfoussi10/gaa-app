@@ -21,29 +21,30 @@ class YousignService
 
     protected function client()
     {
-        return Http::withToken($this->token)->baseUrl($this->base);
+        return Http::withToken($this->token)->baseUrl(rtrim($this->base, '/'));
     }
 
-    /** 1) Create signature request */
-    public function createSignatureRequest(string $name, string $delivery = 'email'): array
+    /** 1) Create signature request (optionally pass ['external_id' => '...']) */
+    public function createSignatureRequest(string $name, string $delivery = 'email', array $extra = []): array
     {
+        $payload = array_merge([
+            'name'          => $name,
+            'delivery_mode' => $delivery,     // "email" or "none"
+            'timezone'      => 'Europe/Paris',
+        ], $extra);
+
         return $this->client()
-            ->post('/signature_requests', [
-                'name'         => $name,
-                'delivery_mode'=> $delivery,     // "email" or "none"
-                'timezone'     => 'Europe/Paris',
-            ])
+            ->post('/signature_requests', $payload)
             ->throw()
             ->json();
     }
 
-    /** 2) Upload a document */
+    /** 2) Upload a document to the signature request */
     public function uploadDocument(string $signatureRequestId, string $absolutePath, bool $parseAnchors = false): array
     {
         return $this->client()
             ->asMultipart()
             ->post("/signature_requests/{$signatureRequestId}/documents", [
-                // order matters in multipart
                 ['name' => 'file',          'contents' => fopen($absolutePath, 'r'), 'filename' => basename($absolutePath)],
                 ['name' => 'nature',        'contents' => 'signable_document'],
                 ['name' => 'parse_anchors', 'contents' => $parseAnchors ? 'true' : 'false'],
@@ -52,10 +53,7 @@ class YousignService
             ->json();
     }
 
-    /**
-     * 3) Add signer.
-     * If you aren’t using anchors, pass a field (coords are example values; tune for your PDF).
-     */
+    /** 3) Add a signer (payload contains info, fields, etc.) */
     public function addSigner(string $signatureRequestId, array $payload): array
     {
         return $this->client()
@@ -73,43 +71,35 @@ class YousignService
             ->json();
     }
 
+    /** Helper: fetch a signature request (status, docs, etc.) */
     public function getSignatureRequest(string $id): array
-{
-    return $this->client()->get("/signature_requests/{$id}")->throw()->json();
-}
-
-public function downloadSignedPdf(string $signatureRequestId): string
-{
-    // If Yousign exposes a “files” link on the SR, follow it and GET the PDF bytes.
-    // In many setups you first list "exported files" for the SR and then GET the file.
-    // Minimal example against a direct export endpoint:
-    $resp = $this->client()
-        ->get("/signature_requests/{$signatureRequestId}/download") // adjust to your account’s export route
-        ->throw();
-
-    return $resp->body(); // raw PDF bytes
-}
-
-public function downloadSignedFile(string $signatureRequestId)
-{
-    $url = "signature_requests/{$signatureRequestId}/documents";
-    $docs = $this->get($url); // assume you have a get() wrapper
-    $fileId = $docs[0]['id'] ?? null;
-
-    if (!$fileId) {
-        throw new \Exception("No signed document found.");
+    {
+        return $this->client()
+            ->get("/signature_requests/{$id}")
+            ->throw()
+            ->json();
     }
 
-    return $this->get("files/{$fileId}/download", [], true); 
-    // true => return raw binary PDF
-}
+    /**
+     * 5) Download the *signed* document (raw PDF bytes).
+     *    This is the endpoint your webhook and on-demand download use.
+     */
+    public function downloadSignedDocument(string $signatureRequestId, string $documentId): string
+    {
+        $resp = $this->client()
+            ->accept('application/pdf')
+            ->get("/signature_requests/{$signatureRequestId}/documents/{$documentId}/download")
+            ->throw();
 
-protected function getRaw(string $path): string
-{
-    $resp = $this->http()->get($path); // $this->http() returns a configured pending request
-    if ($resp->failed()) {
-        throw new \RuntimeException('Yousign download failed: '.$resp->body());
+        return $resp->body(); // raw PDF bytes
     }
-    return $resp->body(); // bytes
-}
+
+    /** Optional: list documents on the SR (to pick the right id if needed) */
+    public function listDocuments(string $signatureRequestId): array
+    {
+        return $this->client()
+            ->get("/signature_requests/{$signatureRequestId}/documents")
+            ->throw()
+            ->json();
+    }
 }
