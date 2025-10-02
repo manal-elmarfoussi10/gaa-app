@@ -90,13 +90,20 @@ public function downloadSignedPdf(string $signatureRequestId): string
     return $resp->body(); // raw PDF bytes
 }
 
-public function downloadSignedDocument(string $signatureRequestId, string $documentId): string
+public function downloadSignedFile(string $signatureRequestId)
 {
-    // v3 style endpoint (adjust if your wrapper uses a different helper)
-    // Should return raw PDF bytes.
-    $path = "signature_requests/{$signatureRequestId}/documents/{$documentId}/download";
-    return $this->getRaw($path); // implement getRaw() to return the binary body
+    $url = "signature_requests/{$signatureRequestId}/documents";
+    $docs = $this->get($url); // assume you have a get() wrapper
+    $fileId = $docs[0]['id'] ?? null;
+
+    if (!$fileId) {
+        throw new \Exception("No signed document found.");
+    }
+
+    return $this->get("files/{$fileId}/download", [], true); 
+    // true => return raw binary PDF
 }
+
 protected function getRaw(string $path): string
 {
     $resp = $this->http()->get($path); // $this->http() returns a configured pending request
