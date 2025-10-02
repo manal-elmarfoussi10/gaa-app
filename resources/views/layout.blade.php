@@ -70,7 +70,7 @@
                 $navItems = [
                   ['label' => 'FONCTIONNALITÉS', 'href' => url('fonctionnalites')],
                   ['label' => 'CONTACT',         'href' => url('contact')],
-                  ['label' => 'MON COMPTE',      'href' => url('mon-compte')],
+                  ['label' => 'Mon entreprise',      'href' => url('profile')],
                   ['label' => 'DASHBOARD',       'href' => $role==='poseur'
                                                   ? url('dashboard/poseur')
                                                   : ($role==='superadmin' ? route('superadmin.dashboard') : url('dashboard'))],
