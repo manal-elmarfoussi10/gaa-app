@@ -99,6 +99,14 @@
 
     /* Yousign smart anchors (hidden text; keep in DOM) */
     .y-anchor { font-size:1px; color:#ffffff; }
+    .sig-img {
+      display:block;
+      max-width:180px;
+      max-height:90px;
+      object-fit:contain;
+      margin-top:8px;
+    }
+    
   </style>
 </head>
 <body>
@@ -128,7 +136,7 @@
   <div class="small muted" style="margin-bottom:10px;">
     Contrat n° {{ $client->id }} · Édité le {{ now()->format('d/m/Y') }}
   </div>
-  
+
   {{-- CLIENT / VÉHICULE --}}
   <div class="grid">
     <div class="card">
