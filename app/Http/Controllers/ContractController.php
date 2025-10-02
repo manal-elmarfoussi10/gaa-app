@@ -49,12 +49,14 @@ class ContractController extends Controller
      */
     public function download(Client $client)
     {
-        if (!$client->contract_pdf_path || !Storage::disk('public')->exists($client->contract_pdf_path)) {
+        $path = $client->contract_pdf_path;
+
+        if (!$path || !Storage::disk('public')->exists($path)) {
             return back()->with('error', 'Aucun contrat généré pour ce client.');
         }
 
         return Storage::disk('public')->download(
-            $client->contract_pdf_path,
+            $path,
             "Contrat-{$client->id}.pdf"
         );
     }
@@ -64,12 +66,15 @@ class ContractController extends Controller
      */
     public function downloadSigned(Client $client)
     {
-        if (!$client->signed_pdf_path || !Storage::disk('public')->exists($client->signed_pdf_path)) {
+        // Utilise l'accessor ->contract_signed_pdf_path (retombe sur signed_pdf_path si nécessaire)
+        $path = $client->contract_signed_pdf_path;
+
+        if (!$path || !Storage::disk('public')->exists($path)) {
             return back()->with('error', 'Aucun contrat signé disponible pour ce client.');
         }
 
         return Storage::disk('public')->download(
-            $client->signed_pdf_path,
+            $path,
             "Contrat-Signe-{$client->id}.pdf"
         );
     }
@@ -88,17 +93,21 @@ class ContractController extends Controller
         $absPath = Storage::disk('public')->path($client->contract_pdf_path);
 
         try {
-            // 1) Créer une demande de signature
+            // 1) Créer la demande de signature
             $title = "Contrat #{$client->id} - {$client->nom_complet}";
-            $sr = $ys->createSignatureRequest($title, 'email'); // retourne ['id' => ...]
 
-            // 2) Uploader le document (⚠️ avecAnchors = false si pas d’ancres dans ton PDF)
+            // 🟢 IMPORTANT: passer external_id pour que le webhook puisse retrouver le client
+            $sr = $ys->createSignatureRequest($title, 'email', [
+                'external_id' => (string) $client->id,
+            ]); // retourne ['id' => '...']
+
+            // 2) Uploader le document (désactiver les anchors si on place des champs manuels)
             $doc = $ys->uploadDocument($sr['id'], $absPath, false);
 
-            // 3) Ajouter le signataire
+            // 3) Ajouter le signataire + champ de signature
             $phone = $client->telephone;
             if ($phone && !preg_match('/^\+\d{6,15}$/', $phone)) {
-                $phone = null; // Yousign exige format E.164
+                $phone = null; // Yousign exige format E.164 si fourni
             }
 
             $payload = [
@@ -110,15 +119,17 @@ class ContractController extends Controller
                     'locale'       => config('services.yousign.locale', 'fr'),
                 ],
                 'signature_level'               => 'electronic_signature',
-                'signature_authentication_mode' => 'otp_email', // ou 'no_otp' pour sandbox
+                'signature_authentication_mode' => app()->environment('production') ? 'otp_email' : 'no_otp',
                 'fields' => [[
                     'document_id' => $doc['id'],
                     'type'        => 'signature',
-                    'page'        => 1,
-                    'x'           => 100,  // ajuster selon ton design
-                    'y'           => 700,  // ajuster selon ton design
-                    'width'       => 150,
-                    'height'      => 40,
+                    // ⚠️ Ajustez ces coordonnées à votre template PDF
+                    // (ex: page 2, x=120, y=680 si votre bloc de signature est en bas de page 2)
+                    'page'        => 2,
+                    'x'           => 120,
+                    'y'           => 680,
+                    'width'       => 180,
+                    'height'      => 45,
                 ]],
             ];
 
@@ -132,6 +143,7 @@ class ContractController extends Controller
                 'yousign_signature_request_id' => $sr['id'],
                 'yousign_document_id'          => $doc['id'] ?? null,
                 'statut_gsauto'                => 'sent',
+                'statut_signature'             => 0,
             ]);
 
             return back()
@@ -143,6 +155,7 @@ class ContractController extends Controller
                 'client_id' => $client->id,
                 'error'     => $e->getMessage()
             ]);
+
             return back()->with('error', "L'envoi vers Yousign a échoué : ".$e->getMessage());
         }
     }

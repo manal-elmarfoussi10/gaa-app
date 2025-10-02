@@ -13,7 +13,7 @@ class ClientSignatureController extends Controller
     /**
      * Envoie le contrat du client à la signature (Yousign v3).
      * Prérequis : le PDF du contrat existe dans storage/app/public/{contract_pdf_path}.
-     * -> Nous plaçons un champ "signature" par coordonnées (page/x/y/width/height).
+     * -> On place un champ "signature" par coordonnées (page/x/y/width/height).
      */
     public function send(Request $request, Client $client, YousignService $ys)
     {
@@ -33,27 +33,21 @@ class ClientSignatureController extends Controller
             $fullname = trim(($client->prenom ?? '') . ' ' . ($client->nom_assure ?? $client->nom ?? ''));
             $title    = "Contrat #{$client->id} - {$fullname}";
 
-            // 3) Créer la demande de signature
-            // 3) Créer la demande de signature (v3) en posant external_id = client id
-$sr = $ys->createSignatureRequest($title, 'email', [
-    'external_id' => (string) $client->id,
-]);// renvoie ['id' => '...']
+            // 3) Créer la demande de signature (v3) et poser external_id = client id
+            $sr = $ys->createSignatureRequest($title, 'email', [
+                'external_id' => (string) $client->id,
+            ]); // renvoie ['id' => '...']
 
-            // 4) Uploader le document (on désactive les anchors => on DOIT fournir des 'fields')
-            $withAnchors = false;
-            $doc = $ys->uploadDocument($sr['id'], $absPath, $withAnchors); // renvoie ['id' => '...']
+            // 4) Uploader le document (anchors off -> on DOIT fournir des fields)
+            $doc = $ys->uploadDocument($sr['id'], $absPath, false); // renvoie ['id' => '...']
 
-            // 5) Ajouter le signataire avec un champ signature "manuel"
-            //    Ajustez les coordonnées si nécessaire :
-            //    - page : 1 (signature client est en bas de la page 1)
-            //    - x/y  : décalage en pixels (plus y est grand, plus on descend sur la page)
-            //    - width/height : taille du rectangle de signature
+            // 5) Ajouter le signataire + champ de signature (coordonnées à ajuster selon votre PDF)
             $signatureField = [
                 'document_id' => $doc['id'],
                 'type'        => 'signature',
                 'page'        => 2,
-                'x'           => 120, // ← Ajustez finement selon votre rendu PDF
-                'y'           => 680, // ← Descendre/monter par pas de 15–30 si besoin
+                'x'           => 120,
+                'y'           => 680,
                 'width'       => 180,
                 'height'      => 45,
             ];
@@ -80,11 +74,12 @@ $sr = $ys->createSignatureRequest($title, 'email', [
             // 6) Activer (envoi de l’e-mail Yousign)
             $ys->activate($sr['id']);
 
-            // 7) Persister les IDs
+            // 7) Persister les IDs + reset statut_signature
             $client->update([
                 'yousign_signature_request_id' => $sr['id'],
                 'yousign_document_id'          => $doc['id'] ?? null,
                 'statut_gsauto'                => 'sent',
+                'statut_signature'             => 0,
             ]);
 
             return back()
@@ -127,34 +122,44 @@ $sr = $ys->createSignatureRequest($title, 'email', [
         }
     }
 
+    /**
+     * Télécharger le contrat signé (essaie local, sinon rapatrie depuis Yousign puis stocke).
+     */
     public function downloadSigned(Client $client, YousignService $ys)
-{
-    // 1) If stored locally → stream it
-    $path = $client->contract_signed_pdf_path ?? $client->signed_pdf_path;
-    if ($path && Storage::disk('public')->exists($path)) {
-        return Response::download(Storage::disk('public')->path($path), "Contrat-signe-{$client->id}.pdf");
+    {
+        // 1) Si déjà stocké localement → on télécharge
+        $localPath = $client->contract_signed_pdf_path ?? $client->signed_pdf_path;
+        if ($localPath && Storage::disk('public')->exists($localPath)) {
+            return Storage::disk('public')->download($localPath, "Contrat-signe-{$client->id}.pdf");
+        }
+
+        // 2) Sinon, tenter de le récupérer depuis Yousign si on a les IDs
+        $srId  = $client->yousign_signature_request_id ?? null; // (accessor ok aussi: $client->yousign_request_id)
+        $docId = $client->yousign_document_id ?? null;
+
+        if ($srId && $docId) {
+            try {
+                $pdf = $ys->downloadSignedDocument($srId, $docId); // renvoie les octets PDF
+
+                $savePath = "contracts/{$client->id}/contract-signed.pdf";
+                Storage::disk('public')->put($savePath, $pdf);
+
+                // Persister pour les prochains téléchargements
+                $client->update([
+                    'signed_pdf_path'          => $savePath, // legacy
+                    'contract_signed_pdf_path' => $savePath, // nouvelle colonne utilisée par l'accessor
+                ]);
+
+                // Et renvoyer le fichier directement
+                return Storage::disk('public')->download($savePath, "Contrat-signe-{$client->id}.pdf");
+            } catch (\Throwable $e) {
+                Log::warning('Yousign downloadSigned failed', [
+                    'client_id' => $client->id,
+                    'error'     => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return back()->with('error', "Contrat signé introuvable pour ce client.");
     }
-
-    // 2) Else try to fetch from Yousign (and save)
-    if ($client->yousign_request_id && $client->yousign_document_id) {
-        $pdf = $ys->downloadSignedDocument($client->yousign_request_id, $client->yousign_document_id);
-
-        $savePath = "contracts/{$client->id}/contract-signed.pdf";
-        Storage::disk('public')->put($savePath, $pdf);
-
-        $client->update([
-            'signed_pdf_path'          => $savePath,
-            'contract_signed_pdf_path' => $savePath,
-        ]);
-
-        return Response::make($pdf, 200, [
-            'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="Contrat-signe-'.$client->id.'.pdf"',
-        ]);
-    }
-
-    return back()->with('error', "Contrat signé introuvable pour ce client.");
-}
-
-
 }

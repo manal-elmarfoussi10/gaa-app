@@ -15,20 +15,21 @@ class YousignWebhookController extends Controller
     {
         $payload = $request->json()->all();
 
-        // Yousign sends "event_name"
+        // Yousign uses event_name
         $event = (string) data_get($payload, 'event_name', '');
 
-        // IDs where Yousign puts them
+        // IDs from payload
         $srId  = data_get($payload, 'data.signature_request.id');                 // signature request id
-        $extId = data_get($payload, 'data.signature_request.external_id');        // your client id (if set on creation)
+        $extId = data_get($payload, 'data.signature_request.external_id');        // your client id if you set it
         $docId = data_get($payload, 'data.signature_request.documents.0.id');     // first document id
 
         Log::info('YS webhook IN', compact('event', 'srId', 'extId', 'docId'));
 
-        // Find the client (external_id → SR id → doc id)
+        // Find client (external_id → SR id → doc id)
         $client = null;
         if (!empty($extId)) {
-            $client = Client::where('id', $extId)->first();
+            // if your client ids are ints, cast:
+            $client = Client::where('id', (int) $extId)->first();
         }
         if (!$client && !empty($srId)) {
             $client = Client::where('yousign_signature_request_id', $srId)->first();
@@ -42,7 +43,7 @@ class YousignWebhookController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        // Keep what we learn; don't overwrite already stored non-null IDs
+        // Base updates: keep what we learn (don’t overwrite non-null values)
         $updates = [
             'yousign_signature_request_id' => $client->yousign_signature_request_id ?: ($srId ?: null),
             'yousign_document_id'          => $client->yousign_document_id ?: ($docId ?: null),
@@ -62,7 +63,7 @@ class YousignWebhookController extends Controller
                 break;
 
             case 'signer.done':
-                // at least one signer finished
+                // au moins un signataire a signé
                 $updates += [
                     'statut_gsauto'    => 'partially_signed',
                     'statut_signature' => 1,
@@ -70,7 +71,7 @@ class YousignWebhookController extends Controller
                 break;
 
             case 'signature_request.done':
-                // whole request is done → mark signed
+                // Demande terminée : marquer signé et essayer d’archiver le PDF signé
                 $updates += [
                     'statut_gsauto'    => 'signed',
                     'statut_signature' => 1,
@@ -78,7 +79,6 @@ class YousignWebhookController extends Controller
                     'signed_at'        => now(),
                 ];
 
-                // Try to fetch and store the signed PDF so UI can show the download button
                 try {
                     $finalSrId  = $srId  ?: $client->yousign_signature_request_id;
                     $finalDocId = $docId ?: $client->yousign_document_id;
@@ -86,15 +86,16 @@ class YousignWebhookController extends Controller
                     if ($finalSrId && $finalDocId) {
                         /** @var \App\Services\YousignService $ys */
                         $ys  = app(YousignService::class);
+                        $pdf = $ys->downloadSignedDocument($finalSrId, $finalDocId); // raw PDF bytes
 
-                        // Implement this to return raw PDF bytes of the signed document
-                        $pdf = $ys->downloadSignedDocument($finalSrId, $finalDocId);
-
-                        $savePath = "contracts/{$client->id}/contract-signed.pdf";
+                        $dir      = "contracts/{$client->id}";
+                        $savePath = "{$dir}/contract-signed.pdf";
+                        Storage::disk('public')->makeDirectory($dir);
                         Storage::disk('public')->put($savePath, $pdf);
 
-                        // Use legacy column that your Blade/model already supports
-                        $updates['signed_pdf_path'] = $savePath;
+                        // update both columns (legacy + new)
+                        $updates['signed_pdf_path']          = $savePath;
+                        $updates['contract_signed_pdf_path'] = $savePath;
                     } else {
                         Log::warning('YS webhook: done but missing ids to download PDF', [
                             'client_id' => $client->id, 'srId' => $finalSrId, 'docId' => $finalDocId
@@ -111,12 +112,12 @@ class YousignWebhookController extends Controller
                 break;
 
             default:
-                // Record other events as a trace
+                // Trace any other event in statut_gsauto for visibility
                 $updates += ['statut_gsauto' => $event ?: 'unknown'];
                 break;
         }
 
-        $client->update($updates);
+        $client->forceFill($updates)->save();
 
         Log::info('YS webhook UPDATED', ['client_id' => $client->id, 'updates' => $updates]);
 
