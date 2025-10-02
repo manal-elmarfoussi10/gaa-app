@@ -100,7 +100,7 @@
                                     <div class="w-1/3 text-gray-500 font-medium">Téléphone</div>
                                     <div class="w-2/3 text-gray-800">{{ $company->phone }}</div>
                                 </div>
-                                <div class="flex">
+                                <div class="w-full">
                                     <div class="w-1/3 text-gray-500 font-medium">Adresse</div>
                                     <div class="w-2/3 text-gray-800">
                                         {{ $company->address }}<br>
@@ -147,34 +147,13 @@
                                 <h3 class="text-lg font-semibold text-gray-800">Information financières</h3>
                             </div>
                             <div class="space-y-4">
-                                <div class="flex">
-                                    <div class="w-1/3 text-gray-500 font-medium">TVA</div>
-                                    <div class="w-2/3 text-gray-800">{{ $company->tva }}</div>
-                                </div>
-                                <div class="flex">
-                                    <div class="w-1/3 text-gray-500 font-medium">IBAN</div>
-                                    <div class="w-2/3 text-gray-800 font-mono tracking-wide">{{ $company->iban }}</div>
-                                </div>
-                                <div class="flex">
-                                    <div class="w-1/3 text-gray-500 font-medium">BIC</div>
-                                    <div class="w-2/3 text-gray-800">{{ $company->bic }}</div>
-                                </div>
-                                <div class="flex">
-                                    <div class="w-1/3 text-gray-500 font-medium">Régime TVA</div>
-                                    <div class="w-2/3 text-gray-800">{{ $company->tva_regime }}</div>
-                                </div>
-                                <div class="flex">
-                                    <div class="w-1/3 text-gray-500 font-medium">Éco-contribution</div>
-                                    <div class="w-2/3 text-gray-800">{{ $company->eco_contribution }}</div>
-                                </div>
-                                <div class="flex">
-                                    <div class="w-1/3 text-gray-500 font-medium">Pénalités de retard</div>
-                                    <div class="w-2/3 text-gray-800">{{ $company->penalty_rate }}</div>
-                                </div>
-                                <div class="flex">
-                                    <div class="w-1/3 text-gray-500 font-medium">Mode de paiement</div>
-                                    <div class="w-2/3 text-gray-800">{{ $company->methode_paiement }}</div>
-                                </div>
+                                <div class="flex"><div class="w-1/3 text-gray-500 font-medium">TVA</div><div class="w-2/3 text-gray-800">{{ $company->tva }}</div></div>
+                                <div class="flex"><div class="w-1/3 text-gray-500 font-medium">IBAN</div><div class="w-2/3 text-gray-800 font-mono tracking-wide">{{ $company->iban }}</div></div>
+                                <div class="flex"><div class="w-1/3 text-gray-500 font-medium">BIC</div><div class="w-2/3 text-gray-800">{{ $company->bic }}</div></div>
+                                <div class="flex"><div class="w-1/3 text-gray-500 font-medium">Régime TVA</div><div class="w-2/3 text-gray-800">{{ $company->tva_regime }}</div></div>
+                                <div class="flex"><div class="w-1/3 text-gray-500 font-medium">Éco-contribution</div><div class="w-2/3 text-gray-800">{{ $company->eco_contribution }}</div></div>
+                                <div class="flex"><div class="w-1/3 text-gray-500 font-medium">Pénalités de retard</div><div class="w-2/3 text-gray-800">{{ $company->penalty_rate }}</div></div>
+                                <div class="flex"><div class="w-1/3 text-gray-500 font-medium">Mode de paiement</div><div class="w-2/3 text-gray-800">{{ $company->methode_paiement }}</div></div>
                             </div>
                         </div>
 
@@ -187,18 +166,12 @@
                                 <h3 class="text-lg font-semibold text-gray-800">Informations légales</h3>
                             </div>
                             <div class="space-y-4">
-                                <div class="flex">
-                                    <div class="w-1/3 text-gray-500 font-medium">Assurance professionnelle</div>
-                                    <div class="w-2/3 text-gray-800">{{ $company->professional_insurance }}</div>
-                                </div>
-                                <div class="flex">
-                                    <div class="w-1/3 text-gray-500 font-medium">Mandataire</div>
-                                    <div class="w-2/3 text-gray-800">{{ $company->representative }}</div>
-                                </div>
+                                <div class="flex"><div class="w-1/3 text-gray-500 font-medium">Assurance professionnelle</div><div class="w-2/3 text-gray-800">{{ $company->professional_insurance }}</div></div>
+                                <div class="flex"><div class="w-1/3 text-gray-500 font-medium">Mandataire</div><div class="w-2/3 text-gray-800">{{ $company->representative }}</div></div>
                             </div>
                         </div>
 
-                        <!-- Documents Section -->
+                        <!-- Documents Section (adds signature_image) -->
                         <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
                             <div class="flex items-center mb-5">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -209,6 +182,7 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 @foreach([
                                     'logo' => 'Logo',
+                                    'signature_image' => 'Signature / Cachet', {{-- ← added --}}
                                     'rib' => 'RIB',
                                     'kbis' => 'KBIS',
                                     'id_photo_recto' => "Photo d'identité (Recto)",

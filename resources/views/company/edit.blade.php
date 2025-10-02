@@ -13,7 +13,7 @@
                 </div>
                 <div>
                     <h1 class="text-3xl font-bold">Modifier mon entreprise</h1>
-                    <p class="text-blue-100 mt-1">Mettez à jour les informations de votre entreprise</p>
+                    <p class="text-orange-100 mt-1">Mettez à jour les informations de votre entreprise</p>
                 </div>
             </div>
         </div>
@@ -24,7 +24,7 @@
             @method('PUT')
 
             <div class="space-y-8">
-                <!-- General Information -->
+                <!-- Informations générales -->
                 <div class="border-b border-gray-200 pb-8">
                     <div class="flex items-center mb-6">
                         <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
@@ -60,7 +60,7 @@
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
                         </div>
 
-                        <!-- New Legal Fields -->
+                        <!-- Champs juridiques -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Forme juridique</label>
                             <input type="text" name="legal_form" value="{{ old('legal_form', $company->legal_form) }}"
@@ -90,11 +90,10 @@
                             <input type="text" name="naf_code" value="{{ old('naf_code', $company->naf_code) }}"
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
                         </div>
-                        <!-- End New Legal Fields -->
                     </div>
                 </div>
 
-                <!-- Contact Information -->
+                <!-- Coordonnées -->
                 <div class="border-b border-gray-200 pb-8">
                     <div class="flex items-center mb-6">
                         <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
@@ -138,7 +137,7 @@
                     </div>
                 </div>
 
-                <!-- Financial Information -->
+                <!-- Informations financières -->
                 <div class="border-b border-gray-200 pb-8">
                     <div class="flex items-center mb-6">
                         <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
@@ -146,7 +145,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <h2 class="text-xl font-semibold text-gray-800">Information financières</h2>
+                        <h2 class="text-xl font-semibold text-gray-800">Informations financières</h2>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -167,7 +166,7 @@
                             <input type="text" name="bic" value="{{ old('bic', $company->bic) }}"
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
                         </div>
-                        <!-- Financial Legal Additions -->
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Régime TVA</label>
                             <input type="text" name="tva_regime" value="{{ old('tva_regime', $company->tva_regime) }}"
@@ -188,36 +187,82 @@
                             <input type="text" name="methode_paiement" value="{{ old('methode_paiement', $company->methode_paiement) }}"
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
                         </div>
-                        <!-- End Financial Legal Additions -->
                     </div>
+                </div>
 
-                    <br><br>
-                <!-- Legal Extras -->
+                <!-- Extras légaux -->
                 <div class="border-b border-gray-200 pb-8">
-                  <div class="flex items-center mb-6">
-                    <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                      </svg>
+                    <div class="flex items-center mb-6">
+                        <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-800">Informations légales</h2>
                     </div>
-                    <h2 class="text-xl font-semibold text-gray-800">Informations légales</h2>
-                  </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">Assurance professionnelle</label>
-                      <input type="text" name="professional_insurance" value="{{ old('professional_insurance', $company->professional_insurance) }}"
-                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Assurance professionnelle</label>
+                            <input type="text" name="professional_insurance" value="{{ old('professional_insurance', $company->professional_insurance) }}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mandataire / Représentant</label>
+                            <input type="text" name="representative" value="{{ old('representative', $company->representative) }}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                        </div>
                     </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">Mandataire</label>
-                      <input type="text" name="representative" value="{{ old('representative', $company->representative) }}"
-                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-                    </div>
-                  </div>
-                </div>
                 </div>
 
-                <!-- Preferences -->
+                <!-- Identité visuelle (Logo & Signature) -->
+                <div class="border-b border-gray-200 pb-8">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618V19a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2h6" />
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-800">Identité visuelle</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Logo -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Logo de l’entreprise</label>
+                            <input type="file" name="logo" accept="image/*"
+                                   class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <p class="text-xs text-gray-500 mt-1">PNG/JPG, ~1 Mo max recommandé.</p>
+
+                            @if($company->logo)
+                                <div class="mt-3">
+                                    <img src="{{ asset('storage/'.$company->logo) }}" alt="Logo actuel" class="h-20 object-contain rounded border border-gray-200">
+                                    <p class="text-xs text-green-600 mt-1">Logo existant — laissez vide pour conserver.</p>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Signature / Cachet -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Signature / Cachet</label>
+                            <input type="file" name="signature_image" id="signatureInput" accept="image/*"
+                                   class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <p class="text-xs text-gray-500 mt-1">PNG transparent conseillé, ~1 Mo max.</p>
+
+                            <div class="mt-3">
+                                @if($company->signature_image)
+                                    <img src="{{ asset('storage/'.$company->signature_image) }}" alt="Signature actuelle" class="h-20 object-contain rounded border border-gray-200" id="signatureCurrent">
+                                @endif
+                                <img id="signaturePreview" class="h-20 object-contain rounded border border-gray-200 {{ $company->signature_image ? 'hidden' : 'hidden' }}" alt="Prévisualisation signature">
+                            </div>
+
+                            @error('signature_image')
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Préférences -->
                 <div class="border-b border-gray-200 pb-8">
                     <div class="flex items-center mb-6">
                         <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
@@ -256,7 +301,7 @@
                     </div>
                 </div>
 
-                <!-- Documents Section -->
+                <!-- Documents (divers) -->
                 <div>
                     <div class="flex items-center mb-6">
                         <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
@@ -269,7 +314,6 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         @foreach([
-                            'logo' => 'Logo de la société',
                             'id_photo_recto' => "Photo d'identité (Recto)",
                             'id_photo_verso' => "Photo d'identité (Verso)",
                             'kbis' => 'Document Kbis',
@@ -287,7 +331,7 @@
                                     </div>
 
                                     @if($company->$field)
-                                        <a href="{{ asset('/storage/app/public/'.$company->$field) }}" target="_blank" class="ml-3 p-2 bg-green-50 rounded-lg text-green-700 hover:bg-green-100">
+                                        <a href="{{ asset('storage/'.$company->$field) }}" target="_blank" class="ml-3 p-2 bg-green-50 rounded-lg text-green-700 hover:bg-green-100" title="Voir le fichier">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
@@ -300,7 +344,7 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                         </svg>
-                                        Fichier existant - laisser vide pour conserver
+                                        Fichier existant — laissez vide pour conserver.
                                     </p>
                                 @endif
                             </div>
@@ -311,7 +355,7 @@
 
             <!-- Submit button -->
             <div class="mt-10 flex justify-center">
-                <button type="submit" class="flex items-center bg-gradient-to-r from-orange-500 to-orange-600 hover:from-green-700 hover:to-green-800 text-white font-semibold px-8 py-3 rounded-lg transition-all shadow-md transform hover:-translate-y-0.5">
+                <button type="submit" class="flex items-center bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold px-8 py-3 rounded-lg transition-all shadow-md transform hover:-translate-y-0.5">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
@@ -323,33 +367,27 @@
 </div>
 
 <style>
-    .bg-gradient-to-r {
-        background-image: linear-gradient(to right, var(--tw-gradient-stops));
-    }
-
-    .hover\:-translate-y-0\.5:hover {
-        transform: translateY(-0.125rem);
-    }
-
-    .transition {
-        transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .duration-150 {
-        transition-duration: 150ms;
-    }
-
-    .focus\:ring-blue-500:focus {
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
-    }
-
-    .focus\:border-blue-500:focus {
-        border-color: #3b82f6;
-    }
-
-    .shadow-md {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
+    .bg-gradient-to-r { background-image: linear-gradient(to right, var(--tw-gradient-stops)); }
+    .hover\:-translate-y-0\.5:hover { transform: translateY(-0.125rem); }
+    .transition { transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform; transition-timing-function: cubic-bezier(.4,0,.2,1); }
+    .duration-150 { transition-duration: 150ms; }
+    .focus\:ring-blue-500:focus { box-shadow: 0 0 0 3px rgba(59,130,246,.5); }
+    .focus\:border-blue-500:focus { border-color: #3b82f6; }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06); }
 </style>
+
+<script>
+  // Live preview for signature replacement
+  const sigInput = document.getElementById('signatureInput');
+  const sigPreview = document.getElementById('signaturePreview');
+  const sigCurrent = document.getElementById('signatureCurrent');
+
+  sigInput?.addEventListener('change', (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    sigPreview.src = URL.createObjectURL(f);
+    sigPreview.classList.remove('hidden');
+    if (sigCurrent) sigCurrent.classList.add('hidden');
+  });
+</script>
 @endsection
