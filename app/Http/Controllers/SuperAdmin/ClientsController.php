@@ -138,30 +138,41 @@ class ClientsController extends Controller
      * === Préviews intégrées (PDF en inline pour l'iframe) ===
      */
 
-    public function previewDevis(Devis $devis)
-    {
-        $this->authorizeSupport();
-
-        // Adapte le nom de la vue à ce que tu as : 'devis.pdf' ou autre
-        $pdf = Pdf::loadView('devis.pdf', compact('devis'));
-        return $pdf->stream("devis_{$devis->id}.pdf");
-    }
-
-    public function previewFacture(Facture $facture)
-    {
-        $this->authorizeSupport();
-
-        $pdf = Pdf::loadView('factures.pdf', compact('facture'));
-        return $pdf->stream("facture_{$facture->id}.pdf");
-    }
-
-    public function previewAvoir(Avoir $avoir)
-    {
-        $this->authorizeSupport();
-
-        $pdf = Pdf::loadView('avoirs.pdf', compact('avoir'));
-        return $pdf->stream("avoir_{$avoir->id}.pdf");
-    }
+     public function previewDevis(Devis $devis)
+     {
+         $this->authorizeSupport();
+     
+         // Load relations and compute $company just like downloadDevis()
+         $devis->load(['items', 'company', 'client.company']);
+         $company = $devis->company ?? $devis->client?->company;
+     
+         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('devis.pdf', compact('devis', 'company'));
+         return $pdf->stream("devis_{$devis->numero}.pdf");
+     }
+     
+     public function previewFacture(Facture $facture)
+     {
+         $this->authorizeSupport();
+     
+         // Load relations and compute $company just like downloadFacture()
+         $facture->load(['items', 'company', 'client.company']);
+         $company = $facture->company ?? $facture->client?->company;
+     
+         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('factures.pdf', compact('facture', 'company'));
+         return $pdf->stream("facture_{$facture->numero}.pdf");
+     }
+     
+     public function previewAvoir(Avoir $avoir)
+     {
+         $this->authorizeSupport();
+     
+         // If your avoir PDF also uses $company, load via related facture->client->company
+         $avoir->load(['facture.client.company']);
+         $company = $avoir->facture?->company ?? $avoir->facture?->client?->company;
+     
+         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('avoirs.pdf', compact('avoir', 'company'));
+         return $pdf->stream("avoir_{$avoir->id}.pdf");
+     }
 
     /**
      * Autorisation centralisée support (superadmin + client_service).
