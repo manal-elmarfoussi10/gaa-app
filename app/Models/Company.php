@@ -41,6 +41,8 @@ class Company extends Model
         'eco_contribution',
         'penalty_rate',
         'payment_method',
+         // 👇 NEW
+    'signature_path',
     ];
 
     public function users()
