@@ -129,7 +129,7 @@
                             </div>
                         </div>
 
-                        <!-- Documents Section -->
+                        <!-- Documents Section (opens via route('attachment')) -->
                         <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
                             <div class="flex items-center mb-5">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -149,15 +149,22 @@
                                     'tva_exemption_doc'  => 'Document exemption TVA',
                                     'invoice_terms_doc'  => 'Conditions générales de vente'
                                 ] as $field => $label)
-                                    @if(!empty($company->$field))
-                                        <a href="{{ asset('storage/'.$company->$field) }}" target="_blank"
-                                           class="flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+
+                                    @php
+                                        $path = $company->$field ?? null;
+                                        $has = !empty($path);
+                                        $docUrl = $has ? route('attachment', ['path' => $path]) : null;
+                                        $ext = $has ? strtolower(pathinfo($path, PATHINFO_EXTENSION)) : null;
+                                    @endphp
+
+                                    @if($has)
+                                        <a href="{{ $docUrl }}" target="_blank" class="flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                                             <div class="bg-orange-100 text-orange-600 p-2 rounded-lg mr-3">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
                                             </div>
-                                            <div>
+                                            <div class="flex-1">
                                                 <div class="text-sm font-medium text-gray-800">{{ $label }}</div>
                                                 <div class="text-xs text-gray-500 mt-1">Voir le document</div>
                                             </div>
