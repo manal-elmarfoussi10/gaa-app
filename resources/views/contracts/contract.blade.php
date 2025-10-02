@@ -52,6 +52,10 @@
     .brand__meta  { font-size:10px; color:#4B5563; line-height:1.35; }
     .brand__tag   { font-weight:800; font-size:22px; color:#1F2937; }
 
+    .logo {
+      width:78px; height:78px; object-fit:contain; border-radius:10px; border:1px solid #E5E7EB; background:#FFFFFF;
+    }
+
     .badge {
       display:inline-block; padding:4px 10px; border-radius:999px;
       background: {{ $ORANGE_SOFT }}; color: {{ $ORANGE }}; border:1px solid {{ $ORANGE_LINE }};
@@ -91,16 +95,9 @@
     .sign-hint { font-size:11px; color:#64748B; margin-top:8px; }
 
     .footer { margin-top:16px; padding-top:10px; border-top:2px solid {{ $ORANGE_LINE }}; font-size:10px; color:#6B7280; }
+    .right { text-align:right; }
 
-    .sig-img {
-      display:block;
-      max-width:180px;
-      max-height:90px;
-      object-fit:contain;
-      margin-top:8px;
-    }
-
-    /* Yousign smart anchors (keep in DOM if you still use Yousign) */
+    /* Yousign smart anchors (hidden text; keep in DOM) */
     .y-anchor { font-size:1px; color:#ffffff; }
   </style>
 </head>
@@ -120,7 +117,8 @@
         </div>
       </div>
     </div>
-    <div>
+    <div class="right">
+      <br><br>
       <div class="badge">Contrat & Cession de créance</div><br>
       <div class="brand__tag">GS Auto</div>
     </div>
@@ -130,7 +128,7 @@
   <div class="small muted" style="margin-bottom:10px;">
     Contrat n° {{ $client->id }} · Édité le {{ now()->format('d/m/Y') }}
   </div>
-
+  
   {{-- CLIENT / VÉHICULE --}}
   <div class="grid">
     <div class="card">
