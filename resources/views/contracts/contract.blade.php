@@ -91,6 +91,7 @@
         </div>
       </div>
     </div>
+    <br>   <br>
     <div class="right">
       <div class="badge">Contrat & Cession de Créance</div><br>
       <div class="brand__tag">GS Auto</div>
