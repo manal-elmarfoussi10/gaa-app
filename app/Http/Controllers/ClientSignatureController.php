@@ -34,7 +34,10 @@ class ClientSignatureController extends Controller
             $title    = "Contrat #{$client->id} - {$fullname}";
 
             // 3) Créer la demande de signature
-            $sr = $ys->createSignatureRequest($title, 'email'); // renvoie ['id' => '...']
+            // 3) Créer la demande de signature (v3) en posant external_id = client id
+$sr = $ys->createSignatureRequest($title, 'email', [
+    'external_id' => (string) $client->id,
+]);// renvoie ['id' => '...']
 
             // 4) Uploader le document (on désactive les anchors => on DOIT fournir des 'fields')
             $withAnchors = false;
