@@ -27,7 +27,7 @@ class ClientsController extends Controller
             \Barryvdh\Debugbar\Facades\Debugbar::disable();
         }
 
-        // Liste défensive des colonnes (inclure les colonnes "fichiers" si utilisées)
+        // Liste défensive des colonnes
         $candidateCols = [
             'id','company_id','prenom','nom_assure','plaque',
             'email','telephone','adresse','kilometrage','type_vitrage',
@@ -52,7 +52,6 @@ class ClientsController extends Controller
         $client = $query
             ->when($selectCols, fn ($q) => $q->select($selectCols))
             ->with([
-                // ⚠️ Toujours inclure les FKs dans select() (client_id / facture_id) pour hydrater la relation
                 'factures' => fn($q) => $q
                     ->select('id','client_id','numero','total_ht','total_ttc','created_at')
                     ->latest()->limit(100),
@@ -93,7 +92,7 @@ class ClientsController extends Controller
 
         $statutLabel = $this->deriveStatutLabel($client);
 
-        // Liste utilisateurs (même company que le client si possible)
+        // Liste utilisateurs
         $companyIdForUsers = $client->company_id ?? auth()->user()->company_id;
         $users = User::query()
             ->withoutGlobalScopes()
@@ -140,7 +139,7 @@ class ClientsController extends Controller
     {
         $this->authorizeSupport();
 
-        // From your tree: resources/views/devis/single-pdf.blade.php
+        // View exists: resources/views/devis/single-pdf.blade.php
         $devis->load(['items', 'client.company']);
         $company = $devis->client?->company;
 
@@ -152,8 +151,7 @@ class ClientsController extends Controller
     {
         $this->authorizeSupport();
 
-        // From your tree: resources/views/factures/pdf.blade.php
-        // Do NOT try to load a non-existent $facture->company relation.
+        // View exists: resources/views/factures/pdf.blade.php
         $facture->load(['items', 'client.company']);
         $company = $facture->client?->company;
 
@@ -165,8 +163,7 @@ class ClientsController extends Controller
     {
         $this->authorizeSupport();
 
-        // From your tree: resources/views/avoirs/single_pdf.blade.php  (underscore)
-        // Company is reached via facture -> client -> company
+        // View exists: resources/views/avoirs/single_pdf.blade.php  (underscore)
         $avoir->load(['facture.client.company']);
         $company = $avoir->facture?->client?->company;
 
@@ -180,6 +177,7 @@ class ClientsController extends Controller
     private function authorizeSupport(): void
     {
         $u = auth()->user();
+
         abort_unless(
             $u && in_array($u->role, [User::ROLE_SUPERADMIN, User::ROLE_CLIENT_SERVICE], true),
             403
