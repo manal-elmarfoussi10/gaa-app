@@ -14,62 +14,52 @@ class YousignWebhookController extends Controller
         $payload = $request->json()->all();
         $event   = (string) data_get($payload, 'event', '');
 
-        Log::info('Yousign webhook IN', [
-            'event'   => $event,
-            'payload' => $payload,
-        ]);
+        // ---- Read identifiers EXACTLY like your payload shows ----
+        $srId     = data_get($payload, 'data.signature_request.id');      // <-- present in your screenshot
+        $extId    = data_get($payload, 'data.signature_request.external_id'); // often null in your tests
+        $docId    = data_get($payload, 'data.documents.0.id');            // first document id if present
 
-        // Try to identify the client
-        $externalId = data_get($payload, 'data.external_id');
-        $signatureRequestId = data_get($payload, 'data.id') 
-                           ?? data_get($payload, 'data.signature_request.id');
+        Log::info('Yousign webhook IN', compact('event','srId','extId','docId'));
 
-        $documentId = data_get($payload, 'data.document.id');
+        // ---- Find the client robustly: by external_id, then SR id, then document id ----
+        $q = Client::query();
 
-        $query = Client::query();
-
-        if ($externalId) {
-            $query->where('id', $externalId);
-        } elseif ($signatureRequestId) {
-            $query->where('yousign_signature_request_id', $signatureRequestId);
+        if (!empty($extId)) {
+            $q->where('id', $extId);
+        } elseif (!empty($srId)) {
+            $q->where('yousign_signature_request_id', $srId);
+        } elseif (!empty($docId)) {
+            $q->where('yousign_document_id', $docId);
         } else {
-            Log::warning('Webhook without externalId or signatureRequestId');
+            Log::warning('No linking key (external_id / signature_request_id / document_id).');
             return response()->json(['ok' => true]);
         }
 
+        // ---- Build updates according to event ----
         $updates = [
-            'yousign_signature_request_id' => $signatureRequestId,
-            'yousign_document_id'          => $documentId,
+            'yousign_signature_request_id' => $srId ?: $docId, // keep what we learn
+            'yousign_document_id'          => $docId ?: null,
         ];
 
         switch ($event) {
             case 'signature_request.activated':
-                $updates['statut_gsauto']    = 'activated';
-                $updates['statut_signature'] = 0;
-                $updates['statut_termine']   = 0;
+                $updates += ['statut_gsauto' => 'activated', 'statut_signature' => 0, 'statut_termine' => 0];
                 break;
 
             case 'signer.done':
-                $updates['statut_gsauto']    = 'partially_signed';
-                $updates['statut_signature'] = 1;
+                $updates += ['statut_gsauto' => 'partially_signed', 'statut_signature' => 1];
                 break;
 
             case 'signature_request.done':
-                $updates['statut_gsauto']  = 'signed';
-                $updates['statut_termine'] = 1;
-                $updates['signed_at']      = now();
+                $updates += ['statut_gsauto' => 'signed', 'statut_termine' => 1, 'signed_at' => now()];
                 break;
 
             default:
-                $updates['statut_gsauto'] = $event;
+                $updates += ['statut_gsauto' => $event ?: 'unknown'];
         }
 
-        $affected = $query->update($updates);
-
-        Log::info('Yousign webhook UPDATE', [
-            'rows' => $affected,
-            'updates' => $updates,
-        ]);
+        $rows = $q->update($updates);
+        Log::info('Yousign UPDATE', ['rows' => $rows, 'updates' => $updates]);
 
         return response()->json(['ok' => true]);
     }
