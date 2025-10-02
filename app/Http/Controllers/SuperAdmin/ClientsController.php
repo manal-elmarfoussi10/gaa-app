@@ -176,5 +176,13 @@ class ClientsController extends Controller
                   ->stream("avoir_{$avoir->id}.pdf");
     }
 
+    private function authorizeSupport(): void
+    {
+        $u = auth()->user();
+        abort_unless(
+            $u && in_array($u->role, [User::ROLE_SUPERADMIN, User::ROLE_CLIENT_SERVICE], true),
+            403
+        );
+
     
 }
