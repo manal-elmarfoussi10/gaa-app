@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Services\YousignService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ContractController extends Controller
@@ -86,56 +87,64 @@ class ContractController extends Controller
 
         $absPath = Storage::disk('public')->path($client->contract_pdf_path);
 
-        // 1) Créer une demande de signature
-        $title = "Contrat #{$client->id} - {$client->getNomCompletAttribute()}";
-        $sr = $ys->createSignatureRequest($title, 'email'); // retourne ['id' => ...]
+        try {
+            // 1) Créer une demande de signature
+            $title = "Contrat #{$client->id} - {$client->nom_complet}";
+            $sr = $ys->createSignatureRequest($title, 'email'); // retourne ['id' => ...]
 
-        // 2) Uploader le document
-        // Ici : pas d’anchors → on devra préciser manuellement les champs
-        $doc = $ys->uploadDocument($sr['id'], $absPath, false);
+            // 2) Uploader le document (⚠️ avecAnchors = false si pas d’ancres dans ton PDF)
+            $doc = $ys->uploadDocument($sr['id'], $absPath, false);
 
-        // 3) Ajouter le signataire
-        $phone = $client->telephone;
-        if ($phone && !preg_match('/^\+\d{6,15}$/', $phone)) {
-            $phone = null; // Yousign exige format E.164
+            // 3) Ajouter le signataire
+            $phone = $client->telephone;
+            if ($phone && !preg_match('/^\+\d{6,15}$/', $phone)) {
+                $phone = null; // Yousign exige format E.164
+            }
+
+            $payload = [
+                'info' => [
+                    'first_name'   => $client->prenom ?: 'Client',
+                    'last_name'    => $client->nom_assure ?? $client->nom ?? '-',
+                    'email'        => $client->email,
+                    'phone_number' => $phone,
+                    'locale'       => config('services.yousign.locale', 'fr'),
+                ],
+                'signature_level'               => 'electronic_signature',
+                'signature_authentication_mode' => 'otp_email', // ou 'no_otp' pour sandbox
+                'fields' => [[
+                    'document_id' => $doc['id'],
+                    'type'        => 'signature',
+                    'page'        => 1,
+                    'x'           => 100,  // ajuster selon ton design
+                    'y'           => 700,  // ajuster selon ton design
+                    'width'       => 150,
+                    'height'      => 40,
+                ]],
+            ];
+
+            $ys->addSigner($sr['id'], $payload);
+
+            // 4) Activer (envoi du mail au client)
+            $ys->activate($sr['id']);
+
+            // 5) Persister dans la DB
+            $client->update([
+                'yousign_signature_request_id' => $sr['id'],
+                'yousign_document_id'          => $doc['id'] ?? null,
+                'statut_gsauto'                => 'sent',
+            ]);
+
+            return back()
+                ->with('success', 'Document envoyé au client pour signature.')
+                ->with('open_signature', true);
+
+        } catch (\Throwable $e) {
+            Log::error('Yousign send failed', [
+                'client_id' => $client->id,
+                'error'     => $e->getMessage()
+            ]);
+            return back()->with('error', "L'envoi vers Yousign a échoué : ".$e->getMessage());
         }
-
-        $payload = [
-            'info' => [
-                'first_name'   => $client->prenom ?: 'Client',
-                'last_name'    => $client->nom_assure ?? $client->nom ?? '-',
-                'email'        => $client->email,
-                'phone_number' => $phone,
-                'locale'       => config('services.yousign.locale', 'fr'),
-            ],
-            'signature_level'               => 'electronic_signature',
-            'signature_authentication_mode' => 'otp_email', // ou 'no_otp' en sandbox
-            'fields' => [[
-                'document_id' => $doc['id'],
-                'type'        => 'signature',
-                'page'        => 1,
-                'x'           => 100,  // coord X (px)
-                'y'           => 700,  // coord Y (px)
-                'width'       => 150,
-                'height'      => 40,
-            ]],
-        ];
-
-        $ys->addSigner($sr['id'], $payload);
-
-        // 4) Activer (envoi du mail au client)
-        $ys->activate($sr['id']);
-
-        // 5) Persister dans la DB
-        $client->update([
-            'yousign_signature_request_id' => $sr['id'],
-            'yousign_document_id'          => $doc['id'] ?? null,
-            'statut_gsauto'                => 'sent',
-        ]);
-
-        return back()
-            ->with('success', 'Document envoyé au client pour signature.')
-            ->with('open_signature', true);
     }
 
     /**
@@ -147,10 +156,19 @@ class ContractController extends Controller
             return back()->with('error', "Aucune demande de signature Yousign n'est associée à ce client.");
         }
 
-        $ys->activate($client->yousign_signature_request_id);
+        try {
+            $ys->activate($client->yousign_signature_request_id);
 
-        return back()
-            ->with('success', 'Rappel envoyé au client.')
-            ->with('open_signature', true);
+            return back()
+                ->with('success', 'Rappel envoyé au client.')
+                ->with('open_signature', true);
+
+        } catch (\Throwable $e) {
+            Log::error('Yousign resend failed', [
+                'client_id' => $client->id,
+                'error'     => $e->getMessage()
+            ]);
+            return back()->with('error', "La relance a échoué : ".$e->getMessage());
+        }
     }
 }
