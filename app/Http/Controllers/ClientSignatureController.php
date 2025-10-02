@@ -127,5 +127,34 @@ $sr = $ys->createSignatureRequest($title, 'email', [
         }
     }
 
+    public function downloadSigned(Client $client, YousignService $ys)
+{
+    // 1) If stored locally → stream it
+    $path = $client->contract_signed_pdf_path ?? $client->signed_pdf_path;
+    if ($path && Storage::disk('public')->exists($path)) {
+        return Response::download(Storage::disk('public')->path($path), "Contrat-signe-{$client->id}.pdf");
+    }
+
+    // 2) Else try to fetch from Yousign (and save)
+    if ($client->yousign_request_id && $client->yousign_document_id) {
+        $pdf = $ys->downloadSignedDocument($client->yousign_request_id, $client->yousign_document_id);
+
+        $savePath = "contracts/{$client->id}/contract-signed.pdf";
+        Storage::disk('public')->put($savePath, $pdf);
+
+        $client->update([
+            'signed_pdf_path'          => $savePath,
+            'contract_signed_pdf_path' => $savePath,
+        ]);
+
+        return Response::make($pdf, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="Contrat-signe-'.$client->id.'.pdf"',
+        ]);
+    }
+
+    return back()->with('error', "Contrat signé introuvable pour ce client.");
+}
+
 
 }

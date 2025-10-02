@@ -120,7 +120,7 @@
       @endif
 
       {{-- Download signed --}}
-      @if($client->contract_signed_pdf_path)
+      @if($client->contract_signed_pdf_path || $client->signed_pdf_path)
         <a href="{{ route('clients.contract.download_signed', $client->id) }}"
            class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           Télécharger le contrat signé
@@ -146,7 +146,6 @@
     });
   </script>
 @endif
-
   {{-- Statut du dossier --}}
   <div class="bg-white rounded-xl shadow-md p-6 mb-8">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center">

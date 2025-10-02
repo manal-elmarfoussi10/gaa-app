@@ -90,12 +90,19 @@ public function downloadSignedPdf(string $signatureRequestId): string
     return $resp->body(); // raw PDF bytes
 }
 
-public function downloadSignedDocuments(string $signatureRequestId): string
+public function downloadSignedDocument(string $signatureRequestId, string $documentId): string
 {
-    // GET /signature_requests/{id}/documents/download
-    return $this->client()
-        ->get("/signature_requests/{$signatureRequestId}/documents/download")
-        ->throw()
-        ->body();
+    // v3 style endpoint (adjust if your wrapper uses a different helper)
+    // Should return raw PDF bytes.
+    $path = "signature_requests/{$signatureRequestId}/documents/{$documentId}/download";
+    return $this->getRaw($path); // implement getRaw() to return the binary body
+}
+protected function getRaw(string $path): string
+{
+    $resp = $this->http()->get($path); // $this->http() returns a configured pending request
+    if ($resp->failed()) {
+        throw new \RuntimeException('Yousign download failed: '.$resp->body());
+    }
+    return $resp->body(); // bytes
 }
 }
