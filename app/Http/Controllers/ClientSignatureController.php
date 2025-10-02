@@ -12,38 +12,53 @@ class ClientSignatureController extends Controller
 {
     /**
      * Envoie le contrat du client à la signature (Yousign v3).
-     * Prérequis :
-     *  - Le PDF du contrat existe dans storage/app/public/{contract_pdf_path}
-     *  - La vue Blade contient les Smart Anchors :
-     *      [[SIGN_CLIENT]]     (zone signature client)
-     *      [[SIGN_COMPANY]]    (zone signature entreprise) ← optionnel
+     * Prérequis : le PDF du contrat existe dans storage/app/public/{contract_pdf_path}.
+     * -> Nous plaçons un champ "signature" par coordonnées (page/x/y/width/height).
      */
     public function send(Request $request, Client $client, YousignService $ys)
     {
-        // 0) Sécurité basique
+        // 0) Garde : e-mail requis
         if (empty($client->email)) {
             return back()->with('error', "Le client n'a pas d’e-mail.");
         }
+
+        // 1) Vérifier l'existence du PDF
         if (!$client->contract_pdf_path || !Storage::disk('public')->exists($client->contract_pdf_path)) {
             return back()->with('error', 'Aucun contrat PDF généré pour ce client.');
         }
 
         try {
-            // 1) Créer la demande de signature
-            $fullname = trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? ''));
+            // 2) Préparer
+            $absPath  = Storage::disk('public')->path($client->contract_pdf_path);
+            $fullname = trim(($client->prenom ?? '') . ' ' . ($client->nom_assure ?? $client->nom ?? ''));
             $title    = "Contrat #{$client->id} - {$fullname}";
-            $sr       = $ys->createSignatureRequest($title, 'email');  // returns ['id' => '...']
 
-            // 2) Joindre le document avec ANCHORS ACTIVÉS
-            //    => le service sait qu’il doit laisser Yousign repérer [[SIGN_CLIENT]] / [[SIGN_COMPANY]]
-            $absPath   = Storage::disk('public')->path($client->contract_pdf_path);
-            $withAnchors = true;
-            $doc       = $ys->uploadDocument($sr['id'], $absPath, $withAnchors); // returns ['id' => '...']
+            // 3) Créer la demande de signature
+            $sr = $ys->createSignatureRequest($title, 'email'); // renvoie ['id' => '...']
 
-            // 3) Ajouter le signataire (le CLIENT). AUCUN "fields" nécessaire quand anchors = true
+            // 4) Uploader le document (on désactive les anchors => on DOIT fournir des 'fields')
+            $withAnchors = false;
+            $doc = $ys->uploadDocument($sr['id'], $absPath, $withAnchors); // renvoie ['id' => '...']
+
+            // 5) Ajouter le signataire avec un champ signature "manuel"
+            //    Ajustez les coordonnées si nécessaire :
+            //    - page : 1 (signature client est en bas de la page 1)
+            //    - x/y  : décalage en pixels (plus y est grand, plus on descend sur la page)
+            //    - width/height : taille du rectangle de signature
+            $signatureField = [
+                'document_id' => $doc['id'],
+                'type'        => 'signature',
+                'page'        => 1,
+                'x'           => 120, // ← Ajustez finement selon votre rendu PDF
+                'y'           => 680, // ← Descendre/monter par pas de 15–30 si besoin
+                'width'       => 180,
+                'height'      => 45,
+            ];
+
+            // Yousign attend un phone en E.164 si fourni ; sinon laissez null
             $phone = $client->telephone;
             if ($phone && !preg_match('/^\+\d{6,15}$/', $phone)) {
-                $phone = null; // E.164 only
+                $phone = null;
             }
 
             $ys->addSigner($sr['id'], [
@@ -55,34 +70,14 @@ class ClientSignatureController extends Controller
                     'locale'       => config('services.yousign.locale', 'fr'),
                 ],
                 'signature_level'               => 'electronic_signature',
-                // en prod, utilisez 'otp_email' ; en dev, 'no_otp' est pratique
                 'signature_authentication_mode' => app()->environment('production') ? 'otp_email' : 'no_otp',
-                // Pas de 'fields' ici : les Smart Anchors du PDF pilotent la position.
+                'fields' => [$signatureField],
             ]);
 
-            // (Optionnel) 4) Si vous voulez aussi une signature entreprise :
-            //    Décommentez ci-dessous et fournissez un email interne (ENV ou config).
-            /*
-            $companySignerEmail = config('services.yousign.company_signer_email'); // ex: 'signature@gsauto.com'
-            if ($companySignerEmail) {
-                $ys->addSigner($sr['id'], [
-                    'info' => [
-                        'first_name'   => 'Représentant',
-                        'last_name'    => 'GS Auto',
-                        'email'        => $companySignerEmail,
-                        'phone_number' => null,
-                        'locale'       => config('services.yousign.locale', 'fr'),
-                    ],
-                    'signature_level'               => 'electronic_signature',
-                    'signature_authentication_mode' => app()->environment('production') ? 'otp_email' : 'no_otp',
-                ]);
-            }
-            */
-
-            // 5) Activer (envoi de l’e-mail)
+            // 6) Activer (envoi de l’e-mail Yousign)
             $ys->activate($sr['id']);
 
-            // 6) Sauvegarder
+            // 7) Persister les IDs
             $client->update([
                 'yousign_signature_request_id' => $sr['id'],
                 'yousign_document_id'          => $doc['id'] ?? null,
@@ -98,12 +93,14 @@ class ClientSignatureController extends Controller
                 'client_id' => $client->id,
                 'error'     => $e->getMessage(),
             ]);
+
+            // Erreur fréquente si aucun 'field' n’est associé : "signer.field_required"
             return back()->with('error', "L'envoi vers Yousign a échoué : ".$e->getMessage());
         }
     }
 
     /**
-     * Relance (réactive la demande pour que Yousign renvoie une notification).
+     * Relance la demande de signature (renvoie la notif au client).
      */
     public function resend(Request $request, Client $client, YousignService $ys)
     {
