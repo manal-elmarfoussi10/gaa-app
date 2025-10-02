@@ -103,7 +103,7 @@
 
               <a href="{{ route('mon-compte') }}" class="flex items-center gap-1 ml-2 hover:opacity-80 transition max-w-[140px]">
                 @if ($user && $user->photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->photo))
-                  <img src="{{ asset('storage/' . $user->photo) }}" alt="Photo" class="h-7 w-7 rounded-full object-cover border-2 border-[#FF4B00] shadow" />
+                  <img src="{{ asset('/storage/app/public/' . $user->photo) }}" alt="Photo" class="h-7 w-7 rounded-full object-cover border-2 border-[#FF4B00] shadow" />
                 @else
                   <div class="h-7 w-7 bg-[#FF4B00] text-white rounded-full flex items-center justify-center font-bold text-xs">
                     {{ strtoupper($user->name[0] ?? 'U') }}
