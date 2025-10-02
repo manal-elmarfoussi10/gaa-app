@@ -83,4 +83,10 @@ class Client extends Model
     {
         return $value ?? $this->attributes['yousign_signature_request_id'] ?? null;
     }
+
+    public function emails()
+{
+    // Use FQCN to avoid missing import issues
+    return $this->hasMany(\App\Models\Email::class, 'client_id');
+}
 }
