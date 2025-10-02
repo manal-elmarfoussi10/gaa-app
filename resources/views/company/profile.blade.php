@@ -150,7 +150,7 @@
                                     'invoice_terms_doc'  => 'Conditions générales de vente'
                                 ] as $field => $label)
                                     @if(!empty($company->$field))
-                                        <a href="{{ asset('/storage/app/public/.$company->$field) }}" target="_blank"
+                                        <a href="{{ asset('/storage/app/public/''.$company->$field) }}" target="_blank"
                                            class="flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                                             <div class="bg-orange-100 text-orange-600 p-2 rounded-lg mr-3">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
