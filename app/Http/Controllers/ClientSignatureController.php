@@ -48,7 +48,7 @@ class ClientSignatureController extends Controller
             $signatureField = [
                 'document_id' => $doc['id'],
                 'type'        => 'signature',
-                'page'        => 1,
+                'page'        => 2,
                 'x'           => 120, // ← Ajustez finement selon votre rendu PDF
                 'y'           => 680, // ← Descendre/monter par pas de 15–30 si besoin
                 'width'       => 180,

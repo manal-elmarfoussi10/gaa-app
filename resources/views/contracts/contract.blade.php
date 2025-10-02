@@ -186,8 +186,7 @@
       <h3>Signature du client</h3>
       <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
       <div class="sign-row">
-        Fait à : <span class="sign-line">&nbsp;</span>
-        &nbsp;&nbsp;le : {{ now()->format('d/m/Y') }}
+        Fait le:  {{ now()->format('d/m/Y') }}
       </div>
       <div class="sign-hint">Lu et approuvé</div>
       <div class="y-anchor">[[SIGN_CLIENT]]</div>
@@ -197,8 +196,7 @@
       <h3>Cachet & signature de {{ $cName }}</h3>
       <div class="sign-row">Représentant : <span class="sign-line">&nbsp;</span></div>
       <div class="sign-row">
-        Fait à : <span class="sign-line">&nbsp;</span>
-        &nbsp;&nbsp;le : {{ now()->format('d/m/Y') }}
+        Fait le : {{ now()->format('d/m/Y') }}
       </div>
       <div class="y-anchor">[[SIGN_COMPANY]]</div>
     </div>
