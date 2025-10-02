@@ -134,56 +134,46 @@ class ClientsController extends Controller
         return $pdf->download($filename);
     }
 
-    /**
-     * === Préviews intégrées (PDF en inline pour l'iframe) ===
-     */
-
-     public function previewDevis(Devis $devis)
-     {
-         $this->authorizeSupport();
-     
-         // Load relations and compute $company just like downloadDevis()
-         $devis->load(['items', 'company', 'client.company']);
-         $company = $devis->company ?? $devis->client?->company;
-     
-         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('devis.pdf', compact('devis', 'company'));
-         return $pdf->stream("devis_{$devis->numero}.pdf");
-     }
-     
-     public function previewFacture(Facture $facture)
-     {
-         $this->authorizeSupport();
-     
-         // Load relations and compute $company just like downloadFacture()
-         $facture->load(['items', 'company', 'client.company']);
-         $company = $facture->company ?? $facture->client?->company;
-     
-         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('factures.pdf', compact('facture', 'company'));
-         return $pdf->stream("facture_{$facture->numero}.pdf");
-     }
-     
-     public function previewAvoir(Avoir $avoir)
-     {
-         $this->authorizeSupport();
-     
-         // If your avoir PDF also uses $company, load via related facture->client->company
-         $avoir->load(['facture.client.company']);
-         $company = $avoir->facture?->company ?? $avoir->facture?->client?->company;
-     
-         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('avoirs.pdf', compact('avoir', 'company'));
-         return $pdf->stream("avoir_{$avoir->id}.pdf");
-     }
-
-    /**
-     * Autorisation centralisée support (superadmin + client_service).
-     */
-    private function authorizeSupport(): void
+    public function previewDevis(Devis $devis)
     {
-        $u = auth()->user();
-        abort_unless(
-            $u && in_array($u->role, [User::ROLE_SUPERADMIN, User::ROLE_CLIENT_SERVICE], true),
-            403
-        );
+        $this->authorizeSupport();
+    
+        // Devis doesn't need its own company() if we can reach it via client
+        $devis->load(['items', 'client.company']);
+    
+        $company = $devis->client?->company;
+    
+        // You have: resources/views/devis/single-pdf.blade.php
+        return Pdf::loadView('devis.single-pdf', compact('devis', 'company'))
+                  ->stream("devis_{$devis->numero}.pdf");
+    }
+    
+    public function previewFacture(Facture $facture)
+    {
+        $this->authorizeSupport();
+    
+        // Remove 'company' from the eager load (no relation on the model)
+        $facture->load(['items', 'client.company']);
+    
+        $company = $facture->client?->company;
+    
+        // You have: resources/views/factures/pdf.blade.php
+        return Pdf::loadView('factures.pdf', compact('facture', 'company'))
+                  ->stream("facture_{$facture->numero}.pdf");
+    }
+    
+    public function previewAvoir(Avoir $avoir)
+    {
+        $this->authorizeSupport();
+    
+        // Reach the company via facture -> client -> company
+        $avoir->load(['facture.client.company']);
+    
+        $company = $avoir->facture?->client?->company;
+    
+        // Use the single template you have: resources/views/avoirs/single_pdf.blade.php
+        return Pdf::loadView('avoirs.single_pdf', compact('avoir', 'company'))
+                  ->stream("avoir_{$avoir->id}.pdf");
     }
 
     
