@@ -85,8 +85,7 @@ class Client extends Model
     }
 
     public function emails()
-{
-    // Use FQCN to avoid missing import issues
-    return $this->hasMany(\App\Models\Email::class, 'client_id');
-}
+    {
+        return $this->hasMany(\App\Models\Email::class, 'client_id');
+    }
 }
