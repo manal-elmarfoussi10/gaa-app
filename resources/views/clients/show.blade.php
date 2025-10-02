@@ -32,51 +32,19 @@
       </a>
     </div>
   </div>
-{{-- Signature (GS Auto) --}}
+
+  {{-- Signature (GS Auto) --}}
 <div id="signature-block" class="bg-white rounded-xl shadow-md p-6 mb-8">
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
-    {{-- LEFT: title + badge + helper text --}}
     <div class="flex-1 min-w-0">
-      @php
-        // normalize status for display
-        $gs = $client->statut_gsauto;            // 'draft' | 'sent' | 'viewed' | 'activated' | 'partially_signed' | 'signed' | 'failed' | ...
-        $sig = (int) ($client->statut_signature ?? 0);
-
-        $statusLabel = 'EN ATTENTE';
-        $statusClass = 'bg-amber-100 text-amber-800';
-
-        switch ($gs) {
-          case 'activated':
-          case 'sent':
-            $statusLabel = 'ENVOYÉ';
-            break;
-          case 'viewed':
-            $statusLabel = 'OUVERT';
-            break;
-          case 'partially_signed':
-            $statusLabel = 'SIGNATURE EN COURS';
-            $statusClass = 'bg-blue-100 text-blue-800';
-            break;
-          case 'signed':
-            $statusLabel = 'SIGNÉ';
-            $statusClass = 'bg-green-100 text-green-800';
-            break;
-          case 'failed':
-            $statusLabel = 'ÉCHEC';
-            $statusClass = 'bg-red-100 text-red-800';
-            break;
-          case 'draft':
-          case null:
-          default:
-            $statusLabel = $sig === 1 ? 'SIGNÉ' : 'EN ATTENTE';
-            $statusClass = $sig === 1 ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800';
-        }
-      @endphp
-
       <h2 class="text-xl font-semibold text-gray-800 flex items-center">
         Signature électronique (GS Auto)
-        <span class="ml-3 text-xs font-medium px-3 py-1 rounded-full {{ $statusClass }}">
-          {{ $statusLabel }}
+        @php
+          $badgeSigned = ($client->statut_gsauto === 'signed') || ($client->statut_signature == 1);
+        @endphp
+        <span class="ml-3 text-xs font-medium px-3 py-1 rounded-full
+                     {{ $badgeSigned ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }}">
+          {{ $badgeSigned ? 'SIGNÉ' : 'EN ATTENTE' }}
         </span>
       </h2>
 
@@ -120,7 +88,7 @@
       {{-- Send / Resend --}}
       @php $canSend = (bool) $client->contract_pdf_path; @endphp
 
-      @if(!$gs || $gs === 'draft')
+      @if(!$client->statut_gsauto || $client->statut_gsauto === 'draft')
         <form method="POST" action="{{ route('clients.send_signature', $client->id) }}" class="inline-block m-0">
           @csrf
           <button type="submit"
@@ -129,8 +97,7 @@
             Envoyer pour signature
           </button>
         </form>
-
-      @elseif(in_array($gs, ['sent','viewed','activated','partially_signed','failed']))
+      @elseif(in_array($client->statut_gsauto, ['sent','viewed','activated','partially_signed']))
         <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}" class="inline-block m-0">
           @csrf
           <button type="submit"
@@ -138,11 +105,18 @@
             Renvoyer
           </button>
         </form>
-
-      @elseif($gs === 'signed')
+      @elseif($client->statut_gsauto === 'signed')
         <span class="inline-flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-lg text-sm">
           Déjà signé
         </span>
+      @elseif($client->statut_gsauto === 'failed')
+        <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}" class="inline-block m-0">
+          @csrf
+          <button type="submit"
+                  class="inline-flex items-center bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+            Renvoyer (échec)
+          </button>
+        </form>
       @endif
 
       {{-- Download signed --}}
@@ -157,14 +131,10 @@
 
   {{-- Alerts --}}
   @if(session('success'))
-    <div class="mt-4 bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded">
-      {{ session('success') }}
-    </div>
+    <div class="mt-4 bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded">{{ session('success') }}</div>
   @endif
   @if(session('error'))
-    <div class="mt-4 bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded">
-      {{ session('error') }}
-    </div>
+    <div class="mt-4 bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded">{{ session('error') }}</div>
   @endif
 </div>
 
