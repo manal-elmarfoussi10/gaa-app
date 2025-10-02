@@ -11,9 +11,22 @@
   $cSiret = $company->siret ?? '';
   $cTva   = $company->tva ?? '';
 
-  // Force GS Auto logo (local if exists, else remote URL)
-  $gsLocal = public_path('images/GS.png');
-  $gsLogo  = file_exists($gsLocal) ? $gsLocal : 'https://dev.gservicesauto.com/images/GS.png';
+  // Company signature -> build a data URI (works in DOMPDF + others)
+  use Illuminate\Support\Facades\Storage;
+
+  $sigSrc = null;
+  if (!empty($company?->signature_path)) {
+      try {
+          $abs = Storage::disk('public')->path($company->signature_path);
+          if (is_file($abs)) {
+              $mime = function_exists('mime_content_type') ? mime_content_type($abs) : 'image/png';
+              $data = base64_encode(file_get_contents($abs));
+              $sigSrc = "data:{$mime};base64,{$data}";
+          }
+      } catch (\Throwable $e) {
+          $sigSrc = null; // fallback silently
+      }
+  }
 
   // Accent palette (subtle orange)
   $ORANGE      = '#F97316';
@@ -38,10 +51,6 @@
     .brand__name  { font-weight:800; font-size:18px; color:#1F2937; }
     .brand__meta  { font-size:10px; color:#4B5563; line-height:1.35; }
     .brand__tag   { font-weight:800; font-size:22px; color:#1F2937; }
-
-    .logo {
-      width:78px; height:78px; object-fit:contain; border-radius:10px; border:1px solid #E5E7EB; background:#FFFFFF;
-    }
 
     .badge {
       display:inline-block; padding:4px 10px; border-radius:999px;
@@ -82,9 +91,16 @@
     .sign-hint { font-size:11px; color:#64748B; margin-top:8px; }
 
     .footer { margin-top:16px; padding-top:10px; border-top:2px solid {{ $ORANGE_LINE }}; font-size:10px; color:#6B7280; }
-    .right { text-align:right; }
 
-    /* Yousign smart anchors (hidden text; keep in DOM) */
+    .sig-img {
+      display:block;
+      max-width:180px;
+      max-height:90px;
+      object-fit:contain;
+      margin-top:8px;
+    }
+
+    /* Yousign smart anchors (keep in DOM if you still use Yousign) */
     .y-anchor { font-size:1px; color:#ffffff; }
   </style>
 </head>
@@ -104,8 +120,7 @@
         </div>
       </div>
     </div>
-    <div class="right">
-      <br><br>
+    <div>
       <div class="badge">Contrat & Cession de créance</div><br>
       <div class="brand__tag">GS Auto</div>
     </div>
@@ -180,24 +195,30 @@
     <p>• Le client confirme l’exactitude des informations communiquées et autorise leur transmission à l’assureur.</p>
   </div>
 
-  {{-- Signatures (with Yousign anchors) --}}
+  {{-- Signatures --}}
   <div class="sign-grid">
     <div class="sign-box">
       <h3>Signature du client</h3>
       <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
-      <div class="sign-row">
-        Fait le:  {{ now()->format('d/m/Y') }}
-      </div>
+      <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
       <div class="sign-hint">Lu et approuvé</div>
+      {{-- Yousign anchor (if still used) --}}
       <div class="y-anchor">[[SIGN_CLIENT]]</div>
     </div>
 
     <div class="sign-box">
       <h3>Cachet & signature de {{ $cName }}</h3>
       <div class="sign-row">Représentant : <span class="sign-line">&nbsp;</span></div>
-      <div class="sign-row">
-        Fait le : {{ now()->format('d/m/Y') }}
-      </div>
+      <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
+
+      {{-- Render company signature image if available --}}
+      @if($sigSrc)
+        <img src="{{ $sigSrc }}" alt="Signature {{ $cName }}" class="sig-img">
+      @else
+        <div class="sign-hint">Signature non fournie</div>
+      @endif
+
+      {{-- Yousign anchor (if still used) --}}
       <div class="y-anchor">[[SIGN_COMPANY]]</div>
     </div>
   </div>
