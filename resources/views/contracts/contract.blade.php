@@ -1,379 +1,261 @@
+{{-- resources/views/contracts/contract.blade.php --}}
 @php
-/**
- * Expected:
- * - $client  : App\Models\Client (with ->company loaded)
- * - $company : App\Models\Company
- *
- * IMPORTANT for DomPDF images:
- *   Always pass absolute file paths (public_path/storage/...) or data URIs.
- */
-$company = $company ?? $client->company;
+    /** @var \App\Models\Client $client */
+    $company = $client->company;
 
-// Helpers to resolve absolute image paths for DomPDF
-$logoPath = null;
-if (!empty($company?->logo)) {
-    $candidate = public_path('storage/'.$company->logo);
-    $logoPath  = is_file($candidate) ? $candidate : null;
-}
+    // Company fallbacks to avoid blanks
+    $cName   = $company->commercial_name ?: ($company->name ?? 'Votre Société');
+    $cAddr   = trim(($company->address ? $company->address.' ' : '')
+            .($company->postal_code ? $company->postal_code.' ' : '')
+            .($company->city ?? ''));
+    $cEmail  = $company->email ?? '';
+    $cPhone  = $company->phone ?? '';
+    $cSiret  = $company->siret ?? '';
+    $cTva    = $company->tva ?? '';
+    $cApe    = $company->ape ?? $company->naf_code ?? '';
+    $cLogo   = $company->logo ?? null; // store relative path (public disk)
+    $logoUrl = $cLogo ? (Storage::disk('public')->exists($cLogo) ? storage_path('app/public/'.$cLogo) : null) : null;
 
-$companySignPath = null;
-if (!empty($company?->signature_path)) {
-    $candidate2 = public_path('storage/'.$company->signature_path);
-    $companySignPath = is_file($candidate2) ? $candidate2 : null;
-}
-
-$clientSignPath = null;
-if (!empty($client?->signature_path)) {
-    $candidate3 = public_path('storage/'.$client->signature_path);
-    $clientSignPath = is_file($candidate3) ? $candidate3 : null;
-}
-
-// Formatting helpers
-$fullName = trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? ''));
-$today    = now()->timezone(config('app.timezone','Europe/Paris'))->format('d/m/Y');
-
-$addressClient = trim(($client->adresse ?? '')
-    . (empty($client->code_postal) ? '' : ' '.$client->code_postal)
-    . (empty($client->ville) ? '' : ' '.$client->ville));
-
-$companyAddress = trim(($company->address ?? '')
-    . (empty($company->postal_code) ? '' : ' '.$company->postal_code)
-    . (empty($company->city) ? '' : ' '.$company->city));
+    // Client helpers
+    $fullName = trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? ''));
 @endphp
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <title>Contrat GS Auto – {{ $fullName ?: 'Client' }}</title>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-  @page { margin: 28mm 18mm 30mm 18mm; }
-  body  { font-family: DejaVu Sans, Arial, Helvetica, sans-serif; color:#111; font-size:12px; }
-
-  .header { position: fixed; top: -18mm; left: 0; right: 0; height: 58mm; }
-  .footer { position: fixed; bottom: -18mm; left: 0; right: 0; height: 40mm; font-size:10px; color:#555; }
-
-  .brand { display:flex; gap:14px; align-items:center; }
-  .brand img { height:58px; }
-  .brand h1 { font-size:20px; margin:0; letter-spacing: .2px; }
-
-  .meta { margin-top:6px; line-height:1.35; }
-  .hr   { height:1px; background:#222; margin:8px 0 12px; }
-
-  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
-
-  .card { border:1px solid #555; border-radius:6px; padding:10px 12px; }
-  .card h3 { margin:0 0 8px 0; font-size:13px; text-transform:uppercase; letter-spacing:.4px; }
-  .label { color:#666; font-size:11px; }
-  .value { font-weight:600; }
-
-  .table { width:100%; border-collapse: collapse; margin-top:6px; }
-  .table th, .table td { border:1px solid #777; padding:6px 8px; }
-  .table th { background:#f2f2f2; text-align:left; }
-
-  .muted { color:#666; }
-  .small { font-size:10px; }
-  .mt-6 { margin-top: 6px; }
-  .mt-10{ margin-top:10px; }
-  .mt-14{ margin-top:14px; }
-  .mt-18{ margin-top:18px; }
-  .mt-24{ margin-top:24px; }
-  .mb-0 { margin-bottom:0; }
-  .center { text-align:center; }
-  .right  { text-align:right; }
-
-  .signatures { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px; }
-  .sig-box { border:1px dashed #888; border-radius:6px; padding:10px; min-height:120px; }
-  .sig-title { font-size:12px; font-weight:600; margin-bottom:6px; }
-  .sig-line  { margin-top:30px; border-top:1px solid #888; }
-
-  .terms { font-size:10.5px; line-height:1.45; }
-  .page-break { page-break-after: always; }
+    @page { margin: 28mm 18mm 28mm 18mm; }
+    body { font-family: DejaVu Sans, sans-serif; color:#111; font-size:12px; line-height:1.45; }
+    h1,h2,h3 { margin:0 0 6px; }
+    h1 { font-size:22px; letter-spacing: .3px; }
+    h2 { font-size:14px; text-transform:uppercase; color:#444; letter-spacing: .4px; }
+    small, .muted { color:#666; }
+    .grid { display: table; width: 100%; table-layout: fixed; }
+    .col { display: table-cell; vertical-align: top; }
+    .w-50 { width: 50%; }
+    .mt-2 { margin-top: 8px; } .mt-3 { margin-top: 12px; } .mt-4 { margin-top: 18px; } .mt-5 { margin-top: 24px; }
+    .mb-0 { margin-bottom: 0; } .mb-1{ margin-bottom: 4px; } .mb-2 { margin-bottom: 8px; } .mb-3 { margin-bottom: 12px; }
+    .p-0{ padding:0; } .p-2{ padding:8px; } .p-3{ padding:12px; } .p-4{ padding:16px; }
+    .card { border:1px solid #cfcfcf; border-radius:6px; }
+    .card h2 { background:#f4f6f8; border-bottom:1px solid #e5e7ea; padding:8px 12px; }
+    .card .card-body { padding:10px 12px; }
+    .kv { display: table; width:100%; }
+    .kv .k { color:#555; width: 38%; display: table-cell; padding: 6px 8px; border-bottom:1px solid #f0f0f0; }
+    .kv .v { width: 62%; display: table-cell; padding: 6px 8px; border-bottom:1px solid #f0f0f0; }
+    .muteborder { border:1px dashed #d9d9d9; }
+    .text-right { text-align:right; }
+    .text-center { text-align:center; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:10px; background:#eef6ff; color:#0b68c7; font-size:11px; }
+    .table { width:100%; border-collapse: collapse; }
+    .table th, .table td { border:1px solid #dfe3e8; padding:8px; }
+    .table th { background:#f8f9fb; font-weight:700; color:#3a3a3a; }
+    .totals td { border: none; padding:6px 8px; }
+    .hr { height:1px; background:#e7e7e7; border:0; margin:18px 0; }
+    .signature-box { height:88px; border:1px solid #cfd8dc; border-radius:4px; background:#fff; }
+    .page-footer, .page-header { position: fixed; left: 0; right: 0; color:#777; }
+    .page-header { top: -18mm; }
+    .page-footer { bottom: -16mm; font-size: 11px; }
+    .page-number:before { content: counter(page); }
+    .company-block { line-height:1.3; }
+    .company-name { font-size:18px; font-weight:700; letter-spacing:.3px; }
+    .tiny { font-size:11px; }
 </style>
 </head>
 <body>
 
-{{-- ================= Header ================= --}}
-<div class="header">
-  <div class="brand">
-    @if($logoPath)
-      <img src="{{ $logoPath }}" alt="Logo">
-    @endif
-    <div>
-      <h1>Contrat GS Auto</h1>
-      <div class="meta">
-        <div><strong>{{ $company?->commercial_name ?? $company?->name ?? 'GS Auto' }}</strong></div>
-        @if($companyAddress)<div>{{ $companyAddress }}</div>@endif
-        <div>
-          @if($company?->email) ✉ {{ $company->email }} @endif
-          @if($company?->phone) · ☎ {{ $company->phone }} @endif
+{{-- ====== HEADER ====== --}}
+<div class="page-header">
+    <div class="grid">
+        <div class="col w-50">
+            <div class="company-block">
+                <div class="company-name">{{ $cName }}</div>
+                @if($cAddr)<div>{{ $cAddr }}</div>@endif
+                <div class="tiny">
+                    @if($cEmail) ✉ {{ $cEmail }}@endif
+                    @if($cPhone) · ☎ {{ $cPhone }}@endif
+                </div>
+                <div class="tiny">
+                    @if($cSiret) SIRET: {{ $cSiret }}@endif
+                    @if($cTva) · TVA: {{ $cTva }}@endif
+                    @if($cApe) · APE/NAF: {{ $cApe }}@endif
+                </div>
+            </div>
         </div>
-        <div class="small muted">
-          @if($company?->siret) SIRET: {{ $company->siret }} @endif
-          @if($company?->tva) · TVA: {{ $company->tva }} @endif
-          @if($company?->rcs_number) · RCS: {{ $company->rcs_number }} {{ $company->rcs_city }} @endif
+        <div class="col w-50" style="text-align:right;">
+            @if($logoUrl)
+                <img src="{{ $logoUrl }}" alt="Logo" style="height:44px;">
+            @endif
         </div>
-      </div>
     </div>
-  </div>
-  <div class="hr"></div>
+    <hr class="hr">
 </div>
 
-{{-- ================= Footer ================= --}}
-<div class="footer">
-  <div class="hr"></div>
-  <div class="small muted">
-    <div><strong>{{ $company?->commercial_name ?? $company?->name ?? 'GS Auto' }}</strong> — {{ $companyAddress }}</div>
-    <div>
-      @if($company?->email) ✉ {{ $company->email }} @endif
-      @if($company?->phone) · ☎ {{ $company->phone }} @endif
-      @if($company?->tva) · TVA: {{ $company->tva }} @endif
-      @if($company?->ape) · Code APE: {{ $company->ape }} @endif
+{{-- ====== FOOTER ====== --}}
+<div class="page-footer">
+    <hr class="hr">
+    <div class="grid">
+        <div class="col w-50 tiny">
+            Contrat GS Auto — {{ $cName }}
+        </div>
+        <div class="col w-50 tiny text-right">
+            Page <span class="page-number"></span>
+        </div>
     </div>
-    <div class="right">Page <span class="page-number"></span></div>
-  </div>
 </div>
 
-<script type="text/php">
-if (isset($pdf)) {
-    $pdf->page_text(520, 805, "Page {PAGE_NUM} / {PAGE_COUNT}", "DejaVuSans", 9, array(0,0,0));
-}
-</script>
-
-{{-- ================= Body ================= --}}
+{{-- ====== CONTENT ====== --}}
 <main>
+    <h1 class="mb-0">Contrat GS Auto</h1>
+    <div class="muted">Référence dossier <strong>#{{ $client->id }}</strong></div>
 
-  {{-- ===== Reference / Date ===== --}}
-  <div class="grid-3 mt-14">
-    <div class="card">
-      <div class="label">Référence dossier</div>
-      <div class="value">#{{ $client->id }}</div>
-    </div>
-    <div class="card">
-      <div class="label">Date</div>
-      <div class="value">{{ $today }}</div>
-    </div>
-    <div class="card">
-      <div class="label">Statut GS Auto</div>
-      <div class="value">{{ $client->statut_gsauto ?? '—' }}</div>
-    </div>
-  </div>
-
-  {{-- ===== Client ===== --}}
-  <div class="card mt-14">
-    <h3>Client</h3>
-    <table class="table">
-      <tr>
-        <th>Nom / Prénom</th>
-        <td>{{ $fullName ?: '—' }}</td>
-      </tr>
-      <tr>
-        <th>Email</th>
-        <td>{{ $client->email ?: '—' }}</td>
-      </tr>
-      <tr>
-        <th>Téléphone</th>
-        <td>{{ $client->telephone ?: '—' }}</td>
-      </tr>
-      <tr>
-        <th>Adresse</th>
-        <td>{{ $addressClient ?: '—' }}</td>
-      </tr>
-    </table>
-  </div>
-
-  {{-- ===== Véhicule ===== --}}
-  <div class="card mt-10">
-    <h3>Véhicule</h3>
-    <table class="table">
-      <tr>
-        <th>Immatriculation</th>
-        <td>{{ $client->plaque ?: '—' }}</td>
-      </tr>
-      <tr>
-        <th>Type de vitrage</th>
-        <td>{{ $client->type_vitrage ?: '—' }}</td>
-      </tr>
-      <tr>
-        <th>Kilométrage</th>
-        <td>{{ $client->kilometrage ? number_format($client->kilometrage, 0, ',', ' ') . ' km' : '—' }}</td>
-      </tr>
-      <tr>
-        <th>Ancien modèle plaque</th>
-        <td>{{ $client->ancien_modele_plaque ?: '—' }}</td>
-      </tr>
-    </table>
-  </div>
-
-  {{-- ===== Assurance / Sinistre ===== --}}
-  <div class="card mt-10">
-    <h3>Assurance & Sinistre</h3>
-    <table class="table">
-      <tr>
-        <th>Assureur</th>
-        <td>{{ $client->nom_assurance ?: '—' }}</td>
-      </tr>
-      <tr>
-        <th>N° police</th>
-        <td>{{ $client->numero_police ?: '—' }}</td>
-      </tr>
-      <tr>
-        <th>N° sinistre</th>
-        <td>{{ $client->numero_sinistre ?: '—' }}</td>
-      </tr>
-      <tr>
-        <th>Date du sinistre</th>
-        <td>{{ $client->date_sinistre ? \Carbon\Carbon::parse($client->date_sinistre)->format('d/m/Y') : '—' }}</td>
-      </tr>
-      <tr>
-        <th>Date de déclaration</th>
-        <td>{{ $client->date_declaration ? \Carbon\Carbon::parse($client->date_declaration)->format('d/m/Y') : '—' }}</td>
-      </tr>
-      <tr>
-        <th>Adresse d’intervention</th>
-        <td>{{ $client->adresse_pose ?: '—' }}</td>
-      </tr>
-      <tr>
-        <th>Précisions</th>
-        <td>{{ $client->precision ?: '—' }}</td>
-      </tr>
-    </table>
-  </div>
-
-  {{-- ===== Autorisations ===== --}}
-  <div class="card mt-10">
-    <h3>Autorisations & Déclarations</h3>
-    <ul class="terms">
-      <li>J’autorise {{ $company?->commercial_name ?? $company?->name ?? 'GS Auto' }} à intervenir sur mon véhicule pour la réparation/remplacement du vitrage indiqué.</li>
-      <li>Je confirme l’exactitude des informations relatives à mon assurance (compagnie, numéro de police, numéro de sinistre le cas échéant).</li>
-      <li>J’autorise la transmission de mes documents (carte grise, carte verte, facture, photos) à mon assureur et partenaires aux seules fins de gestion du dossier.</li>
-      <li>En cas de prise en charge assurance, j’accepte la cession de créance à {{ $company?->commercial_name ?? $company?->name ?? 'GS Auto' }} à hauteur des sommes dues par l’assureur.</li>
-      <li>Je reconnais avoir pris connaissance des conditions générales au verso et de la politique RGPD (voir ci-dessous).</li>
-    </ul>
-  </div>
-
-  {{-- ===== Tarification (optionnelle) ===== --}}
-  <div class="card mt-10">
-    <h3>Détail de prestation (HT)</h3>
-    <table class="table">
-      <thead>
-        <tr>
-          <th style="width:50%">Désignation</th>
-          <th style="width:15%">Quantité</th>
-          <th style="width:15%">PU HT (€)</th>
-          <th style="width:20%">Total HT (€)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Remplacement/pose vitrage (référence)</td>
-          <td class="center">1</td>
-          <td class="right">—</td>
-          <td class="right">—</td>
-        </tr>
-      </tbody>
-      <tfoot>
-        <tr>
-          <th colspan="3" class="right">Total HT</th>
-          <th class="right">—</th>
-        </tr>
-        <tr>
-          <th colspan="3" class="right">TVA (20%)</th>
-          <th class="right">—</th>
-        </tr>
-        <tr>
-          <th colspan="3" class="right">Total TTC</th>
-          <th class="right">—</th>
-        </tr>
-      </tfoot>
-    </table>
-    <div class="small muted mt-6">Le chiffrage définitif figure sur le devis/la facture.</div>
-  </div>
-
-  {{-- ===== Signatures ===== --}}
-  <div class="signatures mt-18">
-    <div class="sig-box">
-      <div class="sig-title">Signature du client — {{ $fullName ?: '—' }}</div>
-      @if($clientSignPath)
-        <img src="{{ $clientSignPath }}" style="height:70px;" alt="Signature client">
-      @else
-        <div class="muted small">Espace réservé à la signature manuscrite ou électronique.</div>
-      @endif
-      <div class="sig-line small muted">Date et lieu : {{ $today }} — .......................................</div>
-    </div>
-
-    <div class="sig-box">
-      <div class="sig-title">Pour {{ $company?->commercial_name ?? $company?->name ?? 'GS Auto' }}</div>
-      @if($companySignPath)
-        <img src="{{ $companySignPath }}" style="height:70px;" alt="Signature société">
-      @else
-        <div class="muted small">Signature du représentant légal</div>
-      @endif
-      <div class="sig-line small muted">Cachet de l’entreprise</div>
-    </div>
-  </div>
-
-  {{-- ===== Annexes photos (si présentes) ===== --}}
-  @php
-    $docMap = [
-      'Photo Vitrage'   => $client->photo_vitrage ?? null,
-      'Carte Verte'     => $client->photo_carte_verte ?? null,
-      'Carte Grise'     => $client->photo_carte_grise ?? null,
-    ];
-    $resolved = [];
-    foreach ($docMap as $label => $relPath) {
-        if (!$relPath) continue;
-        $abs = public_path('storage/'.$relPath);
-        if (is_file($abs)) $resolved[] = [$label, $abs];
-    }
-  @endphp
-
-  @if(count($resolved))
-    <div class="page-break"></div>
-    <h3 class="mt-0">Annexes — Photographies</h3>
-    <div class="grid-3 mt-10">
-      @foreach($resolved as [$label, $abs])
-        <div class="card">
-          <div class="label">{{ $label }}</div>
-          <img src="{{ $abs }}" alt="{{ $label }}" style="width:100%; height:210px; object-fit:contain;">
+    <div class="grid mt-3">
+        <div class="col w-50">
+            <div class="badge">Date : {{ now()->format('d/m/Y') }}</div>
         </div>
-      @endforeach
+        <div class="col w-50 text-right">
+            @if($client->statut_gsauto)
+                <span class="badge">Statut : {{ $client->statut_gsauto }}</span>
+            @endif
+        </div>
     </div>
-  @endif
 
-  {{-- ===== Conditions & RGPD ===== --}}
-  <div class="page-break"></div>
-  <h3 class="mb-0">Conditions générales & RGPD</h3>
-  <div class="terms mt-10">
-    <p><strong>1. Objet.</strong> Le présent contrat encadre la réparation/le remplacement de vitrages
-      sur le véhicule identifié. Les prestations sont réalisées conformément aux règles de l’art et
-      prescriptions constructeur.</p>
+    {{-- Client --}}
+    <div class="card mt-4">
+        <h2>Client</h2>
+        <div class="card-body">
+            <div class="kv">
+                <div class="k">Nom / Prénom</div><div class="v">{{ $fullName ?: '—' }}</div>
+                <div class="k">Email</div><div class="v">{{ $client->email ?: '—' }}</div>
+                <div class="k">Téléphone</div><div class="v">{{ $client->telephone ?: '—' }}</div>
+                <div class="k">Adresse</div><div class="v">
+                    @php
+                        $addr = trim(($client->adresse ?? '').' '.($client->code_postal ?? '').' '.($client->ville ?? ''));
+                    @endphp
+                    {{ $addr ?: '—' }}
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <p><strong>2. Prix & paiement.</strong> Les prix sont exprimés en EUR. En cas de prise en charge
-      par l’assurance, le client cède à {{ $company?->commercial_name ?? $company?->name ?? 'GS Auto' }} la créance
-      correspondant au montant remboursable. Toute franchise, dépense non prise en charge ou
-      prestation complémentaire reste due par le client.</p>
+    {{-- Véhicule --}}
+    <div class="card mt-3">
+        <h2>Véhicule</h2>
+        <div class="card-body">
+            <div class="kv">
+                <div class="k">Immatriculation</div><div class="v">{{ $client->plaque ?: '—' }}</div>
+                <div class="k">Type de vitrage</div><div class="v">{{ $client->type_vitrage ?: '—' }}</div>
+                <div class="k">Kilométrage</div><div class="v">{{ $client->kilometrage ? number_format($client->kilometrage, 0, ',', ' ').' km' : '—' }}</div>
+                <div class="k">Ancien modèle plaque</div><div class="v">{{ $client->ancien_modele_plaque ?: '—' }}</div>
+            </div>
+        </div>
+    </div>
 
-    <p><strong>3. Délais.</strong> Les délais d’intervention sont indicatifs. {{ $company?->commercial_name ?? $company?->name ?? 'GS Auto' }}
-      ne peut être tenue responsable d’un retard imputable à un tiers (assurance, approvisionnement, etc.).</p>
+    {{-- Assurance & Sinistre --}}
+    <div class="card mt-3">
+        <h2>Assurance & sinistre</h2>
+        <div class="card-body">
+            <div class="kv">
+                <div class="k">Assureur</div><div class="v">{{ $client->nom_assurance ?: ($client->autre_assurance ?: '—') }}</div>
+                <div class="k">N° police</div><div class="v">{{ $client->numero_police ?: '—' }}</div>
+                <div class="k">N° sinistre</div><div class="v">{{ $client->numero_sinistre ?: '—' }}</div>
+                <div class="k">Date du sinistre</div><div class="v">
+                    {{ $client->date_sinistre ? \Carbon\Carbon::parse($client->date_sinistre)->format('d/m/Y') : '—' }}
+                </div>
+                <div class="k">Date de déclaration</div><div class="v">
+                    {{ $client->date_declaration ? \Carbon\Carbon::parse($client->date_declaration)->format('d/m/Y') : '—' }}
+                </div>
+                <div class="k">Adresse d’intervention</div><div class="v">{{ $client->adresse_pose ?: '—' }}</div>
+                <div class="k">Précisions</div><div class="v">{{ $client->precision ?: '—' }}</div>
+            </div>
+        </div>
+    </div>
 
-    <p><strong>4. Garantie.</strong> Les interventions bénéficient d’une garantie pièces et main d’œuvre
-      selon les dispositions légales et nos conditions internes (défauts de pose hors choc/usage inapproprié).</p>
+    {{-- Autorisations / Déclarations --}}
+    <div class="card mt-3">
+        <h2>Autorisations & déclarations</h2>
+        <div class="card-body">
+            <ul style="margin:6px 0 0 18px; padding:0;">
+                <li>J’autorise <strong>{{ $cName }}</strong> à intervenir sur mon véhicule pour la réparation / pose de vitrage décrite ci-dessus.</li>
+                <li>Je confirme l’exactitude des informations communiquées (assurance, police, sinistre, identité, véhicule).</li>
+                <li>J’autorise la transmission de mes documents (carte grise, carte verte, facture, photos) à l’assureur et partenaires, aux seules fins de gestion du dossier.</li>
+                <li>En cas de prise en charge, je cède à <strong>{{ $cName }}</strong> la créance due par l’assureur à hauteur des montants remboursables (cession de créance).</li>
+                <li>Je reconnais avoir pris connaissance des conditions générales et de l’information RGPD en fin de document.</li>
+            </ul>
+        </div>
+    </div>
 
-    <p><strong>5. Responsabilité.</strong> {{ $company?->commercial_name ?? $company?->name ?? 'GS Auto' }} est tenue d’une obligation
-      de moyens. Toute réclamation devra être formulée par écrit dans les 7 jours ouvrés suivant l’intervention.</p>
+    {{-- Détail (section récap — non obligatoire si vous joignez le devis/la facture) --}}
+    <div class="card mt-3">
+        <h2>Détail de prestation (récapitulatif)</h2>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width:50%;">Désignation</th>
+                        <th style="width:15%;">Quantité</th>
+                        <th style="width:17%;">PU HT (€)</th>
+                        <th style="width:18%;">Total HT (€)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Remplacement/pose vitrage (référence)</td>
+                        <td class="text-center">1</td>
+                        <td class="text-right">—</td>
+                        <td class="text-right">—</td>
+                    </tr>
+                </tbody>
+            </table>
 
-    <p><strong>6. Données personnelles (RGPD).</strong> Les données recueillies sont nécessaires à la
-      gestion du dossier (prise de rendez-vous, relation assurance, facturation). Elles sont conservées
-      pendant la durée légale et accessibles par les personnes habilitées. Vous disposez de droits d’accès,
-      rectification, opposition, effacement et portabilité en écrivant à
-      <em>{{ $company?->email ?: '—' }}</em>. Pour plus d’informations, consultez notre politique de confidentialité.</p>
+            <table class="totals" style="margin-left:auto; margin-top:8px;">
+                <tr>
+                    <td class="text-right">Total HT</td>
+                    <td style="min-width:90px;" class="text-right">—</td>
+                </tr>
+                <tr>
+                    <td class="text-right">TVA (20%)</td>
+                    <td class="text-right">—</td>
+                </tr>
+                <tr>
+                    <td class="text-right"><strong>Total TTC</strong></td>
+                    <td class="text-right"><strong>—</strong></td>
+                </tr>
+            </table>
+            <div class="tiny mt-2 muted">Le chiffrage définitif figure sur le devis ou la facture correspondante.</div>
+        </div>
+    </div>
 
-    <p><strong>7. Règlement des litiges.</strong> À défaut d’accord amiable, compétence exclusive des tribunaux
-      du siège social de l’entreprise. Droit français applicable.</p>
-  </div>
+    {{-- Signatures --}}
+    <div class="grid mt-5">
+        <div class="col w-50">
+            <strong>Signature du client</strong> @if($fullName) — <span class="muted">{{ $fullName }}</span>@endif
+            <div class="signature-box mt-2"></div>
+            <div class="tiny mt-1">Date et lieu : {{ now()->format('d/m/Y') }} — ...........................................</div>
+        </div>
+        <div class="col w-50">
+            <strong>Pour {{ $cName }}</strong>
+            <div class="signature-box mt-2"></div>
+            <div class="tiny mt-1">Nom / Qualité : .........................................................</div>
+        </div>
+    </div>
 
+    {{-- Conditions générales & RGPD --}}
+    <div class="mt-5">
+        <h2 class="mb-1">Conditions générales & RGPD</h2>
+        <div class="tiny">
+            <p class="mb-1"><strong>1. Objet.</strong> Le présent contrat encadre la réparation / le remplacement de vitrages sur le véhicule identifié, réalisée conformément aux règles de l’art et aux prescriptions constructeur.</p>
+            <p class="mb-1"><strong>2. Prix & paiement.</strong> Les prix sont exprimés en EUR. En cas de prise en charge par l’assurance, le client cède à {{ $cName }} la créance correspondant au montant remboursable. Toute franchise, dépense non prise en charge ou prestation complémentaire reste due par le client.</p>
+            <p class="mb-1"><strong>3. Délais.</strong> Les délais d’intervention sont indicatifs. La responsabilité de {{ $cName }} ne saurait être engagée en cas de retard imputable à un tiers (assurance, approvisionnement, etc.).</p>
+            <p class="mb-1"><strong>4. Garantie.</strong> Les interventions bénéficient d’une garantie pièces et main-d’œuvre selon la législation et nos conditions internes (défauts de pose hors choc / usage inapproprié).</p>
+            <p class="mb-1"><strong>5. Responsabilité.</strong> {{ $cName }} est tenue d’une obligation de moyens. Toute réclamation doit être formulée par écrit sous 7 jours ouvrés suivant l’intervention.</p>
+            <p class="mb-1"><strong>6. Données personnelles (RGPD).</strong> Les données recueillies sont nécessaires à la gestion du dossier (RDV, relation assurance, facturation). Conservation pendant la durée légale; accès réservé aux personnes habilitées. Droits d’accès, rectification, opposition, effacement et portabilité par mail à {{ $cEmail ?: 'votre-email@domaine.tld' }}.</p>
+            <p class="mb-1"><strong>7. Litiges.</strong> À défaut d’accord amiable, compétence exclusive des tribunaux du siège social. Droit français applicable.</p>
+        </div>
+    </div>
 </main>
+
 </body>
 </html>
