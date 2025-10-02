@@ -3,7 +3,7 @@
   /** @var \App\Models\Client $client */
   $company = $company ?? $client->company;
 
-  // Company fallbacks (still printed as legal entity)
+  // Company fallbacks (legal info)
   $cName  = $company->commercial_name ?? $company->name ?? 'GS Auto';
   $cAddr  = trim(($company->address ? $company->address.', ' : '').($company->postal_code ?? '').' '.($company->city ?? ''));
   $cPhone = $company->phone ?? '';
@@ -11,21 +11,24 @@
   $cSiret = $company->siret ?? '';
   $cTva   = $company->tva ?? '';
 
-  // Force GS Auto logo (local copy if present, else remote)
+  // Force GS Auto logo (local if exists, else remote URL)
   $gsLocal = public_path('images/GS.png');
   $gsLogo  = file_exists($gsLocal) ? $gsLocal : 'https://dev.gservicesauto.com/images/GS.png';
 
-  // Colors (subtle orange accent)
-  $ORANGE      = '#F97316';  // primary accent
-  $ORANGE_SOFT = '#FFF7ED';  // light bg
-  $ORANGE_LINE = '#FDBA74';  // lines / borders
+  // Accent palette (subtle orange)
+  $ORANGE      = '#F97316';
+  $ORANGE_SOFT = '#FFF7ED';
+  $ORANGE_LINE = '#FDBA74';
   $INK         = '#111827';
+
+  $fullName = $client->nom_complet
+           ?? trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? ''));
 @endphp
 <!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>Contrat GS Auto – {{ $client->nom_complet ?? trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? '')) }}</title>
+  <title>Contrat GS Auto – {{ $fullName }}</title>
   <style>
     @page { margin: 32px 36px; }
     body  { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; color: {{ $INK }}; font-size:12px; line-height:1.45; }
@@ -41,9 +44,9 @@
     }
 
     .badge {
-      display:inline-block; padding:4px 10px; border-radius:999px; background: {{ $ORANGE_SOFT }}; color: {{ $ORANGE }};
-      font-weight:800; font-size:11px; border:1px solid {{ $ORANGE_LINE }};
-      text-transform:uppercase; letter-spacing:.02em;
+      display:inline-block; padding:4px 10px; border-radius:999px;
+      background: {{ $ORANGE_SOFT }}; color: {{ $ORANGE }}; border:1px solid {{ $ORANGE_LINE }};
+      font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:.02em;
     }
 
     h1 { font-size:20px; margin:0 0 8px 0; color:#0F172A; }
@@ -53,7 +56,6 @@
 
     .card { border:1px solid #E5E7EB; border-radius:10px; padding:12px 14px; margin-bottom:10px; }
     .grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    .grid-3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
 
     table.meta { width:100%; border-collapse:separate; border-spacing:0; }
     table.meta th, table.meta td { padding:8px 10px; font-size:12px; vertical-align:top; border-bottom:1px solid #E5E7EB; }
@@ -72,7 +74,7 @@
 
     .sign-grid { display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:12px; }
     .sign-box {
-      border:2px dashed {{ $ORANGE_LINE }}; border-radius:12px; padding:14px 16px; min-height:140px; position:relative; background:#FFFFFF;
+      border:2px dashed {{ $ORANGE_LINE }}; border-radius:12px; padding:14px 16px; min-height:140px; background:#FFFFFF;
     }
     .sign-box h3 { margin:0 0 6px; font-size:14px; color:#0F172A; }
     .sign-row { margin:4px 0; color:#1F2937; }
@@ -82,7 +84,7 @@
     .footer { margin-top:16px; padding-top:10px; border-top:2px solid {{ $ORANGE_LINE }}; font-size:10px; color:#6B7280; }
     .right { text-align:right; }
 
-    /* --- YOUSIGN SMART ANCHORS (hidden but printed) --- */
+    /* Yousign smart anchors (hidden text; keep in DOM) */
     .y-anchor { font-size:1px; color:#ffffff; }
   </style>
 </head>
@@ -91,7 +93,6 @@
   {{-- Header / Branding --}}
   <div class="brand">
     <div class="brand__left">
-      <img class="logo" src="{{ $gsLogo }}" alt="GS Auto">
       <div>
         <div class="brand__name">{{ $cName }}</div>
         <div class="brand__meta">
@@ -104,6 +105,7 @@
       </div>
     </div>
     <div class="right">
+      <br><br>
       <div class="badge">Contrat & Cession de créance</div><br>
       <div class="brand__tag">GS Auto</div>
     </div>
@@ -119,7 +121,7 @@
     <div class="card">
       <div class="section-title">Client</div>
       <table class="meta">
-        <tr><th>Nom</th><td>{{ $client->nom_complet ?? trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? '')) }}</td></tr>
+        <tr><th>Nom</th><td>{{ $fullName }}</td></tr>
         <tr><th>Email</th><td>{{ $client->email ?? '—' }}</td></tr>
         <tr><th>Téléphone</th><td>{{ $client->telephone ?? '—' }}</td></tr>
         <tr><th>Adresse</th><td>{{ $client->adresse ?? '—' }}</td></tr>
@@ -178,13 +180,11 @@
     <p>• Le client confirme l’exactitude des informations communiquées et autorise leur transmission à l’assureur.</p>
   </div>
 
-  {{-- Signatures (avec ancres Yousign) --}}
+  {{-- Signatures (with Yousign anchors) --}}
   <div class="sign-grid">
     <div class="sign-box">
       <h3>Signature du client</h3>
-      <div class="sign-row">Nom : <strong>
-        {{ $client->nom_complet ?? trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? '')) }}
-      </strong></div>
+      <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
       <div class="sign-row">
         Fait à : <span class="sign-line">&nbsp;</span>
         &nbsp;&nbsp;le : {{ now()->format('d/m/Y') }}
