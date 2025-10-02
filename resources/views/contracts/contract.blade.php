@@ -1,277 +1,204 @@
 {{-- resources/views/contracts/contract.blade.php --}}
 @php
   /** @var \App\Models\Client $client */
-  $company = $client->company;
+  $company = $company ?? $client->company;
 
-  // ---- Company (fallbacks) ----
-  $cName    = $company->commercial_name ?? $company->name ?? 'GS Auto';
-  $cAddr    = trim(($company->address ?: '').' '.($company->postal_code ?: '').' '.($company->city ?: ''));
-  $cEmail   = $company->email  ?? '';
-  $cPhone   = $company->phone  ?? '';
-  $cSiret   = $company->siret  ?? '';
-  $cTva     = $company->tva    ?? '';
-  $cApe     = $company->ape    ?? $company->naf_code ?? '';
-  $cRcs     = $company->rcs_number ?? '';
-  $cRcsCity = $company->rcs_city ?? '';
-  $cLogo    = $company->logo ?? null;
-
-  // Base64 logo if present (public disk)
-  $logoBase64 = null;
-  try {
-      if ($cLogo && \Illuminate\Support\Facades\Storage::disk('public')->exists($cLogo)) {
-          $logoData  = \Illuminate\Support\Facades\Storage::disk('public')->get($cLogo);
-          $mime      = strtolower(pathinfo($cLogo, PATHINFO_EXTENSION)) ?: 'png';
-          $logoBase64 = 'data:image/'.$mime.';base64,'.base64_encode($logoData);
-      }
-  } catch (\Throwable $e) { $logoBase64 = null; }
-
-  // ---- Client ----
-  $clientName  = trim(($client->prenom ?: '').' '.($client->nom_assure ?? $client->nom ?? ''));
-  $clientEmail = $client->email ?? '';
-  $clientPhone = $client->telephone ?? '';
-  $clientAddr  = trim(($client->adresse ?: '').' '.($client->code_postal ?: '').' '.($client->ville ?: ''));
-
-  // ---- Vehicle / insurance ----
-  $immat    = $client->plaque ?? '';
-  $vitrage  = $client->type_vitrage ?? '-';
-  $km       = $client->kilometrage ? number_format($client->kilometrage, 0, ',', ' ').' km' : '-';
-
-  $assureur = $client->nom_assurance ?: ($client->autre_assurance ?: '-');
-  $police   = $client->numero_police ?: '-';
-  $sinistre = $client->numero_sinistre ?: '-';
-
-  $dateSin  = $client->date_sinistre ? \Carbon\Carbon::parse($client->date_sinistre)->format('d/m/Y') : '-';
-  $dateDecl = $client->date_declaration ? \Carbon\Carbon::parse($client->date_declaration)->format('d/m/Y') : '-';
-
-  $today    = now()->format('d/m/Y');
-
-  // ---- Colors ----
-  $colorPrimary = '#0E7490'; // cyan-700
-  $colorDark    = '#0F172A'; // slate-900
-  $colorMuted   = '#64748B'; // slate-500
-  $borderColor  = '#E2E8F0'; // slate-200
+  // Company fallbacks
+  $cName  = $company->commercial_name ?? $company->name ?? 'Votre Société';
+  $cAddr  = trim(($company->address ? $company->address.', ' : '').($company->postal_code ?? '').' '.($company->city ?? ''));
+  $cPhone = $company->phone ?? '';
+  $cMail  = $company->email ?? '';
+  $cSiret = $company->siret ?? '';
+  $cTva   = $company->tva ?? '';
+  $logo   = $company->logo ?? null;
 @endphp
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>Contrat {{ $cName }} — Client #{{ $client->id }}</title>
+  <title>Contrat GS Auto – {{ $client->nom_complet ?? trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? '')) }}</title>
   <style>
-    @page { margin: 28mm 20mm 32mm 20mm; }
-    body { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; color: {{ $colorDark }}; font-size: 12px; line-height: 1.45; }
+    @page { margin: 32px 36px; }
+    body  { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; color:#111827; font-size:12px; line-height:1.45; }
 
-    header { position: fixed; top: -20mm; left: 0; right: 0; height: 18mm; }
-    footer { position: fixed; bottom: -22mm; left: 0; right: 0; height: 20mm; color: {{ $colorMuted }}; font-size: 10px; }
+    .brand { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+    .brand__left  { display:flex; align-items:center; gap:14px; }
+    .brand__name  { font-weight:800; font-size:18px; color:#0F766E; }
+    .brand__meta  { font-size:10px; color:#4B5563; line-height:1.35; }
+    .brand__tag   { font-weight:700; font-size:22px; color:#1F2937; }
 
-    .hr { height: 1px; background: {{ $borderColor }}; border: 0; margin: 6px 0 0; }
+    .logo {
+      width:75px; height:75px; object-fit:contain; border-radius:8px; border:1px solid #E5E7EB;
+    }
 
-    .wrap { width: 100%; }
-    .flex { display: flex; align-items: center; }
-    .space-between { justify-content: space-between; }
-    .right { text-align: right; }
+    .badge {
+      display:inline-block; padding:4px 10px; border-radius:999px; background:#ECFEFF; color:#0E7490; font-weight:700; font-size:11px;
+      border:1px solid #BAE6FD;
+    }
 
-    .brand { font-size: 18px; font-weight: 700; color: {{ $colorPrimary }}; }
-    .meta { font-size: 11px; color: {{ $colorMuted }}; margin-top: 2px; }
+    h1 { font-size:20px; margin:0 0 8px 0; color:#0F172A; }
+    h2 { font-size:14px; margin:0 0 8px 0; color:#0F172A; }
+    .muted { color:#6B7280; }
+    .small { font-size:10px; }
 
-    .title { margin: 10px 0 14px; font-size: 20px; color: {{ $colorPrimary }}; }
-    .subtitle { font-size: 13px; color: {{ $colorMuted }}; margin-top: 2px; }
+    .card { border:1px solid #E5E7EB; border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .grid-3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
 
-    .badge { display: inline-block; background: {{ $colorPrimary }}; color: #fff; padding: 4px 10px; border-radius: 999px; font-size: 11px; }
-    .section { margin-top: 14px; }
-    .section h3 { margin: 0 0 8px; font-size: 14px; color: {{ $colorDark }}; }
-    .section p { margin: 0 0 6px; }
+    table.meta { width:100%; border-collapse:separate; border-spacing:0; }
+    table.meta th, table.meta td { padding:8px 10px; font-size:12px; vertical-align:top; border-bottom:1px solid #E5E7EB; }
+    table.meta th { width:180px; color:#374151; font-weight:700; background:#F9FAFB; }
 
-    .grid-2 { display: table; width: 100%; border-collapse: collapse; }
-    .grid-2 .col { display: table-cell; width: 50%; vertical-align: top; padding-right: 10px; }
-    .grid-2 .col:last-child { padding-right: 0; padding-left: 10px; }
+    .section-title { margin:14px 0 8px; font-size:13px; font-weight:800; color:#0E7490; text-transform:uppercase; letter-spacing:.02em; }
 
-    table.info { width: 100%; border-collapse: collapse; }
-    table.info th { text-align: left; font-size: 11px; color: {{ $colorMuted }}; font-weight: 600; padding: 6px 8px; background: #F8FAFC; border-bottom: 1px solid {{ $borderColor }}; }
-    table.info td { padding: 8px; border-bottom: 1px solid {{ $borderColor }}; }
+    .block { border:1px dashed #C7D2FE; background:#F8FAFF; border-radius:10px; padding:12px 14px; margin-top:8px; }
+    .legal p { margin:0 0 8px; text-align:justify; }
 
-    .box { border: 1px solid {{ $borderColor }}; border-radius: 6px; padding: 10px 12px; }
-    .muted { color: {{ $colorMuted }}; }
-    .small { font-size: 10px; }
+    .sign-grid { display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:12px; }
+    .sign-box {
+      border:2px dashed #B6E3F8; border-radius:12px; padding:14px 16px; min-height:140px; position:relative; background:#F7FBFE;
+    }
+    .sign-box h3 { margin:0 0 6px; font-size:14px; color:#0F172A; }
+    .sign-row { margin:4px 0; color:#1F2937; }
+    .sign-line { display:inline-block; min-width:160px; border-bottom:2px solid #93C5FD; transform: translateY(-3px); }
+    .sign-hint { font-size:11px; color:#64748B; margin-top:8px; }
 
-    .terms ol { margin: 0 0 0 16px; padding: 0; }
-    .terms li { margin: 6px 0; }
+    .footer { margin-top:16px; padding-top:10px; border-top:1px solid #E5E7EB; font-size:10px; color:#6B7280; }
+    .right { text-align:right; }
 
-    .sig-grid { display: table; width: 100%; border-collapse: collapse; margin-top: 16px; }
-    .sig-col { display: table-cell; width: 50%; vertical-align: top; padding-right: 12px; }
-    .sig-col:last-child { padding-right: 0; padding-left: 12px; }
-    .sig-box { border: 1px dashed {{ $colorMuted }}; border-radius: 6px; padding: 12px; height: 120px; }
-    .sig-label { font-weight: 600; font-size: 12px; margin-bottom: 6px; color: {{ $colorDark }}; }
-    .sig-meta { font-size: 11px; color: {{ $colorMuted }}; }
-
-    .mt-8 { margin-top: 8px; }
-    .mt-12 { margin-top: 12px; }
+    /* --- YOUSIGN SMART ANCHORS (hidden but printed) --- */
+    .y-anchor { font-size:1px; color:#ffffff; }
   </style>
 </head>
 <body>
 
-  {{-- ===== Header ===== --}}
-  <header>
-    <div class="wrap">
-      <div class="flex space-between">
-        <div class="flex" style="gap:10px;">
-          @if($logoBase64)
-            <img src="{{ $logoBase64 }}" alt="Logo" style="height:26px;">
-          @endif
-          <div>
-            <div class="brand">{{ $cName }}</div>
-            <div class="meta">
-              {{ $cAddr }}
-              @if($cEmail) · {{ $cEmail }} @endif
-              @if($cPhone) · {{ $cPhone }} @endif
-            </div>
-          </div>
-        </div>
-        <div class="right">
-          <span class="badge">Contrat & Cession de créance</span>
-          <div class="meta">Réf. client #{{ $client->id }} — Émis le {{ $today }}</div>
-        </div>
-      </div>
-      <div class="hr"></div>
-    </div>
-  </header>
-
-  {{-- ===== Footer ===== --}}
-  <footer>
-    <div class="hr"></div>
-    <div class="flex space-between" style="margin-top:6px;">
-      <div class="small">
-        {{ $cName }}
-        @if($cSiret) · SIRET {{ $cSiret }} @endif
-        @if($cTva)   · TVA {{ $cTva }} @endif
-        @if($cApe)   · APE/NAF {{ $cApe }} @endif
-        @if($cRcs || $cRcsCity) · RCS {{ trim($cRcs.' '.$cRcsCity) }} @endif
-      </div>
-      <div class="small">Page <span class="page-number"></span></div>
-    </div>
-    <script type="text/php">
-      if (isset($pdf)) {
-        $x = 535; $y = 816; $text = $PAGE_NUM; $font = $fontMetrics->get_font("DejaVu Sans", "normal");
-        $pdf->page_text($x, $y, $text, $font, 9, array(100/255, 116/255, 139/255));
-      }
-    </script>
-  </footer>
-
-  {{-- ===== Content ===== --}}
-  <main>
-    <h1 class="title">Contrat de prise en charge & cession de créance</h1>
-    <div class="subtitle">Encadre l’intervention vitrage, l’avance des frais et la cession de créance à l’assurance.</div>
-
-    {{-- Info blocks --}}
-    <div class="section grid-2">
-      <div class="col">
-        <div class="box">
-          <h3>Client</h3>
-          <table class="info">
-            <tr><th>Nom</th><td>{{ $clientName ?: '—' }}</td></tr>
-            <tr><th>Email</th><td>{{ $clientEmail ?: '—' }}</td></tr>
-            <tr><th>Téléphone</th><td>{{ $clientPhone ?: '—' }}</td></tr>
-            <tr><th>Adresse</th><td>{{ $clientAddr ?: '—' }}</td></tr>
-          </table>
-        </div>
-      </div>
-      <div class="col">
-        <div class="box">
-          <h3>Véhicule</h3>
-          <table class="info">
-            <tr><th>Immatriculation</th><td>{{ $immat ?: '—' }}</td></tr>
-            <tr><th>Type de vitrage</th><td>{{ $vitrage }}</td></tr>
-            <tr><th>Kilométrage</th><td>{{ $km }}</td></tr>
-          </table>
+  {{-- Header / Branding --}}
+  <div class="brand">
+    <div class="brand__left">
+      @if($logo && file_exists(public_path('storage/'.$logo)))
+        <img class="logo" src="{{ public_path('storage/'.$logo) }}" alt="Logo">
+      @else
+        <div class="logo"></div>
+      @endif
+      <div>
+        <div class="brand__name">{{ $cName }}</div>
+        <div class="brand__meta">
+          {{ $cAddr }}<br>
+          @if($cPhone) Tél&nbsp;: {{ $cPhone }} · @endif
+          @if($cMail) Email&nbsp;: {{ $cMail }} @endif
+          @if($cSiret) · SIRET {{ $cSiret }} @endif
+          @if($cTva) · TVA {{ $cTva }} @endif
         </div>
       </div>
     </div>
-
-    <div class="section">
-      <div class="box">
-        <h3>Assurance</h3>
-        <table class="info">
-          <tr><th>Assureur</th><td>{{ $assureur }}</td></tr>
-          <tr><th>N° de police</th><td>{{ $police }}</td></tr>
-          <tr><th>N° de sinistre</th><td>{{ $sinistre }}</td></tr>
-          <tr><th>Date du sinistre</th><td>{{ $dateSin }}</td></tr>
-          <tr><th>Date de déclaration</th><td>{{ $dateDecl }}</td></tr>
-        </table>
-      </div>
+    <div class="right">
+      <div class="badge">Contrat & Cession de Créance</div><br>
+      <div class="brand__tag">GS Auto</div>
     </div>
+  </div>
 
-    {{-- Objet --}}
-    <div class="section">
-      <h3>Objet du contrat</h3>
+  {{-- Sub meta --}}
+  <div class="small muted" style="margin-bottom:10px;">
+    Contrat n° {{ $client->id }} · édité le {{ now()->format('d/m/Y') }}
+  </div>
+
+  {{-- CLIENT / VEHICULE / ASSURANCE --}}
+  <div class="grid">
+    <div class="card">
+      <div class="section-title">Client</div>
+      <table class="meta">
+        <tr><th>Nom</th><td>{{ $client->nom_complet ?? trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? '')) }}</td></tr>
+        <tr><th>Email</th><td>{{ $client->email ?? '—' }}</td></tr>
+        <tr><th>Téléphone</th><td>{{ $client->telephone ?? '—' }}</td></tr>
+        <tr><th>Adresse</th><td>{{ $client->adresse ?? '—' }}</td></tr>
+        <tr><th>Réf. Interne</th><td>{{ $client->reference_interne ?? '—' }}</td></tr>
+        <tr><th>Réf. Client</th><td>{{ $client->reference_client ?? '—' }}</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="section-title">Véhicule</div>
+      <table class="meta">
+        <tr><th>Immatriculation</th><td>{{ $client->plaque ?? '—' }}</td></tr>
+        <tr><th>Kilométrage</th><td>{{ $client->kilometrage ? number_format($client->kilometrage,0,',',' ') . ' km' : '—' }}</td></tr>
+        <tr><th>Type de vitrage</th><td>{{ $client->type_vitrage ?? '—' }}</td></tr>
+        <tr><th>Anc. modèle plaque</th><td>{{ $client->ancien_modele_plaque ?? '—' }}</td></tr>
+        <tr><th>Adresse de pose</th><td>{{ $client->adresse_pose ?? '—' }}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Assurance</div>
+    <table class="meta">
+      <tr><th>Assureur</th><td>{{ $client->nom_assurance ?? '—' }}</td></tr>
+      <tr><th>N° Police</th><td>{{ $client->numero_police ?? '—' }}</td></tr>
+      <tr><th>N° Sinistre</th><td>{{ $client->numero_sinistre ?? '—' }}</td></tr>
+      <tr><th>Autre assurance</th><td>{{ $client->autre_assurance ?? '—' }}</td></tr>
+      <tr><th>Date du sinistre</th><td>{{ $client->date_sinistre ? \Carbon\Carbon::parse($client->date_sinistre)->format('d/m/Y') : '—' }}</td></tr>
+      <tr><th>Date de déclaration</th><td>{{ $client->date_declaration ? \Carbon\Carbon::parse($client->date_declaration)->format('d/m/Y') : '—' }}</td></tr>
+    </table>
+  </div>
+
+  {{-- Mandat / Cession / Conditions --}}
+  <div class="grid">
+    <div class="block legal">
+      <h2>Mandat</h2>
       <p>
-        Le présent document formalise l’intervention de <strong>{{ $cName }}</strong> pour la réparation ou le remplacement d’un vitrage sur le véhicule ci-dessus.
-        Il encadre l’avance des frais, la facturation directe à l’assureur et, le cas échéant, la <strong>cession de créance</strong> due par l’assureur à l’assuré.
+        Le client mandate {{ $cName }} pour effectuer les démarches nécessaires auprès de l’assureur,
+        gérer la relation sinistre et procéder, le cas échéant, au remplacement / à la réparation du vitrage.
       </p>
     </div>
-
-    {{-- Cession / Mandat --}}
-    <div class="section">
-      <h3>Cession de créance & mandat de gestion</h3>
-      <div class="box">
-        <p>
-          Je soussigné(e) <strong>{{ $clientName ?: '—' }}</strong>, assuré(e) du véhicule immatriculé <strong>{{ $immat ?: '—' }}</strong>, 
-          autorise la société <strong>{{ $cName }}</strong> à gérer, en mon nom, l’ensemble des formalités liées au sinistre susvisé, et à adresser la facture à mon assureur
-          ({{ $assureur }} – n° police {{ $police }}).
-        </p>
-        <p class="mt-8">
-          En cas de prise en charge par l’assurance, je <strong>cède à titre de paiement</strong> au profit de <strong>{{ $cName }}</strong> la créance correspondant au montant TTC
-          de la facture, à hauteur de l’indemnité due par l’assureur. Le solde éventuel (franchise, exclusions, plafonds, vétusté, défaut de garanties, etc.) reste à ma charge
-          et sera réglé à {{ $cName }} à première demande.
-        </p>
-      </div>
-    </div>
-
-    {{-- Conditions générales --}}
-    <div class="section terms">
-      <h3>Conditions générales</h3>
-      <ol>
-        <li><strong>Identification :</strong> Le client certifie l’exactitude des informations communiquées (identité, assurance, immatriculation).</li>
-        <li><strong>Accord d’intervention :</strong> Le client accepte l’intervention (réparation / remplacement) telle que décrite sur l’ordre de réparation.</li>
-        <li><strong>Prix & règlement :</strong> Le tarif appliqué est celui en vigueur le jour de l’intervention. Les montants non pris en charge par l’assureur sont à la charge du client (franchise, options, défaut de garanties, etc.).</li>
-        <li><strong>Restitution :</strong> La restitution intervient après l’intervention et, si nécessaire, le règlement des sommes dues par le client.</li>
-        <li><strong>Cession de créance :</strong> La cession s’opère à due concurrence des sommes réglées par l’assureur. En cas de refus total ou partiel, le client règle le solde dû.</li>
-        <li><strong>Pièces :</strong> Les pièces remplacées peuvent être conservées par {{ $cName }} pour expertise. Propriété réservée jusqu’au paiement intégral.</li>
-        <li><strong>Garanties :</strong> Pose vitrage garantie contre les vices de pose selon conditions internes disponibles sur demande.</li>
-        <li><strong>Responsabilité :</strong> {{ $cName }} n’est pas responsable des retards dus à la force majeure ou aux décisions de l’assureur.</li>
-        <li><strong>RGPD :</strong> Données traitées pour la gestion du dossier. Droits d’accès/rectification/opposition via {{ $cEmail ?: 'notre adresse e-mail' }}.</li>
-        <li><strong>Droit & litiges :</strong> Droit français. Compétence des tribunaux du ressort du siège social de {{ $cName }}, sauf dispositions d’ordre public.</li>
-      </ol>
-    </div>
-
-    {{-- Signature block --}}
-    <div class="section">
-      <div class="grid-2">
-        <div class="col">
-          <div class="sig-box">
-            <div class="sig-label">Signature du client</div>
-            <div class="sig-meta">
-              Nom : <strong>{{ $clientName ?: '—' }}</strong><br>
-              Fait à : ____________________ &nbsp; le : {{ $today }}<br>
-              Lu et approuvé
-            </div>
-            {{-- Les “fields” e-sign sont ajoutés via l’API (pas besoin d’ancres). --}}
-          </div>
-        </div>
-        <div class="col">
-          <div class="sig-box">
-            <div class="sig-label">Cachet & signature de {{ $cName }}</div>
-            <div class="sig-meta">
-              Représentant : ____________________<br>
-              Fait à : ____________________ &nbsp; le : {{ $today }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <p class="small muted mt-12">
-        En signant, le client confirme avoir pris connaissance et accepté les présentes conditions, autorise {{ $cName }} à gérer la relation avec l’assureur et,
-        le cas échéant, cède sa créance d’indemnisation à {{ $cName }} à hauteur de la facture.
+    <div class="block legal">
+      <h2>Cession de créance</h2>
+      <p>
+        En cas de prise en charge par l’assureur, le client cède à {{ $cName }} sa créance d’indemnisation
+        à hauteur du montant de la facture émise par {{ $cName }} au titre de l’intervention réalisée.
       </p>
     </div>
-  </main>
+  </div>
+
+  <div class="card legal">
+    <h2>Conditions & Informations</h2>
+    <p>• La prise en charge reste conditionnée à la garantie du contrat d’assurance et aux plafonds applicables.</p>
+    <p>• Le reste à charge éventuel (franchise, exclusions, non-garanti) demeure dû par le client.</p>
+    <p>• Le client confirme l’exactitude des informations communiquées et l’autorise à les transmettre à l’assureur.</p>
+  </div>
+
+  {{-- Signatures --}}
+  <div class="sign-grid">
+    <div class="sign-box">
+      <h3>Signature du client</h3>
+      <div class="sign-row">Nom : <strong>
+        {{ $client->nom_complet ?? trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? '')) }}
+      </strong></div>
+      <div class="sign-row">
+        Fait à : <span class="sign-line">&nbsp;</span>
+        &nbsp;&nbsp;le : {{ now()->format('d/m/Y') }}
+      </div>
+      <div class="sign-hint">Lu et approuvé</div>
+
+      {{-- Yousign smart anchor (hidden but printed). Set upload with $withAnchors=true --}}
+      <div class="y-anchor">[[SIGN_CLIENT]]</div>
+    </div>
+
+    <div class="sign-box">
+      <h3>Cachet & signature de {{ $cName }}</h3>
+      <div class="sign-row">Représentant : <span class="sign-line">&nbsp;</span></div>
+      <div class="sign-row">
+        Fait à : <span class="sign-line">&nbsp;</span>
+        &nbsp;&nbsp;le : {{ now()->format('d/m/Y') }}
+      </div>
+
+      {{-- Yousign smart anchor for company --}}
+      <div class="y-anchor">[[SIGN_COMPANY]]</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Ce document a été généré automatiquement – {{ $cName }} · {{ $cAddr }} ·
+    @if($cPhone) {{ $cPhone }} · @endif
+    @if($cMail) {{ $cMail }} @endif
+  </div>
+
 </body>
 </html>
