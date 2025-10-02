@@ -10,89 +10,147 @@ use Illuminate\Support\Facades\Storage;
 
 class ContractController extends Controller
 {
-    // --- PDF build & store (called by your button) ---
+    /**
+     * Génère le contrat PDF et le stocke dans storage/app/public/contracts/{id}/contract.pdf
+     */
     public function generate(Request $request, Client $client)
     {
-        $pdf = Pdf::loadView('contracts.client', ['client' => $client])->setPaper('a4');
+        // Charger la relation company pour l'affichage du contrat
+        $client->loadMissing('company');
+
+        // Générer le PDF depuis la vue Blade
+        $pdf = Pdf::loadView('contracts.contract', [
+            'client'  => $client,
+            'company' => $client->company,
+        ])->setPaper('a4');
 
         $dir      = "contracts/{$client->id}";
         $filename = 'contract.pdf';
         $path     = "{$dir}/{$filename}";
 
+        // Créer le répertoire si besoin
         Storage::disk('public')->makeDirectory($dir);
+
+        // Sauvegarder le PDF
         Storage::disk('public')->put($path, $pdf->output());
 
-        $client->contract_pdf_path = $path;
-        $client->statut_gsauto     = $client->statut_gsauto ?: 'draft';
-        $client->save();
+        // Mettre à jour le client
+        $client->update([
+            'contract_pdf_path' => $path,
+            'statut_gsauto'     => $client->statut_gsauto ?: 'draft',
+        ]);
 
         return back()->with('success', 'Contrat généré.')->with('open_signature', true);
     }
 
+    /**
+     * Télécharger le contrat brut (non signé)
+     */
     public function download(Client $client)
     {
         if (!$client->contract_pdf_path || !Storage::disk('public')->exists($client->contract_pdf_path)) {
             return back()->with('error', 'Aucun contrat généré pour ce client.');
         }
-        return Storage::disk('public')->download($client->contract_pdf_path, "Contrat-{$client->id}.pdf");
+
+        return Storage::disk('public')->download(
+            $client->contract_pdf_path,
+            "Contrat-{$client->id}.pdf"
+        );
     }
 
+    /**
+     * Télécharger le contrat signé (si disponible)
+     */
     public function downloadSigned(Client $client)
     {
-        if (!$client->contract_signed_pdf_path || !Storage::disk('public')->exists($client->contract_signed_pdf_path)) {
+        if (!$client->signed_pdf_path || !Storage::disk('public')->exists($client->signed_pdf_path)) {
             return back()->with('error', 'Aucun contrat signé disponible pour ce client.');
         }
-        return Storage::disk('public')->download($client->contract_signed_pdf_path, "Contrat-Signe-{$client->id}.pdf");
+
+        return Storage::disk('public')->download(
+            $client->signed_pdf_path,
+            "Contrat-Signe-{$client->id}.pdf"
+        );
     }
 
-    // --- Send for e-signature (uses service above) ---
+    /**
+     * Envoyer le contrat pour signature électronique via Yousign
+     */
     public function send(Request $request, Client $client, YousignService $ys)
     {
-        // Ensure a PDF exists
+        // Vérifier qu'un PDF existe, sinon le générer
         if (!$client->contract_pdf_path || !Storage::disk('public')->exists($client->contract_pdf_path)) {
-            // auto-generate if missing
             $this->generate($request, $client);
             $client->refresh();
         }
 
         $absPath = Storage::disk('public')->path($client->contract_pdf_path);
 
-        // 1) Create SR
-        $sr = $ys->createSignatureRequest("Contrat #{$client->id} - {$client->nom}", 'email');
+        // 1) Créer une demande de signature
+        $title = "Contrat #{$client->id} - {$client->getNomCompletAttribute()}";
+        $sr = $ys->createSignatureRequest($title, 'email'); // retourne ['id' => ...]
 
-        // 2) Upload document (use smart anchors in your template or later give manual fields)
-        $doc = $ys->uploadDocument($sr['id'], $absPath, true);
+        // 2) Uploader le document
+        // Ici : pas d’anchors → on devra préciser manuellement les champs
+        $doc = $ys->uploadDocument($sr['id'], $absPath, false);
 
-        // 3) Add signer (no manual fields if you used smart anchors)
+        // 3) Ajouter le signataire
+        $phone = $client->telephone;
+        if ($phone && !preg_match('/^\+\d{6,15}$/', $phone)) {
+            $phone = null; // Yousign exige format E.164
+        }
+
         $payload = [
             'info' => [
-                'first_name'   => $client->prenom ?? $client->nom,
-                'last_name'    => $client->nom ?? '—',
+                'first_name'   => $client->prenom ?: 'Client',
+                'last_name'    => $client->nom_assure ?? $client->nom ?? '-',
                 'email'        => $client->email,
-                'phone_number' => $client->telephone ?? null,   // optional
+                'phone_number' => $phone,
                 'locale'       => config('services.yousign.locale', 'fr'),
             ],
             'signature_level'               => 'electronic_signature',
-            'signature_authentication_mode' => 'otp_email',   // or 'no_otp' in sandbox
-            // If you did NOT use smart anchors, add fields:
-            // 'fields' => [[ 'document_id' => $doc['id'], 'type' => 'signature', 'page' => 1, 'width' => 180, 'x' => 400, 'y' => 650 ]],
+            'signature_authentication_mode' => 'otp_email', // ou 'no_otp' en sandbox
+            'fields' => [[
+                'document_id' => $doc['id'],
+                'type'        => 'signature',
+                'page'        => 1,
+                'x'           => 100,  // coord X (px)
+                'y'           => 700,  // coord Y (px)
+                'width'       => 150,
+                'height'      => 40,
+            ]],
         ];
+
         $ys->addSigner($sr['id'], $payload);
 
-        // 4) Activate
+        // 4) Activer (envoi du mail au client)
         $ys->activate($sr['id']);
 
-        // persist ids + status
-        $client->yousign_request_id = $sr['id'];
-        $client->statut_gsauto      = 'sent';
-        $client->save();
+        // 5) Persister dans la DB
+        $client->update([
+            'yousign_signature_request_id' => $sr['id'],
+            'yousign_document_id'          => $doc['id'] ?? null,
+            'statut_gsauto'                => 'sent',
+        ]);
 
-        return back()->with('success', 'Document envoyé au client pour signature.')->with('open_signature', true);
+        return back()
+            ->with('success', 'Document envoyé au client pour signature.')
+            ->with('open_signature', true);
     }
 
+    /**
+     * Relancer le client (Yousign enverra un rappel)
+     */
     public function resend(Request $request, Client $client, YousignService $ys)
     {
-        // In v3, to “resend”, create a new Signature Request (simplest) or manage reminders via API if needed.
-        return $this->send($request, $client, $ys);
+        if (!$client->yousign_signature_request_id) {
+            return back()->with('error', "Aucune demande de signature Yousign n'est associée à ce client.");
+        }
+
+        $ys->activate($client->yousign_signature_request_id);
+
+        return back()
+            ->with('success', 'Rappel envoyé au client.')
+            ->with('open_signature', true);
     }
 }
