@@ -3,14 +3,23 @@
   /** @var \App\Models\Client $client */
   $company = $company ?? $client->company;
 
-  // Company fallbacks
-  $cName  = $company->commercial_name ?? $company->name ?? 'Votre Société';
+  // Company fallbacks (still printed as legal entity)
+  $cName  = $company->commercial_name ?? $company->name ?? 'GS Auto';
   $cAddr  = trim(($company->address ? $company->address.', ' : '').($company->postal_code ?? '').' '.($company->city ?? ''));
   $cPhone = $company->phone ?? '';
   $cMail  = $company->email ?? '';
   $cSiret = $company->siret ?? '';
   $cTva   = $company->tva ?? '';
-  $logo   = $company->logo ?? null;
+
+  // Force GS Auto logo (local copy if present, else remote)
+  $gsLocal = public_path('images/GS.png');
+  $gsLogo  = file_exists($gsLocal) ? $gsLocal : 'https://dev.gservicesauto.com/images/GS.png';
+
+  // Colors (subtle orange accent)
+  $ORANGE      = '#F97316';  // primary accent
+  $ORANGE_SOFT = '#FFF7ED';  // light bg
+  $ORANGE_LINE = '#FDBA74';  // lines / borders
+  $INK         = '#111827';
 @endphp
 <!doctype html>
 <html lang="fr">
@@ -19,21 +28,22 @@
   <title>Contrat GS Auto – {{ $client->nom_complet ?? trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? '')) }}</title>
   <style>
     @page { margin: 32px 36px; }
-    body  { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; color:#111827; font-size:12px; line-height:1.45; }
+    body  { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; color: {{ $INK }}; font-size:12px; line-height:1.45; }
 
     .brand { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
     .brand__left  { display:flex; align-items:center; gap:14px; }
-    .brand__name  { font-weight:800; font-size:18px; color:#0F766E; }
+    .brand__name  { font-weight:800; font-size:18px; color:#1F2937; }
     .brand__meta  { font-size:10px; color:#4B5563; line-height:1.35; }
-    .brand__tag   { font-weight:700; font-size:22px; color:#1F2937; }
+    .brand__tag   { font-weight:800; font-size:22px; color:#1F2937; }
 
     .logo {
-      width:75px; height:75px; object-fit:contain; border-radius:8px; border:1px solid #E5E7EB;
+      width:78px; height:78px; object-fit:contain; border-radius:10px; border:1px solid #E5E7EB; background:#FFFFFF;
     }
 
     .badge {
-      display:inline-block; padding:4px 10px; border-radius:999px; background:#ECFEFF; color:#0E7490; font-weight:700; font-size:11px;
-      border:1px solid #BAE6FD;
+      display:inline-block; padding:4px 10px; border-radius:999px; background: {{ $ORANGE_SOFT }}; color: {{ $ORANGE }};
+      font-weight:800; font-size:11px; border:1px solid {{ $ORANGE_LINE }};
+      text-transform:uppercase; letter-spacing:.02em;
     }
 
     h1 { font-size:20px; margin:0 0 8px 0; color:#0F172A; }
@@ -49,21 +59,27 @@
     table.meta th, table.meta td { padding:8px 10px; font-size:12px; vertical-align:top; border-bottom:1px solid #E5E7EB; }
     table.meta th { width:180px; color:#374151; font-weight:700; background:#F9FAFB; }
 
-    .section-title { margin:14px 0 8px; font-size:13px; font-weight:800; color:#0E7490; text-transform:uppercase; letter-spacing:.02em; }
+    .section-title {
+      margin:14px 0 8px; font-size:13px; font-weight:900; color: {{ $ORANGE }};
+      text-transform:uppercase; letter-spacing:.02em;
+    }
 
-    .block { border:1px dashed #C7D2FE; background:#F8FAFF; border-radius:10px; padding:12px 14px; margin-top:8px; }
+    .block {
+      border:1px dashed {{ $ORANGE_LINE }}; background: {{ $ORANGE_SOFT }};
+      border-radius:10px; padding:12px 14px; margin-top:8px;
+    }
     .legal p { margin:0 0 8px; text-align:justify; }
 
     .sign-grid { display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:12px; }
     .sign-box {
-      border:2px dashed #B6E3F8; border-radius:12px; padding:14px 16px; min-height:140px; position:relative; background:#F7FBFE;
+      border:2px dashed {{ $ORANGE_LINE }}; border-radius:12px; padding:14px 16px; min-height:140px; position:relative; background:#FFFFFF;
     }
     .sign-box h3 { margin:0 0 6px; font-size:14px; color:#0F172A; }
     .sign-row { margin:4px 0; color:#1F2937; }
-    .sign-line { display:inline-block; min-width:160px; border-bottom:2px solid #93C5FD; transform: translateY(-3px); }
+    .sign-line { display:inline-block; min-width:160px; border-bottom:2px solid {{ $ORANGE_LINE }}; transform: translateY(-3px); }
     .sign-hint { font-size:11px; color:#64748B; margin-top:8px; }
 
-    .footer { margin-top:16px; padding-top:10px; border-top:1px solid #E5E7EB; font-size:10px; color:#6B7280; }
+    .footer { margin-top:16px; padding-top:10px; border-top:2px solid {{ $ORANGE_LINE }}; font-size:10px; color:#6B7280; }
     .right { text-align:right; }
 
     /* --- YOUSIGN SMART ANCHORS (hidden but printed) --- */
@@ -75,11 +91,7 @@
   {{-- Header / Branding --}}
   <div class="brand">
     <div class="brand__left">
-      @if($logo && file_exists(public_path('storage/'.$logo)))
-        <img class="logo" src="{{ public_path('storage/'.$logo) }}" alt="Logo">
-      @else
-        <div class="logo"></div>
-      @endif
+      <img class="logo" src="{{ $gsLogo }}" alt="GS Auto">
       <div>
         <div class="brand__name">{{ $cName }}</div>
         <div class="brand__meta">
@@ -91,19 +103,18 @@
         </div>
       </div>
     </div>
-    <br>   <br>
     <div class="right">
-      <div class="badge">Contrat & Cession de Créance</div><br>
+      <div class="badge">Contrat & Cession de créance</div><br>
       <div class="brand__tag">GS Auto</div>
     </div>
   </div>
 
   {{-- Sub meta --}}
   <div class="small muted" style="margin-bottom:10px;">
-    Contrat n° {{ $client->id }} · édité le {{ now()->format('d/m/Y') }}
+    Contrat n° {{ $client->id }} · Édité le {{ now()->format('d/m/Y') }}
   </div>
 
-  {{-- CLIENT / VEHICULE / ASSURANCE --}}
+  {{-- CLIENT / VÉHICULE --}}
   <div class="grid">
     <div class="card">
       <div class="section-title">Client</div>
@@ -128,6 +139,7 @@
     </div>
   </div>
 
+  {{-- ASSURANCE --}}
   <div class="card">
     <div class="section-title">Assurance</div>
     <table class="meta">
@@ -140,7 +152,7 @@
     </table>
   </div>
 
-  {{-- Mandat / Cession / Conditions --}}
+  {{-- Mandat / Cession --}}
   <div class="grid">
     <div class="block legal">
       <h2>Mandat</h2>
@@ -158,14 +170,15 @@
     </div>
   </div>
 
+  {{-- Conditions --}}
   <div class="card legal">
     <h2>Conditions & Informations</h2>
     <p>• La prise en charge reste conditionnée à la garantie du contrat d’assurance et aux plafonds applicables.</p>
     <p>• Le reste à charge éventuel (franchise, exclusions, non-garanti) demeure dû par le client.</p>
-    <p>• Le client confirme l’exactitude des informations communiquées et l’autorise à les transmettre à l’assureur.</p>
+    <p>• Le client confirme l’exactitude des informations communiquées et autorise leur transmission à l’assureur.</p>
   </div>
 
-  {{-- Signatures --}}
+  {{-- Signatures (avec ancres Yousign) --}}
   <div class="sign-grid">
     <div class="sign-box">
       <h3>Signature du client</h3>
@@ -177,8 +190,6 @@
         &nbsp;&nbsp;le : {{ now()->format('d/m/Y') }}
       </div>
       <div class="sign-hint">Lu et approuvé</div>
-
-      {{-- Yousign smart anchor (hidden but printed). Set upload with $withAnchors=true --}}
       <div class="y-anchor">[[SIGN_CLIENT]]</div>
     </div>
 
@@ -189,16 +200,14 @@
         Fait à : <span class="sign-line">&nbsp;</span>
         &nbsp;&nbsp;le : {{ now()->format('d/m/Y') }}
       </div>
-
-      {{-- Yousign smart anchor for company --}}
       <div class="y-anchor">[[SIGN_COMPANY]]</div>
     </div>
   </div>
 
   <div class="footer">
-    Ce document a été généré automatiquement – {{ $cName }} · {{ $cAddr }} ·
-    @if($cPhone) {{ $cPhone }} · @endif
-    @if($cMail) {{ $cMail }} @endif
+    Document généré automatiquement – {{ $cName }} · {{ $cAddr }}
+    @if($cPhone) · {{ $cPhone }} @endif
+    @if($cMail) · {{ $cMail }} @endif
   </div>
 
 </body>
