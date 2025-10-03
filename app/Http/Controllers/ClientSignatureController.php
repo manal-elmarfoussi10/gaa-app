@@ -47,7 +47,7 @@ class ClientSignatureController extends Controller
                 'type'        => 'signature',
                 'page'        => 2,
                 'x'           => 120,
-                'y'           => 560,
+                'y'           => 460,
                 'width'       => 180,
                 'height'      => 45,
             ];
