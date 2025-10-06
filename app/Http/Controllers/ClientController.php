@@ -146,9 +146,12 @@ class ClientController extends Controller
             'raison'             => 'nullable|string|max:255',
             'type_vitrage'       => 'nullable|string|max:255',
             'professionnel'      => 'nullable|string|max:255',
-            'photo_vitrage'      => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
-            'photo_carte_verte'  => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
-            'photo_carte_grise'  => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+    
+            // 15 MB (max is in KB)
+            'photo_vitrage'      => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:15360',
+            'photo_carte_verte'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:15360',
+            'photo_carte_grise'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:15360',
+    
             'type_cadeau'        => 'nullable|string|max:255',
             'numero_sinistre'    => 'nullable|string|max:255',
             'kilometrage'        => 'nullable|string|max:255',
@@ -157,6 +160,11 @@ class ClientController extends Controller
             'reference_interne'  => 'nullable|string|max:255',
             'reference_client'   => 'nullable|string|max:255',
             'precision'          => 'nullable|string',
+        ], [
+            // Optional nicer message
+            'photo_carte_grise.max' => 'La carte grise ne doit pas dépasser 15 Mo.',
+            'photo_carte_verte.max' => 'La carte verte ne doit pas dépasser 15 Mo.',
+            'photo_vitrage.max'     => 'La photo du vitrage ne doit pas dépasser 15 Mo.',
         ]);
     
         // Flags
