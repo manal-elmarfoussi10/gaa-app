@@ -99,8 +99,6 @@ Route::middleware(['auth', CompanyAccess::class])
     ->scopeBindings()
     ->group(function () {
 
-    // (removed duplicate: clients.contract.download_signed on ClientSignatureController)
-
     // Dashboards
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/poseur', [DashboardPoseurController::class, 'index'])->name('dashboard.poseur');
@@ -145,9 +143,9 @@ Route::middleware(['auth', CompanyAccess::class])
     Route::get('/avoirs/export/excel', [AvoirController::class, 'exportExcel'])->name('avoirs.export.excel');
     Route::get('/avoirs/export/pdf', [AvoirController::class, 'exportPDF'])->name('avoirs.export.pdf');
     Route::get('/avoirs/{avoir}/pdf', [AvoirController::class, 'exportPDF'])->name('avoirs.pdf');
-    Route::get('/avoirs/create/from-facture/{facture}', [AvoirController::class, 'createFromFacture'])->name('avoirs.create.fromFacture'];
+    Route::get('/avoirs/create/from-facture/{facture}', [AvoirController::class, 'createFromFacture'])->name('avoirs.create.fromFacture');
     Route::resource('avoirs', AvoirController::class);
-    Route::get('/avoirs/{id}/preview', [AvoirController::class,'previewPdf'])->name('avoirs.preview');
+    Route::get('/avoirs/{id}/preview', [AvoirController::class, 'previewPdf'])->name('avoirs.preview');
 
     // Paiements
     Route::get('/paiements/create/{facture?}', [PaiementController::class, 'create'])->name('paiements.create');
