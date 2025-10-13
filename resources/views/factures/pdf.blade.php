@@ -19,6 +19,13 @@
         .section-title { font-weight: 600; margin: 24px 0 8px; color: #0f172a; }
         .terms-box { border: 1px solid #e2e8f0; background: #f8fafc; padding: 12px 14px; border-radius: 6px; line-height: 1.55; white-space: pre-wrap; }
         .footer { font-size: 11px; margin-top: 40px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; color: #64748b; }
+
+        /* Vehicle grid (simple, printer-friendly) */
+        .kv { width:100%; border:1px solid #e2e8f0; border-collapse:collapse; margin:18px 0 }
+        .kv td { padding:6px 8px; border-bottom:1px solid #f1f5f9; width:25% }
+        .kv tr:last-child td { border-bottom:0 }
+        .kv .k { color:#334155; font-weight:600; width:22% }
+        .kv .v { color:#0f172a }
     </style>
 </head>
 <body>
@@ -92,6 +99,85 @@
     @endif
 </div>
 
+{{-- =========================
+     BLOC : VÉHICULE
+========================= --}}
+@if($client)
+  @php
+    $fmt = fn($v, $sfx = '') => filled($v) ? $v . $sfx : '—';
+    $fmtKm = fn($v) => filled($v) ? number_format((int)$v, 0, ',', ' ') . ' km' : '—';
+
+    // Future/optional fields (safe if null)
+    $marque   = data_get($client, 'marque');
+    $modele   = data_get($client, 'modele');
+    $typeMine = data_get($client, 'type_mine');
+    $vin      = data_get($client, 'vin');            // N° de série
+    $travaux  = data_get($client, 'travaux');        // texte libre
+    $miseEnCirc = data_get($client, 'mise_en_circulation');
+    $prochainCt = data_get($client, 'prochain_ct');
+    $couleur    = data_get($client, 'couleur');
+    $peinture   = data_get($client, 'peinture');     // ex: OPAQUE
+    $reglementDirect = data_get($client, 'reglement_direct'); // bool
+    $tvaRecuperee   = data_get($client, 'tva_recuperee');     // bool
+  @endphp
+
+  <div class="section-title">Véhicule</div>
+  <table class="kv">
+    <tr>
+      <td class="k">Immatriculation</td>
+      <td class="v">{{ $fmt($client->plaque) }}</td>
+      <td class="k">Kilométrage</td>
+      <td class="v">{{ $fmtKm($client->kilometrage) }}</td>
+    </tr>
+    <tr>
+      <td class="k">Marque</td>
+      <td class="v">{{ $fmt($marque) }}</td>
+      <td class="k">Mise en circulation</td>
+      <td class="v">
+        {{ $miseEnCirc ? \Carbon\Carbon::parse($miseEnCirc)->format('d/m/Y') : '—' }}
+      </td>
+    </tr>
+    <tr>
+      <td class="k">Modèle</td>
+      <td class="v">{{ $fmt($modele) }}</td>
+      <td class="k">Prochain CT</td>
+      <td class="v">
+        {{ $prochainCt ? \Carbon\Carbon::parse($prochainCt)->format('d/m/Y') : '—' }}
+      </td>
+    </tr>
+    <tr>
+      <td class="k">Type mine</td>
+      <td class="v">{{ $fmt($typeMine) }}</td>
+      <td class="k">Couleur</td>
+      <td class="v">{{ $fmt($couleur) }}</td>
+    </tr>
+    <tr>
+      <td class="k">N° de série</td>
+      <td class="v">{{ $fmt($vin) }}</td>
+      <td class="k">Peinture</td>
+      <td class="v">{{ $fmt($peinture) }}</td>
+    </tr>
+    <tr>
+      <td class="k">Travaux</td>
+      <td class="v">{{ $fmt($travaux) }}</td>
+      <td class="k">Règlement direct</td>
+      <td class="v">{{ is_null($reglementDirect) ? '—' : ($reglementDirect ? 'O' : 'N') }}</td>
+    </tr>
+    <tr>
+      <td class="k">Assurance</td>
+      <td class="v">{{ $fmt($client->nom_assurance) }}</td>
+      <td class="k">TVA récupérée</td>
+      <td class="v">{{ is_null($tvaRecuperee) ? '—' : ($tvaRecuperee ? 'O' : 'N') }}</td>
+    </tr>
+    <tr>
+      <td class="k">N° de police</td>
+      <td class="v">{{ $fmt($client->numero_police) }}</td>
+      <td class="k">Autre assurance</td>
+      <td class="v">{{ $fmt($client->autre_assurance) }}</td>
+    </tr>
+  </table>
+@endif
+
 <div class="prestations-title">Détails des prestations</div>
 <table>
     <thead>
@@ -129,11 +215,8 @@
     </tr>
 </table>
 
-{{-- Modalités & conditions de règlement --}}
 <div class="section-title">Modalités & conditions de règlement</div>
 <div class="terms-box">{!! nl2br(e($termsText)) !!}</div>
-
-{{-- (Removed the “Bon pour accord” block per your request) --}}
 
 <div class="footer">
     {{ $companyName }}

@@ -214,7 +214,6 @@
 
     <div class="sign-box">
       <h3>Cachet & signature de {{ $cName }}</h3>
-      <div class="sign-row">Représentant : <span class="sign-line">&nbsp;</span></div>
       <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
 
       {{-- Render company signature image if available --}}
