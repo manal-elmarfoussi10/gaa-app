@@ -47,7 +47,7 @@ class ClientSignatureController extends Controller
                 'type'        => 'signature',
                 'page'        => 2,
                 'x'           => 120,
-                'y'           => 460,
+                'y'           => 300,
                 'width'       => 180,
                 'height'      => 45,
             ];
@@ -67,7 +67,7 @@ class ClientSignatureController extends Controller
                     'locale'       => config('services.yousign.locale', 'fr'),
                 ],
                 'signature_level'               => 'electronic_signature',
-                'signature_authentication_mode' => app()->environment('production') ? 'otp_email' : 'no_otp',
+                'signature_authentication_mode' => 'no_otp',
                 'fields' => [$signatureField],
             ]);
 
