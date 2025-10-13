@@ -88,11 +88,23 @@
                     @forelse ($devis as $item)
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap col-devis">
+                            <!-- Download PDF -->
                             <a href="{{ route('devis.download.pdf', $item->id) }}" class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-lg text-sm font-medium hover:bg-blue-100">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
                                 #{{ $item->id }}
+                            </a>
+                            <!-- Preview (modal) -->
+                            <a href="#"
+                               class="ml-3 inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
+                               data-url="{{ route('devis.preview', $item->id) }}"
+                               onclick="openPdfPreview(this); return false;">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10z" />
+                                </svg>
+                                Voir
                             </a>
                         </td>
 
@@ -181,6 +193,21 @@
     </div>
 </div>
 
+<!-- PDF Preview Modal -->
+<div id="pdfModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[9999]">
+    <div class="bg-white w-[95%] md:w-[80%] h-[85vh] rounded-xl shadow-xl overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between px-4 py-3 border-b">
+            <h3 class="text-lg font-semibold text-gray-800">Aperçu du devis</h3>
+            <button onclick="closePdfPreview()" class="p-2 rounded hover:bg-gray-100" aria-label="Fermer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+        <iframe id="pdfFrame" class="flex-1 w-full" src="about:blank"></iframe>
+    </div>
+</div>
+
 <script>
     function toggleColumnMenu() {
         const menu = document.getElementById('columnMenu');
@@ -190,7 +217,7 @@
     document.addEventListener('click', function(e) {
         const columnMenu = document.getElementById('columnMenu');
         const button = document.querySelector('button[onclick="toggleColumnMenu()"]');
-        if (!columnMenu.contains(e.target) && !button.contains(e.target)) {
+        if (columnMenu && !columnMenu.contains(e.target) && !button.contains(e.target)) {
             columnMenu.classList.add('hidden');
         }
     });
@@ -215,6 +242,26 @@
                 cell.style.display = isVisible ? '' : 'none';
             });
         });
+    });
+
+    // Modal preview helpers
+    function openPdfPreview(el) {
+        const url = el.getAttribute('data-url');
+        const frame = document.getElementById('pdfFrame');
+        frame.src = url;
+        document.getElementById('pdfModal').classList.remove('hidden');
+        document.getElementById('pdfModal').classList.add('flex');
+    }
+    function closePdfPreview() {
+        const modal = document.getElementById('pdfModal');
+        const frame = document.getElementById('pdfFrame');
+        frame.src = 'about:blank';
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    // Close on ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePdfPreview();
     });
 </script>
 @endsection

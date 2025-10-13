@@ -18,6 +18,12 @@ class Facture extends Model
         'is_paid',
         'date_paiement',
         'methode_paiement',
+        'payment_method',
+        'payment_iban',
+        'payment_bic',
+        'penalty_rate',
+        'payment_terms_text',
+        'due_date',
     ];
 
     public function client()

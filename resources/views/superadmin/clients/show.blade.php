@@ -282,71 +282,250 @@
         </div>
     </div>
 
-    <!-- Documents -->
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-800">Documents</h2>
-        </div>
+{{-- === Pièces commerciales : Devis / Factures / Avoirs === --}}
+@php
+    // Make sure the controller loaded: $client->load('devis','factures.avoirs')
+    $avoirs = $client->factures?->flatMap->avoirs ?? collect();
+@endphp
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            @php
-                $documents = [
-                    'photo_vitrage' => 'Photo Vitrage',
-                    'photo_carte_verte' => 'Carte Verte',
-                    'photo_carte_grise' => 'Carte Grise',
-                ];
-                $hasDocuments = false;
-            @endphp
+<div class="bg-white rounded-xl shadow-md p-6 mb-8">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-semibold text-gray-800">Pièces commerciales</h2>
+  </div>
 
-            @foreach($documents as $field => $label)
-                @if(!empty($client->$field))
-                    @php $hasDocuments = true; @endphp
-                    <div class="border rounded-lg overflow-hidden">
-                        <div class="bg-gray-100 h-48 flex items-center justify-center">
-                            @php $extension = pathinfo($client->$field, PATHINFO_EXTENSION); @endphp
-                            @if(in_array(strtolower($extension), ['pdf']))
-                                <div class="text-center p-4">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    <p class="mt-2 text-sm font-medium text-gray-700 truncate">{{ $label }}</p>
-                                </div>
-                            @else
-                                <img src="{{ route('attachment', $client->$field) }}" class="object-contain w-full h-full" alt="{{ $label }}">
-                            @endif
-                        </div>
-                        <div class="p-3">
-                            <h3 class="font-medium text-gray-800">{{ $label }}</h3>
-                            <div class="flex justify-between mt-2">
-                                <a href="{{ route('attachment', $client->$field) }}" target="_blank" class="text-cyan-600 hover:text-cyan-800 text-sm flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    Voir
-                                </a>
-                                <a href="{{ route('attachment', $client->$field) }}" download class="text-gray-600 hover:text-gray-800 text-sm flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                    </svg>
-                                    Télécharger
-                                </a>
+  {{-- Tabs header --}}
+  <div class="flex gap-2 mb-4">
+    <button type="button" data-tab="tab-devis"
+      class="tab-btn px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-sm font-medium">
+      Devis ({{ $client->devis->count() }})
+    </button>
+    <button type="button" data-tab="tab-factures"
+      class="tab-btn px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-sm font-medium">
+      Factures ({{ $client->factures->count() }})
+    </button>
+    <button type="button" data-tab="tab-avoirs"
+      class="tab-btn px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-sm font-medium">
+      Avoirs ({{ $avoirs->count() }})
+    </button>
+  </div>
+
+  {{-- Devis --}}
+  <div id="tab-devis" class="tab-panel">
+    <div class="overflow-x-auto rounded-lg border">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Numéro</th>
+            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Total HT</th>
+            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Total TTC</th>
+            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 bg-white">
+          @forelse($client->devis as $d)
+            <tr>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
+                {{ optional($d->created_at)->format('d/m/Y') }}
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-cyan-700">
+                {{ $d->numero ?? ('Devis #'.$d->id) }}
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+                {{ number_format($d->total_ht ?? 0, 2, ',', ' ') }} €
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+                {{ number_format($d->total_ttc ?? 0, 2, ',', ' ') }} €
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+                <a href="{{ route('devis.preview', $d->id) }}"
+                   class="js-open-preview text-blue-600 hover:underline"
+                   data-url="{{ route('devis.preview', $d->id) }}">
+                  Voir
+                </a>
+              </td>
+            </tr>
+          @empty
+            <tr><td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500">Aucun devis.</td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{-- Factures --}}
+  <div id="tab-factures" class="tab-panel hidden">
+    <div class="overflow-x-auto rounded-lg border">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Numéro</th>
+            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">HT</th>
+            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">TTC</th>
+            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 bg-white">
+          @forelse($client->factures as $f)
+            <tr>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
+                {{ optional($f->created_at)->format('d/m/Y') }}
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-cyan-700">
+                {{ $f->numero ?? ('Facture #'.$f->id) }}
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+                {{ number_format($f->total_ht ?? 0, 2, ',', ' ') }} €
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+                {{ number_format($f->total_ttc ?? 0, 2, ',', ' ') }} €
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+                <a href="{{ route('factures.preview', $f->id) }}"
+                   class="js-open-preview text-blue-600 hover:underline"
+                   data-url="{{ route('factures.preview', $f->id) }}">
+                  Voir
+                </a>
+              </td>
+            </tr>
+          @empty
+            <tr><td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500">Aucune facture.</td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{-- Avoirs --}}
+  <div id="tab-avoirs" class="tab-panel hidden">
+    <div class="overflow-x-auto rounded-lg border">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Facture associée</th>
+            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Montant</th>
+            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 bg-white">
+          @forelse($avoirs as $a)
+            <tr>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
+                {{ optional($a->created_at)->format('d/m/Y') }}
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap text-sm">
+                {{ optional($a->facture)->numero ? 'Facture '.$a->facture->numero : ('#'.$a->facture_id) }}
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+                {{ number_format($a->montant ?? 0, 2, ',', ' ') }} €
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap text-sm text-right">
+                <a href="{{ route('avoirs.preview', $a->id) }}"
+                   class="js-open-preview text-blue-600 hover:underline"
+                   data-url="{{ route('avoirs.preview', $a->id) }}">
+                  Voir
+                </a>
+              </td>
+            </tr>
+          @empty
+            <tr><td colspan="4" class="px-4 py-6 text-center text-sm text-gray-500">Aucun avoir.</td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{{-- Modal preview (iframe) --}}
+<div id="docPreviewModal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/60"></div>
+  <div class="relative mx-auto mt-8 w-11/12 max-w-5xl bg-white rounded-xl shadow-2xl">
+    <div class="flex items-center justify-between px-4 py-3 border-b">
+      <h3 class="font-semibold text-gray-800">Aperçu du document</h3>
+      <button type="button" class="js-close-preview p-2 rounded hover:bg-gray-100">&times;</button>
+    </div>
+    <div class="p-4">
+      <iframe id="docPreviewFrame" src="about:blank" class="w-full h-[75vh] border rounded-lg"></iframe>
+    </div>
+  </div>
+</div>
+
+
+<!-- Documents -->
+<div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Documents</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @php
+            $documents = [
+                'photo_vitrage'     => 'Photo Vitrage',
+                'photo_carte_verte' => 'Carte Verte',
+                'photo_carte_grise' => 'Carte Grise',
+            ];
+            $hasDocuments = false;
+        @endphp
+
+        @foreach($documents as $field => $label)
+            @if(!empty($client->$field))
+                @php
+                    $hasDocuments = true;
+                    $docUrl = route('attachment', ['path' => $client->$field]);
+                    $extension = strtolower(pathinfo($client->$field, PATHINFO_EXTENSION));
+                @endphp
+
+                <div class="border rounded-lg overflow-hidden">
+                    <div class="bg-gray-100 h-48 flex items-center justify-center">
+                        @if($extension === 'pdf')
+                            <div class="text-center p-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <p class="mt-2 text-sm font-medium text-gray-700 truncate">{{ $label }}</p>
                             </div>
+                        @else
+                            <img src="{{ $docUrl }}" class="object-contain w-full h-full" alt="{{ $label }}">
+                        @endif
+                    </div>
+
+                    <div class="p-3">
+                        <h3 class="font-medium text-gray-800">{{ $label }}</h3>
+                        <div class="flex justify-between mt-2">
+                            {{-- Voir (inline open in new tab) --}}
+                            <a href="{{ $docUrl }}" target="_blank" class="text-cyan-600 hover:text-cyan-800 text-sm flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                Voir
+                            </a>
+
+                            {{-- Télécharger (force download) --}}
+                            <a href="{{ $docUrl }}?download=1" class="text-gray-600 hover:text-gray-800 text-sm flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Télécharger
+                            </a>
                         </div>
                     </div>
-                @endif
-            @endforeach
-
-            @if(!$hasDocuments)
-                <div class="col-span-3 text-center py-8">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <p class="mt-2 text-gray-500">Aucun document disponible</p>
                 </div>
             @endif
-        </div>
+        @endforeach
+
+        @if(!$hasDocuments)
+            <div class="col-span-3 text-center py-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p class="mt-2 text-gray-500">Aucun document disponible</p>
+            </div>
+        @endif
     </div>
+</div>
 
     <!-- ============================ -->
     <!-- Conversations                -->
@@ -550,63 +729,81 @@
 </div>
 @endsection
 
+
+
 @push('scripts')
 <script>
 (function () {
-  function initConversationToggler() {
+  function ready(fn){ 
+    if(document.readyState !== 'loading'){ fn(); } 
+    else { document.addEventListener('DOMContentLoaded', fn, {once:true}); } 
+  }
+
+  ready(function () {
+    // --- Tabs
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+      const id = btn.getAttribute('data-tab');
+      if (!id) return;
+
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(id)?.classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-cyan-600','text-white'));
+      btn.classList.add('bg-cyan-600','text-white');
+    });
+
+    // Activate first tab
+    const first = document.querySelector('.tab-btn');
+    if (first) {
+      first.classList.add('bg-cyan-600','text-white');
+      document.getElementById(first.getAttribute('data-tab'))?.classList.remove('hidden');
+    }
+
+    // --- Preview modal
+    const modal = document.getElementById('docPreviewModal');
+    const frame = document.getElementById('docPreviewFrame');
+
+    document.addEventListener('click', function (e) {
+      const open = e.target.closest('a.js-open-preview');
+      if (!open) return;
+      e.preventDefault();
+      const url = open.getAttribute('data-url') || open.getAttribute('href');
+      if (url && modal && frame) {
+        frame.src = url;
+        modal.classList.remove('hidden');
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('.js-close-preview') || e.target === modal) {
+        modal?.classList.add('hidden');
+        if (frame) frame.src = 'about:blank';
+      }
+    });
+
+    // --- New conversation toggler
     const btnOpen   = document.getElementById('newConversationBtn');
     const formWrap  = document.getElementById('newConversationForm');
     const btnCancel = document.getElementById('cancelNewConversation');
     const subject   = document.getElementById('subject');
 
-    if (!btnOpen || !formWrap) return;
-    if (btnOpen.dataset.bound === '1') return;
-    btnOpen.dataset.bound = '1';
-
-    btnOpen.addEventListener('click', function () {
-      formWrap.classList.toggle('hidden');
-      if (!formWrap.classList.contains('hidden')) {
-        setTimeout(() => subject && subject.focus(), 0);
-      }
-    });
-
-    if (btnCancel) {
-      btnCancel.addEventListener('click', function () {
-        formWrap.classList.add('hidden');
+    if (btnOpen && formWrap) {
+      btnOpen.addEventListener('click', () => {
+        formWrap.classList.toggle('hidden');
+        if (!formWrap.classList.contains('hidden')) setTimeout(() => subject?.focus(), 0);
       });
     }
-  }
-
-  ['DOMContentLoaded', 'turbo:load', 'livewire:navigated'].forEach(evt =>
-    document.addEventListener(evt, initConversationToggler)
-  );
+    btnCancel?.addEventListener('click', () => formWrap?.classList.add('hidden'));
+  });
 })();
 </script>
 @endpush
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const btnOpen   = document.getElementById('newConversationBtn');
-  const formWrap  = document.getElementById('newConversationForm');
-  const btnCancel = document.getElementById('cancelNewConversation');
-  const subject   = document.getElementById('subject');
 
-  if (!btnOpen || !formWrap) return;
 
-  btnOpen.addEventListener('click', function () {
-    formWrap.classList.toggle('hidden');
-    if (!formWrap.classList.contains('hidden')) {
-      setTimeout(() => subject && subject.focus(), 0);
-    }
-  });
 
-  if (btnCancel) {
-    btnCancel.addEventListener('click', function () {
-      formWrap.classList.add('hidden');
-    });
-  }
-});
-</script>
 
 <style>
     .container { max-width: 1200px; }

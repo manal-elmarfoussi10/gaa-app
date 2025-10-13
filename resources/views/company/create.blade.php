@@ -19,11 +19,11 @@
         </div>
 
         <!-- Form -->
-        <form action="{{ route('company.store') }}" method="POST" class="p-6">
+        <form action="{{ route('company.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
             @csrf
 
             <div class="space-y-8">
-                <!-- General Information -->
+                <!-- Informations générales -->
                 <div class="border-b border-gray-200 pb-8">
                     <div class="flex items-center mb-6">
                         <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
@@ -57,7 +57,7 @@
                     </div>
                 </div>
 
-                <!-- Contact Information -->
+                <!-- Coordonnées -->
                 <div class="border-b border-gray-200 pb-8">
                     <div class="flex items-center mb-6">
                         <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
@@ -96,7 +96,7 @@
                     </div>
                 </div>
 
-                <!-- Financial Information -->
+                <!-- Informations financières -->
                 <div class="border-b border-gray-200 pb-8">
                     <div class="flex items-center mb-6">
                         <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
@@ -104,7 +104,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <h2 class="text-xl font-semibold text-gray-800">Information financières</h2>
+                        <h2 class="text-xl font-semibold text-gray-800">Informations financières</h2>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -125,7 +125,39 @@
                     </div>
                 </div>
 
-                <!-- Preferences -->
+                <!-- Logo & Signature -->
+                <div class="border-b border-gray-200 pb-8">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618V19a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2h6" />
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-800">Identité visuelle</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Logo de l’entreprise</label>
+                            <input type="file" name="logo" accept="image/*" class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <p class="text-xs text-gray-500 mt-1">PNG/JPG, 1 Mo max recommandé.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Signature / Cachet</label>
+                            <input type="file" name="signature_image" accept="image/*" id="signatureInput" class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <p class="text-xs text-gray-500 mt-1">PNG transparent conseillé (max 1 Mo).</p>
+                            <div class="mt-3">
+                                <img id="signaturePreview" class="h-20 object-contain rounded border border-gray-200 hidden" alt="Prévisualisation signature">
+                            </div>
+                            @error('signature_image')
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Préférences -->
                 <div>
                     <div class="flex items-center mb-6">
                         <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3">
@@ -164,7 +196,7 @@
                 </div>
             </div>
 
-            <!-- Submit button -->
+            <!-- Bouton Enregistrer -->
             <div class="mt-10 flex justify-center">
                 <button type="submit" class="flex items-center bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold px-8 py-3 rounded-lg transition-all shadow-md transform hover:-translate-y-0.5">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -177,34 +209,13 @@
     </div>
 </div>
 
-<style>
-    .bg-gradient-to-r {
-        background-image: linear-gradient(to right, var(--tw-gradient-stops));
-    }
-    
-    .hover\:-translate-y-0\.5:hover {
-        transform: translateY(-0.125rem);
-    }
-    
-    .transition {
-        transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .duration-150 {
-        transition-duration: 150ms;
-    }
-    
-    .focus\:ring-blue-500:focus {
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
-    }
-    
-    .focus\:border-blue-500:focus {
-        border-color: #3b82f6;
-    }
-    
-    .shadow-md {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-</style>
+<script>
+document.getElementById('signatureInput')?.addEventListener('change', function (e) {
+  const f = e.target.files?.[0];
+  if (!f) return;
+  const img = document.getElementById('signaturePreview');
+  img.src = URL.createObjectURL(f);
+  img.classList.remove('hidden');
+});
+</script>
 @endsection

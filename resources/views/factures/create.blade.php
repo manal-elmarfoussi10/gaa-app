@@ -252,6 +252,77 @@
             </div>
         </div>
 
+        {{-- Modalités & conditions de règlement --}}
+<div class="mb-8">
+    <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+        <h2 class="text-xl font-semibold text-gray-800">Modalités & conditions de règlement</h2>
+
+        {{-- Optional: reset to company defaults (uses $defaults passed by controller) --}}
+        <button type="button" id="resetPaymentDefaults"
+                class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg">
+            Remettre les valeurs par défaut
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+            <label class="block mb-2 font-medium text-gray-700">Mode de paiement</label>
+            <input type="text" name="payment_method"
+                   value="{{ old('payment_method', $defaults['payment_method'] ?? '') }}"
+                   class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                   placeholder="Ex : Virement bancaire">
+        </div>
+
+        <div>
+            <label class="block mb-2 font-medium text-gray-700">Date d'échéance</label>
+            <input type="date" name="due_date"
+                   value="{{ old('due_date', $defaults['due_date'] ?? now()->addDays(30)->toDateString()) }}"
+                   class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50">
+        </div>
+
+        <div>
+            <label class="block mb-2 font-medium text-gray-700">IBAN</label>
+            <input type="text" name="payment_iban"
+                   value="{{ old('payment_iban', $defaults['payment_iban'] ?? '') }}"
+                   class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                   placeholder="FR..">
+        </div>
+
+        <div>
+            <label class="block mb-2 font-medium text-gray-700">BIC</label>
+            <input type="text" name="payment_bic"
+                   value="{{ old('payment_bic', $defaults['payment_bic'] ?? '') }}"
+                   class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                   placeholder="QNTOFRP1XXX">
+        </div>
+
+        <div>
+            <label class="block mb-2 font-medium text-gray-700">Taux des pénalités de retard (%)</label>
+            <input type="number" step="0.01" inputmode="decimal" name="penalty_rate"
+                   value="{{ old('penalty_rate', $defaults['penalty_rate'] ?? '') }}"
+                   class="no-spinners w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                   placeholder="Ex : 10">
+        </div>
+    </div>
+
+    <label class="inline-flex items-center gap-2 mt-3">
+        <input type="checkbox" name="save_as_default" value="1" class="rounded">
+        <span class="text-sm text-gray-700">
+          Enregistrer ces valeurs comme valeurs par défaut de l’entreprise
+        </span>
+      </label>
+
+    <div class="mt-6">
+        <label class="block mb-2 font-medium text-gray-700">Texte affiché sur la facture</label>
+        <textarea name="payment_terms_text" rows="6"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                  placeholder="Saisissez vos modalités (IBAN, BIC, échéance, pénalités, indemnité 40€, etc.)">{{ old('payment_terms_text', $defaults['payment_terms_text'] ?? '') }}</textarea>
+        <p class="text-xs text-gray-500 mt-2">
+            Astuce : laissez ce champ prérempli et adaptez-le au cas par cas. Ce texte sera imprimé en bas de la facture.
+        </p>
+    </div>
+</div>
+
         <!-- Submit -->
         <div class="flex justify-end gap-4 pt-4 border-t border-gray-100">
             <a href="{{ route('factures.index') }}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Annuler</a>
@@ -266,7 +337,72 @@
 </div>
 
 <script>
+    (function () {
+      const ibanEl   = document.querySelector('[name="payment_iban"]');
+      const bicEl    = document.querySelector('[name="payment_bic"]');
+      const dueEl    = document.querySelector('[name="due_date"]');
+      const textEl   = document.querySelector('[name="payment_terms_text"]');
+    
+      // if user edits the textarea, stop auto updates
+      let userEdited = false;
+      if (textEl) {
+        textEl.addEventListener('input', () => userEdited = true);
+      }
+    
+      // company name comes from your controller defaults (create/edit already pass $defaults)
+      const companyName = @json($defaults['company_name'] ?? 'Votre société');
+    
+      function frDate(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        // Guard: invalid date -> return raw
+        return isNaN(d.getTime()) ? iso : d.toLocaleDateString('fr-FR');
+      }
+    
+      function buildFooter() {
+        const iban = (ibanEl?.value || '').trim();
+        const bic  = (bicEl?.value  || '').trim();
+        const due  = frDate(dueEl?.value || '');
+    
+        let t = `Par virement bancaire ou chèque à l'ordre de ${companyName}\n`;
+        if (bic)  t += `Code B.I.C : ${bic}\n`;
+        if (iban) t += `Code I.B.A.N : ${iban}\n`;
+        if (due)  t += `La présente facture sera payable au plus tard le : ${due}\n`;
+        t += `Passé ce délai, sans obligation d’envoi d’une relance, une pénalité sera appliquée conformément au Code de commerce.\n`;
+        t += `Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.`;
+        return t;
+      }
+    
+      function maybeUpdate() {
+        if (!textEl || userEdited) return;
+        textEl.value = buildFooter();
+      }
+    
+      ['input','change'].forEach(evt => {
+        ibanEl?.addEventListener(evt, maybeUpdate);
+        bicEl?.addEventListener(evt, maybeUpdate);
+        dueEl?.addEventListener(evt, maybeUpdate);
+      });
+    
+      // If you have a "Remettre les valeurs par défaut" button, also reset the dirty flag:
+      document.getElementById('resetPaymentDefaults')?.addEventListener('click', () => {
+        userEdited = false;
+        maybeUpdate();
+      });
+    
+      // Initial fill (only if user hasn’t typed)
+      maybeUpdate();
+    })();
+    </script>
+
+<script>
+
+    // ---- Reset payment terms to controller defaults ----
+
+
 document.addEventListener('DOMContentLoaded', function () {
+
+
     /* ========== Helpers ========== */
     const $ = (sel, scope=document) => scope.querySelector(sel);
     const $$ = (sel, scope=document) => Array.from(scope.querySelectorAll(sel));

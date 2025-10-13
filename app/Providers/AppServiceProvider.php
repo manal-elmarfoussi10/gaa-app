@@ -32,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
         return base_path('public_html');
     });
 
+ 
+
     // 🛠️ Appliquer aussi DOMPDF_CHROOT manuellement
     config(['dompdf.defines.DOMPDF_CHROOT' => base_path('public_html')]);
 

@@ -5,6 +5,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 use App\Http\Middleware\CompanyAccess;
 use App\Http\Middleware\SuperAdminAccess;
+use App\Http\Controllers\ContractController;
+use App\Http\Controllers\ClientSignatureController;
 
 // ===============================
 // Superadmin area controllers
@@ -97,6 +99,10 @@ Route::middleware(['auth', CompanyAccess::class])
     ->scopeBindings()
     ->group(function () {
 
+    // Signed contract download (client area)
+    Route::get('/clients/{client}/contract/signed', [ClientSignatureController::class, 'downloadSigned'])
+        ->name('clients.contract.download_signed');
+
     // Dashboards
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/poseur', [DashboardPoseurController::class, 'index'])->name('dashboard.poseur');
@@ -127,6 +133,8 @@ Route::middleware(['auth', CompanyAccess::class])
     Route::get('/devis/export/pdf', [DevisController::class, 'exportPDF'])->name('devis.export.pdf');
     Route::post('/devis/{devis}/generate-facture', [DevisController::class, 'generateFacture'])->name('devis.generate.facture');
     Route::get('/devis/{id}/pdf', [DevisController::class, 'downloadSinglePdf'])->name('devis.download.pdf');
+    // Tenant inline preview
+    Route::get('/devis/{id}/preview', [DevisController::class, 'previewPdf'])->name('devis.preview');
 
     // Factures
     Route::resource('factures', FactureController::class);
@@ -134,11 +142,8 @@ Route::middleware(['auth', CompanyAccess::class])
     Route::get('/factures/export/pdf', [FactureController::class, 'exportFacturesPDF'])->name('factures.export.pdf');
     Route::get('/factures/{id}/pdf', [FactureController::class, 'downloadPdf'])->name('factures.download.pdf');
     Route::match(['get', 'post'], '/factures/{facture}/acquitter', [FactureController::class, 'acquitter'])->name('factures.acquitter');
-
-    // Paiements
-    Route::get('/paiements/create/{facture?}', [PaiementController::class, 'create'])->name('paiements.create');
-    Route::post('/paiements', [PaiementController::class, 'store'])->name('paiements.store');
-    Route::resource('paiements', PaiementController::class)->except(['create']);
+    // Tenant inline preview
+    Route::get('/factures/{id}/preview', [FactureController::class, 'previewPdf'])->name('factures.preview');
 
     // Avoirs
     Route::get('/avoirs/export/excel', [AvoirController::class, 'exportExcel'])->name('avoirs.export.excel');
@@ -146,6 +151,12 @@ Route::middleware(['auth', CompanyAccess::class])
     Route::get('/avoirs/{avoir}/pdf', [AvoirController::class, 'exportPDF'])->name('avoirs.pdf');
     Route::get('/avoirs/create/from-facture/{facture}', [AvoirController::class, 'createFromFacture'])->name('avoirs.create.fromFacture');
     Route::resource('avoirs', AvoirController::class);
+    Route::get('/avoirs/{id}/preview', [AvoirController::class, 'previewPdf'])->name('avoirs.preview');
+
+    // Paiements
+    Route::get('/paiements/create/{facture?}', [PaiementController::class, 'create'])->name('paiements.create');
+    Route::post('/paiements', [PaiementController::class, 'store'])->name('paiements.store');
+    Route::resource('paiements', PaiementController::class)->except(['create']);
 
     // Resources
     Route::resources([
@@ -162,11 +173,33 @@ Route::middleware(['auth', CompanyAccess::class])
     Route::get('/expenses/export/excel', [ExpenseController::class, 'exportExcel'])->name('expenses.export.excel');
     Route::get('/expenses/export/pdf', [ExpenseController::class, 'exportPDF'])->name('expenses.export.pdf');
 
+    // ---- CONTRACT ACTIONS ----
+    Route::post('/clients/{client}/contract/generate', [ContractController::class, 'generate'])->name('clients.contract.generate');
+    Route::get('/clients/{client}/contract/download',  [ContractController::class, 'download'])->name('clients.contract.download');
+    Route::get('/clients/{client}/contract/download-signed', [ContractController::class, 'downloadSigned'])->name('clients.contract.download_signed');
+
+    // Pick **one** sender; keeping ContractController here
+    Route::post('/clients/{client}/send-signature',   [ContractController::class, 'send'])->name('clients.send_signature');
+    Route::post('/clients/{client}/resend-signature', [ContractController::class, 'resend'])->name('clients.resend_signature');
+
+    Route::post('/clients/{client}/signature/refresh', function (App\Models\Client $client, App\Services\YousignService $ys) {
+        if (!$client->yousign_request_id) return back();
+
+        $sr = $ys->getSignatureRequest($client->yousign_request_id);
+        $status = data_get($sr, 'status'); // adjust to provider field
+
+        if (in_array($status, ['completed','done','signed'], true)) {
+            $client->update(['statut_gsauto' => 'signed', 'signed_at' => now()]);
+        }
+
+        return back()->with('open_signature', true);
+    })->name('clients.signature.refresh');
+
     // Bons de commande
     Route::resource('bons-de-commande', BonDeCommandeController::class)
         ->parameters(['bons-de-commande' => 'bon']);
     Route::get('bons-de-commande/export/excel', [BonDeCommandeController::class, 'exportExcel'])->name('bons-de-commande.export.excel');
-    Route::get('bons-de-commande/export/pdf', [BonDeCommandeController::class, 'exportPDF'])->name('bons-de-commande.export.pdf');
+    Route::get('bons-de-commande/export/pdf',   [BonDeCommandeController::class, 'exportPDF'])->name('bons-de-commande.export.pdf');
 
     // Email templates
     Route::resource('email-templates', EmailTemplateController::class)->only(['index','store','show']);
@@ -199,11 +232,11 @@ Route::middleware(['auth', CompanyAccess::class])
     });
 
     // Company profile
-    Route::get('/profile', [CompanyController::class, 'show'])->name('company.profile');
-    Route::get('/profile/edit', [CompanyController::class, 'edit'])->name('company.edit');
+    Route::get('/profile',        [CompanyController::class, 'show'])->name('company.profile');
+    Route::get('/profile/edit',   [CompanyController::class, 'edit'])->name('company.edit');
     Route::put('/profile/update', [CompanyController::class, 'update'])->name('company.update');
     Route::get('/profile/create', [CompanyController::class, 'create'])->name('company.create');
-    Route::post('/profile', [CompanyController::class, 'store'])->name('company.store');
+    Route::post('/profile',       [CompanyController::class, 'store'])->name('company.store');
 
     // Sidexa
     Route::prefix('sidexa')->controller(SidexaController::class)->group(function () {
@@ -214,30 +247,30 @@ Route::middleware(['auth', CompanyAccess::class])
 
     // Users
     Route::prefix('users')->name('users.')->group(function () {
-        Route::get('/', [UserController::class, 'index'])->name('index');
-        Route::get('/create', [UserController::class, 'create'])->name('create');
-        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/',        [UserController::class, 'index'])->name('index');
+        Route::get('/create',  [UserController::class, 'create'])->name('create');
+        Route::post('/',       [UserController::class, 'store'])->name('store');
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
-        Route::put('/{user}', [UserController::class, 'update'])->name('update');
-        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+        Route::put('/{user}',      [UserController::class, 'update'])->name('update');
+        Route::delete('/{user}',   [UserController::class, 'destroy'])->name('destroy');
     });
 
     // Units
-    Route::get('/acheter-unites', [UnitController::class, 'showPurchaseForm'])->name('units.form');
+    Route::get('/acheter-unites',  [UnitController::class, 'showPurchaseForm'])->name('units.form');
     Route::post('/acheter-unites', [UnitController::class, 'purchase'])->name('units.purchase');
 
     // Misc
     Route::get('/ma-consommation', fn () => view('consommation.index'))->name('consommation.index');
     Route::view('/depenses', 'depenses.index')->name('depenses.index');
     Route::view('/fonctionnalites', 'fonctionnalites.fonctionnalites');
-    Route::view('/commercial', 'commercial.dashboard')->name('commercial.dashboard');
-    Route::view('/comptable', 'comptable.dashboard')->name('comptable.dashboard');
+    Route::view('/commercial',  'commercial.dashboard')->name('commercial.dashboard');
+    Route::view('/comptable',   'comptable.dashboard')->name('comptable.dashboard');
     Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
     Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 
     // Global search
-    Route::get('/search', [SearchController::class, 'index'])->name('search');
-    Route::get('/search/suggest', [SearchController::class, 'suggest'])->name('search.suggest');
+    Route::get('/search',          [SearchController::class, 'index'])->name('search');
+    Route::get('/search/suggest',  [SearchController::class, 'suggest'])->name('search.suggest');
 });
 
 /*
@@ -252,25 +285,39 @@ Route::prefix('superadmin')
 
     Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
 
+    // Files
+    Route::get('/files/peek/{type}/{id}', [SAFilesController::class, 'peek'])
+        ->where(['type' => 'clients|devis|factures|avoirs', 'id' => '\d+'])
+        ->name('files.peek');
+
+    Route::get('/files',        [SAFilesController::class, 'index'])->name('files.index');
+    Route::get('/files/export', [SAFilesController::class, 'export'])->name('files.export');
+    Route::get('/files/preview/{type}/{id}', [SAFilesController::class, 'preview'])
+        ->where(['type' => 'devis|factures|avoirs', 'id' => '\d+'])
+        ->name('files.preview');
+
+    // PDF previews (superadmin)
+    Route::get('/devis/{devis}/preview',     [SAClientsController::class, 'previewDevis'])->name('devis.preview');
+    Route::get('/factures/{facture}/preview', [SAClientsController::class, 'previewFacture'])->name('factures.preview');
+    Route::get('/avoirs/{avoir}/preview',     [SAClientsController::class, 'previewAvoir'])->name('avoirs.preview');
+
     // Companies
     Route::resource('companies', SuperAdminCompanyController::class)
         ->only(['index','create','store','show','edit','update','destroy']);
 
     // Company users
-    Route::get('companies/{company}/users/create', [SuperAdminUserController::class, 'create'])->name('companies.users.create');
-    Route::post('companies/{company}/users', [SuperAdminUserController::class, 'store'])->name('companies.users.store');
+    Route::get('companies/{company}/users/create',    [SuperAdminUserController::class, 'create'])->name('companies.users.create');
+    Route::post('companies/{company}/users',          [SuperAdminUserController::class, 'store'])->name('companies.users.store');
     Route::get('companies/{company}/users/{user}/edit', [SuperAdminUserController::class, 'edit'])->name('companies.users.edit');
-    Route::put('companies/{company}/users/{user}', [SuperAdminUserController::class, 'update'])->name('companies.users.update');
-    Route::delete('companies/{company}/users/{user}', [SuperAdminUserController::class, 'destroy'])->name('companies.users.destroy');
+    Route::put('companies/{company}/users/{user}',      [SuperAdminUserController::class, 'update'])->name('companies.users.update');
+    Route::delete('companies/{company}/users/{user}',   [SuperAdminUserController::class, 'destroy'])->name('companies.users.destroy');
 
     // Global users
     Route::resource('global-users', GlobalUserController::class)
         ->only(['index','create','store','edit','update','destroy']);
 
-    // Products (superadmin catalogue)
+    // Products, Messages
     Route::resource('products', SAProductController::class)->except(['show'])->names('products');
-
-    // Messages (global inbox)
     Route::resource('messages', SAMessageController::class)->only(['index','show','destroy'])->names('messages');
 
     // Emails (superadmin)
@@ -286,30 +333,26 @@ Route::prefix('superadmin')
     });
 });
 
-// ==========================================
-// SUPPORT AREA (superadmin + client_service)
-// ==========================================
+/*
+|--------------------------------------------------------------------------
+| SUPPORT (superadmin + client_service)
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth','support'])
     ->prefix('superadmin')
     ->name('superadmin.')
     ->group(function () {
-        // Clients dossier (visible to superadmin + client_service)
         Route::get('/clients/{client}', [SAClientsController::class, 'show'])->name('clients.show');
         Route::get('/clients/{client}/export/pdf', [SAClientsController::class, 'exportPdf'])->name('clients.export.pdf');
 
-        // Conversations (same permissions)
-        Route::post('clients/{client}/conversations', [ConversationController::class, 'store'])
-            ->name('clients.conversations.store');
-        Route::post('conversations/reply/{email}', [ConversationController::class, 'reply'])
-            ->name('conversations.reply');
-        Route::get('conversations/fetch/{client}', [ConversationController::class, 'fetch'])
-            ->name('conversations.fetch');
-        Route::get('conversations/download/{reply}', [ConversationController::class, 'download'])
-            ->name('conversations.download');
-        Route::delete('conversations/{thread}', [ConversationController::class, 'destroyThread'])
-            ->name('conversations.destroyThread');
+        // Conversations
+        Route::post('clients/{client}/conversations', [ConversationController::class, 'store'])->name('clients.conversations.store');
+        Route::post('conversations/reply/{email}',    [ConversationController::class, 'reply'])->name('conversations.reply');
+        Route::get('conversations/fetch/{client}',    [ConversationController::class, 'fetch'])->name('conversations.fetch');
+        Route::get('conversations/download/{reply}',  [ConversationController::class, 'download'])->name('conversations.download');
+        Route::delete('conversations/{thread}',       [ConversationController::class, 'destroyThread'])->name('conversations.destroyThread');
 
-        // Files / Emails for support
+        // Files / Emails
         Route::get('/files',  [SAFilesController::class,  'index'])->name('files.index');
         Route::get('/files/export', [SAFilesController::class, 'export'])->name('files.export');
         Route::get('/emails',       [SAEmailController::class, 'index'])->name('emails.index');

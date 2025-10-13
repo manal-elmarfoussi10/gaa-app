@@ -28,6 +28,13 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+'yousign' => [
+    'api_key'         => env('YOUSIGN_API_KEY'),
+    'base_url'        => env('YOUSIGN_BASE_URL', 'https://api-sandbox.yousign.app/v3'),
+    'webhook_secret'  => env('YOUSIGN_WEBHOOK_SECRET'), // <- raw secret (no sha256=)
+    'locale'          => env('YOUSIGN_LOCALE', 'fr'),
+],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
