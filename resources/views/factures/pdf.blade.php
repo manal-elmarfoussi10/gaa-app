@@ -4,28 +4,26 @@
     <meta charset="UTF-8">
     <title>Facture {{ $facture->numero }}</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; font-size: 12px; color: #1f2937; margin: 0; padding: 20px 40px; background: #fff; }
-        .header { display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #1f2937; margin: 0; padding: 24px 36px; background: #fff; }
+        .header { display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px; }
         .company-info { font-size: 12px; line-height: 1.5; }
         .facture-info { text-align: right; }
-        .facture-info h2 { margin: 0; font-size: 20px; color: #0ea5e9; }
-        .client-info { margin-bottom: 20px; font-size: 12px; line-height: 1.5; }
-        .prestations-title { font-weight: bold; margin: 20px 0 10px; text-transform: uppercase; color: #0f172a; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
-        table th, table td { border-bottom: 1px solid #ccc; padding: 8px; text-align: left; }
-        table th { background: #e0f2fe; font-weight: bold; color: #0c4a6e; }
-        .totals { width: 50%; margin-left: auto; margin-top: 20px; }
+        .facture-info h2 { margin: 0; font-size: 20px; color: #0ea5e9; letter-spacing: .5px; }
+        .client-info { margin: 16px 0 20px; font-size: 12px; line-height: 1.55; }
+        .section-title { font-weight: 700; margin: 18px 0 8px; color: #0f172a; text-transform: uppercase; font-size: 13px; }
+        .kv { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .kv th, .kv td { border: 1px solid #e5e7eb; padding: 8px 10px; vertical-align: top; }
+        .kv th { width: 30%; background: #f8fafc; color: #0f172a; text-align: left; font-weight: 600; }
+        .grid2 { width: 100%; border-collapse: collapse; }
+        .grid2 td { width: 50%; vertical-align: top; padding: 0 0 8px 0; }
+        table.items { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 14px; }
+        table.items th, table.items td { border-bottom: 1px solid #e5e7eb; padding: 8px; text-align: left; }
+        table.items th { background: #e0f2fe; font-weight: 700; color: #0c4a6e; }
+        .totals { width: 50%; margin-left: auto; margin-top: 16px; border-collapse: collapse; }
         .totals td { padding: 6px 8px; }
-        .section-title { font-weight: 600; margin: 24px 0 8px; color: #0f172a; }
         .terms-box { border: 1px solid #e2e8f0; background: #f8fafc; padding: 12px 14px; border-radius: 6px; line-height: 1.55; white-space: pre-wrap; }
-        .footer { font-size: 11px; margin-top: 40px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; color: #64748b; }
-
-        /* Vehicle grid (simple, printer-friendly) */
-        .kv { width:100%; border:1px solid #e2e8f0; border-collapse:collapse; margin:18px 0 }
-        .kv td { padding:6px 8px; border-bottom:1px solid #f1f5f9; width:25% }
-        .kv tr:last-child td { border-bottom:0 }
-        .kv .k { color:#334155; font-weight:600; width:22% }
-        .kv .v { color:#0f172a }
+        .footer { font-size: 11px; margin-top: 28px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; color: #64748b; }
+        .muted { color:#6b7280 }
     </style>
 </head>
 <body>
@@ -42,7 +40,15 @@
     $addr1 = $client ? ($client->adresse ?? '') : null;
     $addr2 = $client ? trim(($client->code_postal ?? '').' '.($client->ville ?? '')) : null;
 
-    $km = $client && filled($client->kilometrage) ? (int) $client->kilometrage : null;
+    $fmtDate = function ($v) {
+        try { return $v ? \Carbon\Carbon::parse($v)->format('d/m/Y') : null; }
+        catch (\Throwable $e) { return $v; }
+    };
+    $fmtKm = function ($v) {
+        if ($v === null || $v === '') return null;
+        $n = (int) $v;
+        return number_format($n, 0, ',', ' ').' km';
+    };
 
     // Payment terms rendering
     $companyName = $company->commercial_name ?? $company->name ?? 'Votre société';
@@ -52,16 +58,13 @@
     $penalty     = $facture->penalty_rate;
     $dueDate     = $facture->due_date ? \Carbon\Carbon::parse($facture->due_date)->format('d/m/Y') : null;
 
-    // Prefer the custom text if present; otherwise compose a nice default.
     $termsText = trim((string) $facture->payment_terms_text);
     if ($termsText === '') {
         $lines = [];
         $lines[] = "Par {$method} à l'ordre de {$companyName}";
         if ($bic)  { $lines[] = "Code B.I.C : {$bic}"; }
         if ($iban) { $lines[] = "Code I.B.A.N : {$iban}"; }
-        if ($dueDate) {
-            $lines[] = "La présente facture sera payable au plus tard le : {$dueDate}";
-        }
+        if ($dueDate) { $lines[] = "La présente facture sera payable au plus tard le : {$dueDate}"; }
         $lines[] = "Passé ce délai, sans obligation d’envoi d’une relance, une pénalité sera appliquée conformément au Code de commerce."
                  . ($penalty !== null && $penalty !== '' ? " Taux des pénalités de retard : {$penalty}%." : "");
         $lines[] = "Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.";
@@ -86,100 +89,78 @@
     </div>
 </div>
 
+{{-- CLIENT --}}
 <div class="client-info">
     <strong>{{ $displayName }}</strong><br>
-
     @if($client)
         @if($addr1) {{ $addr1 }}<br>@endif
         @if($addr2) {{ $addr2 }}<br>@endif
-        @if($km !== null) Kilométrage : {{ number_format($km, 0, ',', ' ') }} km @endif
+        @if($client->email) {{ $client->email }}<br>@endif
+        @if($client->telephone) {{ $client->telephone }}<br>@endif
     @else
         @if($prospectEmail) Email : {{ $prospectEmail }}<br>@endif
         @if($prospectPhone) Tél. : {{ $prospectPhone }}@endif
     @endif
 </div>
 
-{{-- =========================
-     BLOC : VÉHICULE
-========================= --}}
+{{-- VÉHICULE + SINISTRE + ASSURANCE (champs existants) --}}
 @if($client)
-  @php
-    $fmt = fn($v, $sfx = '') => filled($v) ? $v . $sfx : '—';
-    $fmtKm = fn($v) => filled($v) ? number_format((int)$v, 0, ',', ' ') . ' km' : '—';
-
-    // Future/optional fields (safe if null)
-    $marque   = data_get($client, 'marque');
-    $modele   = data_get($client, 'modele');
-    $typeMine = data_get($client, 'type_mine');
-    $vin      = data_get($client, 'vin');            // N° de série
-    $travaux  = data_get($client, 'travaux');        // texte libre
-    $miseEnCirc = data_get($client, 'mise_en_circulation');
-    $prochainCt = data_get($client, 'prochain_ct');
-    $couleur    = data_get($client, 'couleur');
-    $peinture   = data_get($client, 'peinture');     // ex: OPAQUE
-    $reglementDirect = data_get($client, 'reglement_direct'); // bool
-    $tvaRecuperee   = data_get($client, 'tva_recuperee');     // bool
-  @endphp
-
-  <div class="section-title">Véhicule</div>
-  <table class="kv">
-    <tr>
-      <td class="k">Immatriculation</td>
-      <td class="v">{{ $fmt($client->plaque) }}</td>
-      <td class="k">Kilométrage</td>
-      <td class="v">{{ $fmtKm($client->kilometrage) }}</td>
-    </tr>
-    <tr>
-      <td class="k">Marque</td>
-      <td class="v">{{ $fmt($marque) }}</td>
-      <td class="k">Mise en circulation</td>
-      <td class="v">
-        {{ $miseEnCirc ? \Carbon\Carbon::parse($miseEnCirc)->format('d/m/Y') : '—' }}
-      </td>
-    </tr>
-    <tr>
-      <td class="k">Modèle</td>
-      <td class="v">{{ $fmt($modele) }}</td>
-      <td class="k">Prochain CT</td>
-      <td class="v">
-        {{ $prochainCt ? \Carbon\Carbon::parse($prochainCt)->format('d/m/Y') : '—' }}
-      </td>
-    </tr>
-    <tr>
-      <td class="k">Type mine</td>
-      <td class="v">{{ $fmt($typeMine) }}</td>
-      <td class="k">Couleur</td>
-      <td class="v">{{ $fmt($couleur) }}</td>
-    </tr>
-    <tr>
-      <td class="k">N° de série</td>
-      <td class="v">{{ $fmt($vin) }}</td>
-      <td class="k">Peinture</td>
-      <td class="v">{{ $fmt($peinture) }}</td>
-    </tr>
-    <tr>
-      <td class="k">Travaux</td>
-      <td class="v">{{ $fmt($travaux) }}</td>
-      <td class="k">Règlement direct</td>
-      <td class="v">{{ is_null($reglementDirect) ? '—' : ($reglementDirect ? 'O' : 'N') }}</td>
-    </tr>
-    <tr>
-      <td class="k">Assurance</td>
-      <td class="v">{{ $fmt($client->nom_assurance) }}</td>
-      <td class="k">TVA récupérée</td>
-      <td class="v">{{ is_null($tvaRecuperee) ? '—' : ($tvaRecuperee ? 'O' : 'N') }}</td>
-    </tr>
-    <tr>
-      <td class="k">N° de police</td>
-      <td class="v">{{ $fmt($client->numero_police) }}</td>
-      <td class="k">Autre assurance</td>
-      <td class="v">{{ $fmt($client->autre_assurance) }}</td>
-    </tr>
-  </table>
+    <div class="section-title">Véhicule / Sinistre / Assurance</div>
+    <table class="kv">
+        <tr>
+            <th>Plaque d'immatriculation</th>
+            <td>{{ $client->plaque ?: '—' }}</td>
+            <th>Kilométrage</th>
+            <td>{{ $fmtKm($client->kilometrage) ?: '—' }}</td>
+        </tr>
+        <tr>
+            <th>Ancien modèle de plaque</th>
+            <td>{{ $client->ancien_modele_plaque ? 'Oui' : 'Non' }}</td>
+            <th>Professionnel</th>
+            <td>{{ $client->professionnel ?: '—' }}</td>
+        </tr>
+        <tr>
+            <th>Type de vitrage</th>
+            <td>{{ $client->type_vitrage ?: '—' }}</td>
+            <th>Réparation</th>
+            <td>
+                @if(!is_null($client->reparation))
+                    {{ (string)$client->reparation === '1' ? 'Oui' : 'Non' }}
+                @else
+                    —
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <th>Raison du sinistre</th>
+            <td>{{ $client->raison ?: '—' }}</td>
+            <th>Numéro de police</th>
+            <td>{{ $client->numero_police ?: '—' }}</td>
+        </tr>
+        <tr>
+            <th>Date du sinistre</th>
+            <td>{{ $fmtDate($client->date_sinistre) ?: '—' }}</td>
+            <th>Date de déclaration</th>
+            <td>{{ $fmtDate($client->date_declaration) ?: '—' }}</td>
+        </tr>
+        <tr>
+            <th>Assurance</th>
+            <td>{{ $client->nom_assurance ?: '—' }}</td>
+            <th>Autre assurance</th>
+            <td>{{ $client->autre_assurance ?: '—' }}</td>
+        </tr>
+        <tr>
+            <th>N° de sinistre</th>
+            <td>{{ $client->numero_sinistre ?: '—' }}</td>
+            <th>Adresse de pose</th>
+            <td>{{ $client->adresse_pose ?: '—' }}</td>
+        </tr>
+    </table>
 @endif
 
-<div class="prestations-title">Détails des prestations</div>
-<table>
+{{-- PRESTATIONS --}}
+<div class="section-title">Détails des prestations</div>
+<table class="items">
     <thead>
     <tr>
         <th>Description</th>
@@ -191,7 +172,12 @@
     <tbody>
     @foreach($facture->items as $item)
         <tr>
-            <td>{{ $item->produit }}</td>
+            <td>
+                <div>{{ $item->produit }}</div>
+                @if($item->description)
+                    <div class="muted">{{ $item->description }}</div>
+                @endif
+            </td>
             <td>{{ number_format((float)$item->prix_unitaire, 2, ',', ' ') }} €</td>
             <td>{{ rtrim(rtrim(number_format((float)$item->quantite, 2, ',', ' '), '0'), ',') }}</td>
             <td>{{ number_format((float)$item->total_ht, 2, ',', ' ') }} €</td>
@@ -215,6 +201,7 @@
     </tr>
 </table>
 
+{{-- Modalités & conditions de règlement --}}
 <div class="section-title">Modalités & conditions de règlement</div>
 <div class="terms-box">{!! nl2br(e($termsText)) !!}</div>
 
