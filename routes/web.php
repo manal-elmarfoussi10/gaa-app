@@ -99,9 +99,7 @@ Route::middleware(['auth', CompanyAccess::class])
     ->scopeBindings()
     ->group(function () {
 
-    // Signed contract download (client area)
-    Route::get('/clients/{client}/contract/signed', [ClientSignatureController::class, 'downloadSigned'])
-        ->name('clients.contract.download_signed');
+   
 
     // Dashboards
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
