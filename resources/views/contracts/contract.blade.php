@@ -202,17 +202,20 @@
   </div>
 
   {{-- Signatures --}}
-  <div class="sign-grid">
+<div class="sign-grid">
   <div class="sign-box">
-  <h3>Signature du client</h3>
-  <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
-  <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
+    <h3>Signature du client</h3>
+    <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
+    <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
 
-  {{-- Yousign anchor moved directly under the heading --}}
-  <div class="y-anchor" style="margin-top:5px;">[[SIGN_CLIENT]]</div>
+    <!-- Anchor commented out so Yousign ignores it -->
+    <!-- [[SIGN_CLIENT]] -->
+    <div class="y-anchor">&nbsp;</div>
 
-  <div class="sign-hint" style="margin-top:5px;">Lu et approuvé</div>
+    <div class="sign-hint" style="margin-top:5px;">Lu et approuvé</div>
+  </div>
 </div>
+
 
 
     <div class="sign-box">
