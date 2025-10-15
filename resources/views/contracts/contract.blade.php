@@ -203,14 +203,17 @@
 
   {{-- Signatures --}}
   <div class="sign-grid">
-    <div class="sign-box">
-      <h3>Signature du client</h3>
-      <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
-      <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
-      <div class="sign-hint">Lu et approuvé</div>
-      {{-- Yousign anchor (if still used) --}}
-      <div class="y-anchor">[[SIGN_CLIENT]]</div>
-    </div>
+  <div class="sign-box">
+  <h3>Signature du client</h3>
+  <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
+  <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
+
+  {{-- Yousign anchor moved directly under the heading --}}
+  <div class="y-anchor" style="margin-top:5px;">[[SIGN_CLIENT]]</div>
+
+  <div class="sign-hint" style="margin-top:5px;">Lu et approuvé</div>
+</div>
+
 
     <div class="sign-box">
       <h3>Cachet & signature de {{ $cName }}</h3>
