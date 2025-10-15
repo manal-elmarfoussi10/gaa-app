@@ -41,38 +41,33 @@ class ClientSignatureController extends Controller
             // 4) Uploader le document (anchors off -> on DOIT fournir des fields)
             $doc = $ys->uploadDocument($sr['id'], $absPath, false); // renvoie ['id' => '...']
 
-            // 5) Ajouter le signataire + champ de signature (coordonnées à ajuster selon votre PDF)
-            $signatureField = [
-                'type'        => 'signature',
-                'document_id' => $doc['id'],
-                'page'        => 2,                 // keep it on page 2
-                'shape'       => [                  // <- v3 requires shape
-                    'x'      => 120,                // right (+)
-                    'y'      => 660,                // higher number = higher on page (bottom-left origin)
-                    'width'  => 180,
-                    'height' => 45,
-                ],
-                // no 'anchor' or 'text_anchor'
-            ];            
+            // 5) Champ de signature (coordonnées absolues v3 / shape)
+$signatureField = [
+    'type'        => 'signature',
+    'document_id' => $doc['id'],
+    'page'        => 2,
+    'shape'       => [
+        'x'      => 120,  // → right
+        'y'      => 660,  // ↑ higher on page (origin = bottom-left)
+        'width'  => 180,
+        'height' => 45,
+    ],
+];
 
-            // Yousign attend un phone en E.164 si fourni ; sinon laissez null
-            $phone = $client->telephone;
-            if ($phone && !preg_match('/^\+\d{6,15}$/', $phone)) {
-                $phone = null;
-            }
+// 6) Ajout du signataire + champ
+$ys->addSigner($sr['id'], [
+    'info' => [
+        'first_name'   => $client->prenom ?: 'Client',
+        'last_name'    => $client->nom_assure ?? $client->nom ?? '-',
+        'email'        => $client->email,
+        'phone_number' => $phone, // keep null if not E.164
+        'locale'       => config('services.yousign.locale', 'fr'),
+    ],
+    'signature_level'               => 'electronic_signature',
+    'signature_authentication_mode' => 'no_otp',
+    'fields' => [$signatureField],
+]);
 
-            $ys->addSigner($sr['id'], [
-                'info' => [
-                    'first_name'   => $client->prenom ?: 'Client',
-                    'last_name'    => $client->nom_assure ?? $client->nom ?? '-',
-                    'email'        => $client->email,
-                    'phone_number' => $phone,
-                    'locale'       => config('services.yousign.locale', 'fr'),
-                ],
-                'signature_level'               => 'electronic_signature',
-                'signature_authentication_mode' => 'no_otp',
-                'fields' => [$signatureField],
-            ]);
 
             // 6) Activer (envoi de l’e-mail Yousign)
             $ys->activate($sr['id']);
