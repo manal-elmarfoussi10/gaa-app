@@ -43,14 +43,17 @@ class ClientSignatureController extends Controller
 
             // 5) Ajouter le signataire + champ de signature (coordonnées à ajuster selon votre PDF)
             $signatureField = [
-                'document_id' => $doc['id'],
                 'type'        => 'signature',
-                'page'        => 2,
-                'x'           => 120,   // left/right
-                'y'           => 700,   // HIGH on the page (bottom-left origin)
-                'width'       => 180,
-                'height'      => 45,
-              ];              
+                'document_id' => $doc['id'],
+                'page'        => 2,                 // keep it on page 2
+                'shape'       => [                  // <- v3 requires shape
+                    'x'      => 120,                // right (+)
+                    'y'      => 660,                // higher number = higher on page (bottom-left origin)
+                    'width'  => 180,
+                    'height' => 45,
+                ],
+                // no 'anchor' or 'text_anchor'
+            ];            
 
             // Yousign attend un phone en E.164 si fourni ; sinon laissez null
             $phone = $client->telephone;

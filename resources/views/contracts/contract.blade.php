@@ -209,7 +209,6 @@
     <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
 
     <!-- Anchor commented out so Yousign ignores it -->
-    <!-- [[SIGN_CLIENT]] -->
     <div class="y-anchor">&nbsp;</div>
 
     <div class="sign-hint" style="margin-top:5px;">Lu et approuvé</div>
