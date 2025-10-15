@@ -46,11 +46,11 @@ class ClientSignatureController extends Controller
                 'document_id' => $doc['id'],
                 'type'        => 'signature',
                 'page'        => 2,
-                'x'           => 120,
-                'y'           => 180,
+                'x'           => 120,   // left/right
+                'y'           => 700,   // HIGH on the page (bottom-left origin)
                 'width'       => 180,
                 'height'      => 45,
-            ];
+              ];              
 
             // Yousign attend un phone en E.164 si fourni ; sinon laissez null
             $phone = $client->telephone;
