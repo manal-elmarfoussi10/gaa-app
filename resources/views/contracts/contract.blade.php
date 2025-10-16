@@ -202,31 +202,25 @@
   </div>
 
   {{-- Signatures --}}
-  <div class="sign-grid">
-    <div class="sign-box">
-      <h3>Signature du client</h3>
-      <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
-      <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
-      <div class="sign-hint">Lu et approuvé</div>
-      {{-- Yousign anchor (if still used) --}}
-      <div class="y-anchor">[[SIGN_CLIENT]]</div>
-    </div>
-
-    <div class="sign-box">
-      <h3>Cachet & signature de {{ $cName }}</h3>
-      <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
-
-      {{-- Render company signature image if available --}}
-      @if($sigSrc)
-        <img src="{{ $sigSrc }}" alt="Signature {{ $cName }}" class="sig-img">
-      @else
-        <div class="sign-hint">Signature non fournie</div>
-      @endif
-
-      {{-- Yousign anchor (if still used) --}}
-      <div class="y-anchor">[[SIGN_COMPANY]]</div>
-    </div>
+<div class="sign-grid">
+  <div class="sign-box">
+    <h3>Signature du client</h3>
+    <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
+    <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
+    <div class="sign-hint">Lu et approuvé</div>
   </div>
+
+  <div class="sign-box">
+    <h3>Cachet & signature de {{ $cName }}</h3>
+    <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
+    @if($sigSrc)
+      <img src="{{ $sigSrc }}" alt="Signature {{ $cName }}" class="sig-img">
+    @else
+      <div class="sign-hint">Signature non fournie</div>
+    @endif
+  </div>
+</div>
+
 
   <div class="footer">
     Document généré automatiquement – {{ $cName }} · {{ $cAddr }}
