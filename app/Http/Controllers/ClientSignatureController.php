@@ -45,15 +45,15 @@ class ClientSignatureController extends Controller
             $signatureField = [
                 'type'        => 'signature',
                 'document_id' => $doc['id'],
-                'page'        => 2,                 // page 2
-                'shape'       => [                  // coordinates go INSIDE shape
-                    'x'      => 120,               // move right (+)
-                    'y'      => 660,               // higher on page (origin is bottom-left); adjust as needed
+                'page'        => 2,
+                'shape'       => [
+                    'x'      => 120,   // left-right (increase to move right)
+                    'y'      => 660,   // up-down (increase = higher)
                     'width'  => 180,
                     'height' => 45,
                 ],
-            ];            
-
+            ];
+            
             // Yousign attend un phone en E.164 si fourni ; sinon laissez null
             $phone = $client->telephone;
             if ($phone && !preg_match('/^\+\d{6,15}$/', $phone)) {
