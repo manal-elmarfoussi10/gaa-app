@@ -45,10 +45,10 @@ class ClientSignatureController extends Controller
             $signatureField = [
                 'type'        => 'signature',
                 'document_id' => $doc['id'],
-                'page'        => 2,
+                'page'        => 1,
                 'shape'       => [
                     'x'      => 120,
-                    'y'      => 760,   // higher on the page
+                    'y'      => 139,   // higher on the page
                     'width'  => 180,
                     'height' => 45,
                 ],
