@@ -45,14 +45,14 @@ class ClientSignatureController extends Controller
             $signatureField = [
                 'type'        => 'signature',
                 'document_id' => $doc['id'],
-                'page'        => 2, // stay on second page
-                'shape'       => [  // coordinates must be inside shape
+                'page'        => 2,
+                'shape'       => [
                     'x'      => 120,
-                    'y'      => 660,  // increase to move up, decrease to move down
+                    'y'      => 760,   // higher on the page
                     'width'  => 180,
                     'height' => 45,
                 ],
-            ];
+            ];            
             
             
             // Yousign attend un phone en E.164 si fourni ; sinon laissez null
