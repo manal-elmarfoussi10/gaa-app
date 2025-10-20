@@ -452,6 +452,7 @@
   </div>
 </div>
 
+
 <!-- Documents -->
 <div class="bg-white rounded-xl shadow-md p-6 mb-8">
     <div class="flex items-center justify-between mb-4">
@@ -460,8 +461,6 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         @php
-            use Illuminate\Support\Str;
-
             $documents = [
                 'photo_vitrage'     => 'Photo Vitrage',
                 'photo_carte_verte' => 'Carte Verte',
@@ -469,76 +468,78 @@
             ];
             $hasDocuments = false;
 
-            /**
-             * Build a public URL for a stored path or absolute link.
-             */
-            function doc_public_url($rawPath) {
+            // Build a public URL for serving through /attachment/{path} or pass-through absolute URLs
+            $makePublicUrl = function ($rawPath) {
                 if (!$rawPath) return null;
 
-                // If already an absolute URL, return as-is
-                if (Str::startsWith($rawPath, ['http://','https://'])) {
+                // Absolute link? return as-is
+                if (\Illuminate\Support\Str::startsWith($rawPath, ['http://','https://'])) {
                     return $rawPath;
                 }
 
-                // Normalize (strip leading "public/" and slashes)
+                // Normalize storage path (strip leading slashes and "public/")
                 $p = ltrim($rawPath, '/');
-                $p = Str::startsWith($p, 'public/') ? Str::after($p, 'public/') : $p;
+                if (\Illuminate\Support\Str::startsWith($p, 'public/')) {
+                    $p = \Illuminate\Support\Str::after($p, 'public/');
+                }
 
-                // Serve via named route /attachment/{path}
                 return route('attachment', ['path' => $p]);
-            }
+            };
         @endphp
 
         @foreach($documents as $field => $label)
             @php
-                $raw = $client->$field ?? null;
-                $docUrl = $raw ? doc_public_url($raw) : null;
-
-                // Determine extension from the *path* (not the full URL with query)
-                $ext = $raw
-                    ? strtolower(pathinfo(parse_url($raw, PHP_URL_PATH) ?? $raw, PATHINFO_EXTENSION))
-                    : null;
+                $raw     = $client->$field ?? null;
+                $docUrl  = $makePublicUrl($raw);
+                $extPath = $raw ? (parse_url($raw, PHP_URL_PATH) ?? $raw) : null;
+                $ext     = $extPath ? strtolower(pathinfo($extPath, PATHINFO_EXTENSION)) : null;
             @endphp
 
             @if($docUrl)
-                @php $hasDocuments = true; @endphp
+                @php
+                    $hasDocuments = true;
+
+                    // Build a clean download URL
+                    if (\Illuminate\Support\Str::startsWith($raw, ['http://','https://'])) {
+                        $downloadUrl = $docUrl.(\Illuminate\Support\Str::contains($docUrl,'?') ? '&' : '?').'download=1';
+                    } else {
+                        $p = ltrim($raw, '/');
+                        if (\Illuminate\Support\Str::startsWith($p, 'public/')) {
+                            $p = \Illuminate\Support\Str::after($p, 'public/');
+                        }
+                        $downloadUrl = route('attachment', ['path' => $p, 'download' => 1]);
+                    }
+                @endphp
+
                 <div class="border rounded-lg overflow-hidden">
                     <div class="bg-gray-100 h-48 flex items-center justify-center">
                         @if($ext === 'pdf')
                             <div class="text-center p-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 <p class="mt-2 text-sm font-medium text-gray-700 truncate">{{ $label }}</p>
                             </div>
                         @else
-                            <img src="{{ $docUrl }}" alt="{{ $label }}" class="object-contain w-full h-full">
+                            <img src="{{ $docUrl }}" class="object-contain w-full h-full" alt="{{ $label }}">
                         @endif
                     </div>
 
                     <div class="p-3">
                         <h3 class="font-medium text-gray-800">{{ $label }}</h3>
                         <div class="flex justify-between mt-2">
-                            {{-- Voir (ouvre dans un nouvel onglet) --}}
                             <a href="{{ $docUrl }}" target="_blank"
                                class="text-cyan-600 hover:text-cyan-800 text-sm flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                                 Voir
                             </a>
 
-                            {{-- Télécharger (force download via la même route) --}}
-                            @php
-                                // Rebuild a clean download URL against /attachment so query isn't duplicated
-                                $downloadUrl = $raw && !Str::startsWith($raw, ['http://','https://'])
-                                    ? route('attachment', ['path' => ltrim(Str::startsWith(ltrim($raw,'/'), 'public/') ? Str::after(ltrim($raw,'/'), 'public/') : ltrim($raw,'/'), 'download' => 1])
-                                    : ($docUrl.(Str::contains($docUrl,'?') ? '&' : '?').'download=1');
-                            @endphp
                             <a href="{{ $downloadUrl }}" class="text-gray-600 hover:text-gray-800 text-sm flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                 </svg>
                                 Télécharger
                             </a>
@@ -551,7 +552,7 @@
         @if(!$hasDocuments)
             <div class="col-span-3 text-center py-8">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <p class="mt-2 text-gray-500">Aucun document disponible</p>
             </div>
