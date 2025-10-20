@@ -1,52 +1,180 @@
-@extends('layout')
+@extends('layouts.app')
 
 @section('content')
-<div class="max-w-5xl mx-auto bg-white p-6 rounded shadow">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-xl font-semibold">Packs d’unités</h2>
-    <a href="{{ route('superadmin.units.packages.create') }}" class="px-3 py-2 bg-orange-500 text-white rounded">Nouveau pack</a>
-  </div>
+<div class="max-w-6xl mx-auto mt-8 space-y-6">
 
-  @if(session('success'))
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4">{{ session('success') }}</div>
-  @endif
+    {{-- header --}}
+    <div class="bg-white rounded-2xl shadow p-6 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#FFF1EC] flex items-center justify-center">
+                <i data-lucide="layers" class="w-5 h-5 text-[#FF4B00]"></i>
+            </div>
+            <div>
+                <h1 class="text-xl md:text-2xl font-semibold text-gray-800">Packs d’unités</h1>
+                <p class="text-sm text-gray-500">Définissez le prix unitaire et la TVA appliquée aux achats d’unités.</p>
+            </div>
+        </div>
 
-  <table class="w-full">
-    <thead>
-      <tr class="text-left border-b">
-        <th class="py-2">Nom</th>
-        <th class="py-2">Unités</th>
-        <th class="py-2">Prix HT</th>
-        <th class="py-2">Prix TTC</th>
-        <th class="py-2">Actif</th>
-        <th class="py-2">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      @forelse($packages as $p)
-        <tr class="border-b">
-          <td class="py-2">{{ $p->name }}</td>
-          <td class="py-2">{{ $p->units }}</td>
-          <td class="py-2">{{ number_format($p->price_ht,2,',',' ') }} €</td>
-          <td class="py-2">{{ number_format($p->price_ttc,2,',',' ') }} €</td>
-          <td class="py-2">
-            <span class="px-2 py-1 rounded text-xs {{ $p->is_active?'bg-green-100 text-green-700':'bg-gray-100 text-gray-600' }}">
-              {{ $p->is_active ? 'Oui' : 'Non' }}
-            </span>
-          </td>
-          <td class="py-2 space-x-2">
-            <a href="{{ route('superadmin.units.packages.edit',$p) }}" class="text-blue-600">Éditer</a>
-            <form action="{{ route('superadmin.units.packages.destroy',$p) }}" method="POST" class="inline"
-                  onsubmit="return confirm('Supprimer ce pack ?')">
-              @csrf @method('DELETE')
-              <button class="text-red-600">Supprimer</button>
-            </form>
-          </td>
-        </tr>
-      @empty
-        <tr><td class="py-6 text-gray-500" colspan="6">Aucun pack.</td></tr>
-      @endforelse
-    </tbody>
-  </table>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('superadmin.virements.index') }}"
+               class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-sm">
+                <i data-lucide="credit-card" class="w-4 h-4"></i>
+                Virements
+                @isset($pendingVirements)
+                    @if($pendingVirements > 0)
+                        <span class="ml-1 inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full text-xs bg-[#FF4B00] text-white">
+                            {{ $pendingVirements }}
+                        </span>
+                    @endif
+                @endisset
+            </a>
+
+            @if($packages->isEmpty())
+                <a href="{{ route('superadmin.units.packages.create') }}"
+                   class="inline-flex items-center gap-2 bg-[#FF4B00] text-white px-4 py-2 rounded-lg hover:bg-orange-600">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Créer le pack
+                </a>
+            @else
+                <a href="{{ route('superadmin.units.packages.edit', $packages->first()) }}"
+                   class="inline-flex items-center gap-2 bg-[#FF4B00] text-white px-4 py-2 rounded-lg hover:bg-orange-600">
+                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                    Modifier
+                </a>
+            @endif
+        </div>
+    </div>
+
+    {{-- flash messages --}}
+    @if(session('success'))
+        <div class="bg-green-50 text-green-800 border border-green-200 rounded-xl px-4 py-3">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="bg-red-50 text-red-800 border border-red-200 rounded-xl px-4 py-3">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    @if($packages->isEmpty())
+        {{-- empty state --}}
+        <div class="bg-white rounded-2xl shadow p-10 text-center">
+            <div class="mx-auto w-14 h-14 rounded-2xl bg-[#FFF1EC] flex items-center justify-center">
+                <i data-lucide="package-open" class="w-6 h-6 text-[#FF4B00]"></i>
+            </div>
+            <h2 class="mt-4 text-lg font-semibold text-gray-800">Aucun pack configuré</h2>
+            <p class="mt-1 text-gray-500">Créez votre premier pack pour activer l’achat d’unités par les sociétés.</p>
+            <a href="{{ route('superadmin.units.packages.create') }}"
+               class="mt-5 inline-flex items-center gap-2 bg-[#FF4B00] text-white px-5 py-2.5 rounded-lg hover:bg-orange-600">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Créer le pack
+            </a>
+        </div>
+    @else
+        @php
+            $p = $packages->first();
+            $ex = [
+                1   => round($p->price_per_unit * (1 + $p->tax_rate/100), 2),
+                10  => round(10 * $p->price_per_unit * (1 + $p->tax_rate/100), 2),
+                100 => round(100 * $p->price_per_unit * (1 + $p->tax_rate/100), 2),
+            ];
+        @endphp
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {{-- main card --}}
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow p-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs
+                            {{ $p->is_active ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-50 text-gray-600 border border-gray-200' }}">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 {{ $p->is_active ? 'bg-green-400' : 'bg-gray-400' }}"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 {{ $p->is_active ? 'bg-green-500' : 'bg-gray-400' }}"></span>
+                            </span>
+                            {{ $p->is_active ? 'Actif' : 'Inactif' }}
+                        </div>
+
+                        <h2 class="mt-3 text-xl font-semibold text-gray-800">
+                            {{ $p->name ?? 'Pack standard' }}
+                        </h2>
+                        <p class="text-gray-500">Définit les tarifs appliqués à toutes les sociétés.</p>
+                    </div>
+
+                    <div class="text-right">
+                        <div class="text-3xl font-bold text-gray-900">
+                            {{ number_format($p->price_per_unit, 2, ',', ' ') }} €
+                        </div>
+                        <div class="text-sm text-gray-500">par unité (HT)</div>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="rounded-xl border border-gray-200 p-4">
+                        <div class="text-sm text-gray-500">TVA</div>
+                        <div class="text-lg font-semibold text-gray-800">{{ rtrim(rtrim(number_format($p->tax_rate, 2, ',', ' '), '0'), ',') }}%</div>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 p-4">
+                        <div class="text-sm text-gray-500">Créé le</div>
+                        <div class="text-lg font-semibold text-gray-800">{{ $p->created_at?->format('d/m/Y') }}</div>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 p-4">
+                        <div class="text-sm text-gray-500">Dernière mise à jour</div>
+                        <div class="text-lg font-semibold text-gray-800">{{ $p->updated_at?->format('d/m/Y') }}</div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex items-center gap-3">
+                    <a href="{{ route('superadmin.units.packages.edit', $p) }}"
+                       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FF4B00] text-white hover:bg-orange-600">
+                        <i data-lucide="pencil" class="w-4 h-4"></i> Modifier
+                    </a>
+
+                    <form method="POST"
+                          action="{{ route('superadmin.units.packages.destroy', ['unit_package' => $p->getKey()]) }}"
+                          onsubmit="return confirm('Désactiver ce pack ? Les achats resteront bloqués si aucun pack actif n’existe.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                            <i data-lucide="pause-circle" class="w-4 h-4"></i> Désactiver
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {{-- simulation / examples --}}
+            <div class="bg-white rounded-2xl shadow p-6">
+                <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <i data-lucide="calculator" class="w-4 h-4 text-[#FF4B00]"></i>
+                    Exemples TTC
+                </h3>
+
+                <div class="mt-4 space-y-3">
+                    <div class="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                        <div class="text-gray-600">1 unité</div>
+                        <div class="font-semibold text-gray-900">{{ number_format($ex[1], 2, ',', ' ') }} €</div>
+                    </div>
+                    <div class="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                        <div class="text-gray-600">10 unités</div>
+                        <div class="font-semibold text-gray-900">{{ number_format($ex[10], 2, ',', ' ') }} €</div>
+                    </div>
+                    <div class="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                        <div class="text-gray-600">100 unités</div>
+                        <div class="font-semibold text-gray-900">{{ number_format($ex[100], 2, ',', ' ') }} €</div>
+                    </div>
+                </div>
+
+                <hr class="my-5">
+
+                {{-- quick editor link --}}
+                <a href="{{ route('superadmin.units.packages.edit', $p) }}"
+                   class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#FFF1EC] text-[#FF4B00] hover:bg-[#FFE2D7]">
+                    <i data-lucide="settings-2" class="w-4 h-4"></i>
+                    Ajuster les paramètres
+                </a>
+            </div>
+        </div>
+    @endif
 </div>
 @endsection
