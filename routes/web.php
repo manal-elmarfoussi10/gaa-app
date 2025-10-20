@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 use App\Http\Middleware\CompanyAccess;
 use App\Http\Middleware\SuperAdminAccess;
@@ -68,10 +70,39 @@ Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])-
 Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('guest')->name('password.store');
 
 
-Route::get('/attachment/{path}', function ($path) {
-    $fullPath = storage_path('app/public/' . $path);
-    abort_unless(file_exists($fullPath), 404);
-    return response()->file($fullPath);
+
+
+Route::get('/attachment/{path}', function (Request $request, $path) {
+    // Normalize
+    $path = urldecode($path);
+    if (Str::startsWith($path, ['http://', 'https://'])) {
+        // If a full URL was stored, just redirect to it
+        return redirect()->away($path);
+    }
+
+    $path = ltrim($path, '/');
+    if (Str::startsWith($path, 'public/')) {
+        $path = Str::after($path, 'public/');
+    }
+
+    // Try several common locations
+    $candidates = [
+        storage_path('app/public/'.$path),   // disk "public"
+        storage_path('app/'.$path),          // disk "local" (no /public)
+        public_path('storage/'.$path),       // via storage:link
+        public_path($path),                  // accidentally stored in /public
+    ];
+
+    foreach ($candidates as $full) {
+        if (is_file($full)) {
+            if ($request->boolean('download')) {
+                return response()->download($full, basename($full));
+            }
+            return response()->file($full);
+        }
+    }
+
+    abort(404);
 })->where('path', '.*')->name('attachment');
 
 Route::get('/test-pdf', function () {
