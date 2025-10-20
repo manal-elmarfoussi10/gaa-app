@@ -46,9 +46,6 @@
         'poseurs'           => 'Techniciens',
         'stocks'            => 'Stocks',
         'messages'          => 'Messages',
-        'credits'           => 'Acheter des crédits',
-        'users'             => 'Mes utilisateurs',
-        'consommation'      => 'Ma consommation',
       ] as $k => $v)
         <option value="{{ $k }}" @selected($t === $k)>{{ $v }}</option>
       @endforeach

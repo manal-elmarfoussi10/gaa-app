@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class ClientController extends Controller
 {
@@ -220,22 +221,110 @@ class ClientController extends Controller
     }
 
     public function destroy(Client $client)
-    {
-        try {
-            foreach ($client->conversations as $conversation) {
-                $conversation->emails()->delete();
-                $conversation->delete();
+{
+    // (Optional) safety: only allow deleting inside same company unless superadmin
+    if (auth()->user()->role !== User::ROLE_SUPERADMIN &&
+        (int)$client->company_id !== (int)auth()->user()->company_id) {
+        abort(403, 'Accès refusé (mauvaise entreprise).');
+    }
+
+    try {
+        DB::transaction(function () use ($client) {
+
+            // ---- Remove document fields stored on disk (single-file fields) ----
+            foreach (['photo_vitrage', 'photo_carte_verte', 'photo_carte_grise'] as $f) {
+                if ($client->$f) {
+                    Storage::disk('public')->delete($client->$f);
+                }
             }
 
-            $client->factures()->delete();
-            $client->devis()->delete();
-            $client->delete();
+            // ---- Delete gallery/photos records + files (if you use a photos table) ----
+            if (method_exists($client, 'photos')) {
+                $client->photos->each(function ($p) {
+                    if ($p->path) Storage::disk('public')->delete($p->path);
+                    $p->delete();
+                });
+            }
 
-            return redirect()->route('clients.index')->with('success', 'Client supprimé avec succès');
-        } catch (\Exception $e) {
-            return redirect()->route('clients.index')->with('error', 'Erreur: '.$e->getMessage());
+            // ---- Conversations -> emails -> replies (and their attachments if any) ----
+            if (method_exists($client, 'conversations')) {
+                $client->load(['conversations.emails.replies']);
+
+                foreach ($client->conversations as $thread) {
+                    foreach ($thread->emails as $email) {
+                        // email file
+                        if ($email->file_path) {
+                            Storage::disk('public')->delete($email->file_path);
+                        }
+                        // replies + files
+                        foreach ($email->replies as $reply) {
+                            if ($reply->file_path) {
+                                Storage::disk('public')->delete($reply->file_path);
+                            }
+                            $reply->delete();
+                        }
+                        $email->delete();
+                    }
+                    $thread->delete();
+                }
+            }
+
+            // ---- RDV / calendar items (if relation exists) ----
+            if (method_exists($client, 'rdvs')) {
+                $client->rdvs()->delete();
+            }
+
+            // ---- Factures -> paiements + avoirs (children first), then factures ----
+            if (method_exists($client, 'factures')) {
+                $client->load(['factures.avoirs', 'factures.paiements']);
+
+                foreach ($client->factures as $facture) {
+                    // delete paiements if FK restricts
+                    if (method_exists($facture, 'paiements')) {
+                        $facture->paiements()->delete();
+                    }
+                    // delete avoirs
+                    if (method_exists($facture, 'avoirs')) {
+                        $facture->avoirs()->delete();
+                    }
+                    // pdfs or attachments on factures? delete here if you store paths
+                    if (!empty($facture->pdf_path)) {
+                        Storage::disk('public')->delete($facture->pdf_path);
+                    }
+                    $facture->delete();
+                }
+            }
+
+            // ---- Devis (and any attached files) ----
+            if (method_exists($client, 'devis')) {
+                $client->loadMissing('devis');
+                foreach ($client->devis as $devis) {
+                    if (!empty($devis->pdf_path)) {
+                        Storage::disk('public')->delete($devis->pdf_path);
+                    }
+                    $devis->delete();
+                }
+            }
+
+            // ---- Bons de commande / autres relations (add if you have them) ----
+            if (method_exists($client, 'bonsDeCommande')) {
+                $client->bonsDeCommande()->delete();
+            }
+
+            // Finally: delete the client itself
+            $client->delete();
+        });
+
+        return redirect()->route('clients.index')->with('success', 'Client supprimé avec succès');
+    } catch (\Throwable $e) {
+        // Surface SQL FK message if useful
+        $msg = $e->getMessage();
+        if ($e->getPrevious()) {
+            $msg .= ' | ' . $e->getPrevious()->getMessage();
         }
+        return redirect()->route('clients.index')->with('error', 'Suppression impossible: '.$msg);
     }
+}
 
     public function exportPdf(Client $client)
     {
