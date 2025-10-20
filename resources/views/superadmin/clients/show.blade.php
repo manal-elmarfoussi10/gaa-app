@@ -461,6 +461,7 @@
 
     @php
         use Illuminate\Support\Facades\Storage;
+        use Illuminate\Support\Str;
 
         $documents = [
             'photo_vitrage'     => 'Photo Vitrage',
@@ -469,23 +470,50 @@
         ];
 
         $hasDocuments = false;
+
+        /**
+         * Normalize any saved path and return:
+         *  - [$url, $relativePath, $ext]
+         * For local files, $url is /storage/app/public/<relative>.
+         * For absolute URLs, returns the original URL.
+         */
+        $normalizePath = function ($raw) {
+            if (!$raw) return [null, null, null];
+
+            // Absolute URL? Return as-is.
+            if (Str::startsWith($raw, ['http://', 'https://'])) {
+                $ext = strtolower(pathinfo(parse_url($raw, PHP_URL_PATH) ?? $raw, PATHINFO_EXTENSION));
+                return [$raw, $raw, $ext];
+            }
+
+            // Strip leading slash then normalize common prefixes
+            $p = ltrim($raw, '/');
+            // Remove any of these prefixes if present
+            $p = preg_replace('#^(storage/|app/public/|public/)#', '', $p);
+
+            // Existence check against the public disk
+            $exists = Storage::disk('public')->exists($p);
+
+            // Build the URL exactly like you want
+            $url = $exists ? asset('/storage/app/public/' . $p) : null;
+
+            $ext = strtolower(pathinfo($p, PATHINFO_EXTENSION));
+
+            return [$url, $p, $ext];
+        };
     @endphp
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        @foreach($documents as $field => $label)
+        @foreach ($documents as $field => $label)
             @php
-                $file = $client->$field ?? null;
-                $ext = $file ? strtolower(pathinfo($file, PATHINFO_EXTENSION)) : null;
-
-                $fileExists = $file && Storage::disk('public')->exists($file);
-                $fileUrl = $fileExists ? asset('/storage/app/public/' . $file) : null;
+                [$fileUrl, $relative, $ext] = $normalizePath($client->$field ?? null);
             @endphp
 
-            @if($fileExists && $fileUrl)
+            @if ($fileUrl)
                 @php $hasDocuments = true; @endphp
                 <div class="border rounded-lg overflow-hidden hover:shadow-md transition">
                     <div class="bg-gray-100 h-48 flex items-center justify-center">
-                        @if($ext === 'pdf')
+                        @if ($ext === 'pdf')
                             <div class="text-center p-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -526,7 +554,7 @@
             @endif
         @endforeach
 
-        @if(!$hasDocuments)
+        @if (!$hasDocuments)
             <div class="col-span-3 text-center py-8">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
