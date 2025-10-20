@@ -141,37 +141,7 @@
                 </div>
             </div>
 
-            {{-- simulation / examples --}}
-            <div class="bg-white rounded-2xl shadow p-6">
-                <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <i data-lucide="calculator" class="w-4 h-4 text-[#FF4B00]"></i>
-                    Exemples TTC
-                </h3>
-
-                <div class="mt-4 space-y-3">
-                    <div class="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                        <div class="text-gray-600">1 unité</div>
-                        <div class="font-semibold text-gray-900">{{ number_format($ex[1], 2, ',', ' ') }} €</div>
-                    </div>
-                    <div class="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                        <div class="text-gray-600">10 unités</div>
-                        <div class="font-semibold text-gray-900">{{ number_format($ex[10], 2, ',', ' ') }} €</div>
-                    </div>
-                    <div class="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                        <div class="text-gray-600">100 unités</div>
-                        <div class="font-semibold text-gray-900">{{ number_format($ex[100], 2, ',', ' ') }} €</div>
-                    </div>
-                </div>
-
-                <hr class="my-5">
-
-                {{-- quick editor link --}}
-                <a href="{{ route('superadmin.units.packages.edit', $p) }}"
-                   class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#FFF1EC] text-[#FF4B00] hover:bg-[#FFE2D7]">
-                    <i data-lucide="settings-2" class="w-4 h-4"></i>
-                    Ajuster les paramètres
-                </a>
-            </div>
+          
         </div>
     @endif
 </div>
