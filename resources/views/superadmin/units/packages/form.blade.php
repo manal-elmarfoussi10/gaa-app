@@ -43,14 +43,21 @@
             <span>Activer ce tarif</span>
         </label>
 
-        <div class="flex gap-2">
-            <button class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">
+        <div class="mt-4 flex items-center gap-3">
+            {{-- Save --}}
+            <button type="submit"
+                    class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">
                 Enregistrer
             </button>
+        
             @if($package)
-                <form method="POST" action="{{ route('superadmin.units.packages.destroy', $package) }}">
-                    @csrf @method('DELETE')
-                    <button class="px-4 py-2 rounded border" onclick="return confirm('Désactiver ?')">
+                {{-- Deactivate (uses DELETE on destroy route with ID) --}}
+                <form method="POST"
+                      action="{{ route('superadmin.units.packages.destroy', $package) }}"
+                      onsubmit="return confirm('Désactiver ce tarif ?');" class="inline">
+                    @csrf
+                    @method('DELETE')
+                    <button class="px-4 py-2 rounded border">
                         Désactiver
                     </button>
                 </form>
