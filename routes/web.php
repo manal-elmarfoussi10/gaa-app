@@ -327,20 +327,20 @@ Route::prefix('superadmin')
     ->name('superadmin.')
     ->group(function () {
 
-        // === Units (packages) ===
-Route::prefix('units')->name('units.')->group(function () {
-    Route::resource('packages', \App\Http\Controllers\SuperAdmin\UnitPackageController::class, [
-        'as' => 'superadmin'
-    ])->parameters(['packages' => 'unit_package'])->except(['show']);
+  // --- Units (packages) ---
+  Route::prefix('units')->name('units.')->group(function () {
+    Route::resource('packages', UnitPackageController::class)
+        ->parameters(['packages' => 'unit_package'])
+        ->except(['show']);
 });
 
-// === Virements review ===
+// --- Virements review ---
 Route::prefix('virements')->name('virements.')->group(function () {
-    Route::get('/',        [\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'index'])->name('index');
-    Route::get('{virement}',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'show'])->name('show');
-    Route::get('{virement}/proof',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'downloadProof'])->name('proof');
-    Route::post('{virement}/approve',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'approve'])->name('approve');
-    Route::post('{virement}/reject', [\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'reject'])->name('reject');
+    Route::get('/',                 [VirementAdminController::class, 'index'])->name('index');
+    Route::get('{virement}',        [VirementAdminController::class, 'show'])->name('show');
+    Route::get('{virement}/proof',  [VirementAdminController::class, 'downloadProof'])->name('proof');
+    Route::post('{virement}/approve',[VirementAdminController::class, 'approve'])->name('approve');
+    Route::post('{virement}/reject', [VirementAdminController::class, 'reject'])->name('reject');
 });
 
     Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
