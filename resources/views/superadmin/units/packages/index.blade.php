@@ -85,8 +85,8 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs
-                            {{ $p->is_active ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-50 text-gray-600 border border-gray-200' }}">
-                            <span class="relative flex h-2 w-2">
+                             {{ $p->is_active ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-50 text-gray-600 border border-gray-200' }}">
+                             <span class="relative flex h-2 w-2">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 {{ $p->is_active ? 'bg-green-400' : 'bg-gray-400' }}"></span>
                                 <span class="relative inline-flex rounded-full h-2 w-2 {{ $p->is_active ? 'bg-green-500' : 'bg-gray-400' }}"></span>
                             </span>
