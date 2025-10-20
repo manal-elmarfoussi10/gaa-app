@@ -74,19 +74,20 @@
                 Enregistrer
             </button>
 
-            {{-- Désactivation (DELETE) --}}
-            @if(!empty($package))
-            <form method="POST"
-      action="{{ route('superadmin.units.packages.destroy', ['unit_package' => $p->getKey()]) }}"
+           {{-- — Désactivation (DELETE) — --}}
+@if(!empty($package) && $package->exists)
+<form method="POST"
+      action="{{ route('superadmin.units.packages.destroy', ['unit_package' => $package->getKey()]) }}"
       onsubmit="return confirm('Désactiver ce pack ?');">
     @csrf
     @method('DELETE')
     <button type="submit"
             class="inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-300 hover:bg-gray-50">
-        <i data-lucide="trash-2" class="w-4 h-4"></i> Supprimer / Désactiver
+        <i data-lucide="trash-2" class="w-4 h-4"></i>
+        Supprimer / Désactiver
     </button>
 </form>
-            @endif
+@endif
         </div>
     </form>
 </div>
