@@ -74,21 +74,7 @@ Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])-
 Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('guest')->name('password.store');
 
 
-// === Units (packages) ===
-Route::prefix('units')->name('units.')->group(function () {
-    Route::resource('packages', \App\Http\Controllers\SuperAdmin\UnitPackageController::class, [
-        'as' => 'superadmin'
-    ])->parameters(['packages' => 'unit_package'])->except(['show']);
-});
 
-// === Virements review ===
-Route::prefix('virements')->name('virements.')->group(function () {
-    Route::get('/',        [\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'index'])->name('index');
-    Route::get('{virement}',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'show'])->name('show');
-    Route::get('{virement}/proof',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'downloadProof'])->name('proof');
-    Route::post('{virement}/approve',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'approve'])->name('approve');
-    Route::post('{virement}/reject', [\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'reject'])->name('reject');
-});
 
 
 
@@ -340,6 +326,22 @@ Route::prefix('superadmin')
     ->middleware(['auth', SuperAdminAccess::class])
     ->name('superadmin.')
     ->group(function () {
+
+        // === Units (packages) ===
+Route::prefix('units')->name('units.')->group(function () {
+    Route::resource('packages', \App\Http\Controllers\SuperAdmin\UnitPackageController::class, [
+        'as' => 'superadmin'
+    ])->parameters(['packages' => 'unit_package'])->except(['show']);
+});
+
+// === Virements review ===
+Route::prefix('virements')->name('virements.')->group(function () {
+    Route::get('/',        [\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'index'])->name('index');
+    Route::get('{virement}',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'show'])->name('show');
+    Route::get('{virement}/proof',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'downloadProof'])->name('proof');
+    Route::post('{virement}/approve',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'approve'])->name('approve');
+    Route::post('{virement}/reject', [\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'reject'])->name('reject');
+});
 
     Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
 
