@@ -3,7 +3,7 @@
 @section('content')
 <div class="max-w-6xl mx-auto mt-8 space-y-6">
 
-    {{-- header --}}
+    {{-- Header --}}
     <div class="bg-white rounded-2xl shadow p-6 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-[#FFF1EC] flex items-center justify-center">
@@ -45,7 +45,7 @@
         </div>
     </div>
 
-    {{-- flash messages --}}
+    {{-- Flash messages --}}
     @if(session('success'))
         <div class="bg-green-50 text-green-800 border border-green-200 rounded-xl px-4 py-3">
             {{ session('success') }}
@@ -58,7 +58,7 @@
     @endif
 
     @if($packages->isEmpty())
-        {{-- empty state --}}
+        {{-- Empty state --}}
         <div class="bg-white rounded-2xl shadow p-10 text-center">
             <div class="mx-auto w-14 h-14 rounded-2xl bg-[#FFF1EC] flex items-center justify-center">
                 <i data-lucide="package-open" class="w-6 h-6 text-[#FF4B00]"></i>
@@ -73,14 +73,14 @@
         </div>
     @else
         @php
-            $p   = $packages->first();
-            $vat = 20; // fixed VAT for display
+            $p   = $packages->first();  // on n’affiche que le premier/unique pack
+            $vat = 20;                  // TVA fixe pour affichage
             $ttc = fn($q) => round($q * ($p->price_ht ?? 0) * (1 + $vat/100), 2);
             $ex  = [ 1 => $ttc(1), 10 => $ttc(10), 100 => $ttc(100) ];
         @endphp
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {{-- main card --}}
+            {{-- Main card --}}
             <div class="lg:col-span-2 bg-white rounded-2xl shadow p-6">
                 <div class="flex items-start justify-between">
                     <div>
@@ -128,20 +128,33 @@
                         <i data-lucide="pencil" class="w-4 h-4"></i> Modifier
                     </a>
 
-                    <form method="POST"
-                          action="{{ route('superadmin.units.packages.destroy', ['unit_package' => $p->getKey()]) }}"
-                          onsubmit="return confirm('Désactiver ce pack ? Les achats resteront bloqués si aucun pack actif n’existe.');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
-                            <i data-lucide="pause-circle" class="w-4 h-4"></i> Désactiver
-                        </button>
-                    </form>
+                    @if(!$p->is_active)
+                        {{-- ACTIVER (PATCH) --}}
+                        <form method="POST"
+                              action="{{ route('superadmin.units.packages.activate', ['unit_package' => $p->getKey()]) }}">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit"
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-green-300 text-green-700 hover:bg-green-50">
+                                <i data-lucide="play-circle" class="w-4 h-4"></i> Activer
+                            </button>
+                        </form>
+                    @else
+                        {{-- DÉSACTIVER (DELETE) --}}
+                        <form method="POST"
+                              action="{{ route('superadmin.units.packages.destroy', ['unit_package' => $p->getKey()]) }}"
+                              onsubmit="return confirm('Désactiver ce pack ? Les achats resteront bloqués si aucun pack actif n’existe.');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit"
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                                <i data-lucide="pause-circle" class="w-4 h-4"></i> Désactiver
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
 
-          
         </div>
     @endif
 </div>

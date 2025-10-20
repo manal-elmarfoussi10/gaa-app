@@ -343,6 +343,9 @@ Route::prefix('virements')->name('virements.')->group(function () {
     Route::post('{virement}/reject', [VirementAdminController::class, 'reject'])->name('reject');
 });
 
+Route::patch('packages/{unit_package}/activate', [UnitPackageController::class,'activate'])
+    ->name('units.packages.activate');
+
     Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
 
     // Files

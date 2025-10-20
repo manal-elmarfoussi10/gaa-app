@@ -26,32 +26,23 @@ class UnitPackageController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'      => ['nullable','string','max:255'],
-            'price_ht'  => ['required','numeric','min:0'],
-            'is_active' => ['sometimes','boolean'],
+            'name'     => 'nullable|string|max:255',
+            'units'    => 'nullable|integer|min:1',
+            'price_ht' => 'required|numeric|min:0',
+            'is_active'=> 'sometimes|boolean',
         ]);
-
-        $data['is_active'] = (bool)($data['is_active'] ?? true);
-        $data['units']     = 1; // price is per single unit
-
-        // If a pack already exists, update it (single-pack behavior)
-        if ($existing = UnitPackage::first()) {
-            if ($data['is_active']) {
-                UnitPackage::where('id', '!=', $existing->id)->update(['is_active' => false]);
-            }
-            $existing->update($data);
-
-            return redirect()->route('superadmin.units.packages.index')
-                ->with('success', 'Pack mis à jour.');
+    
+        // normalize checkbox
+        $data['is_active'] = $request->boolean('is_active');
+    
+        if ($data['is_active']) {
+            UnitPackage::query()->update(['is_active' => false]);
         }
-
-        $created = UnitPackage::create($data);
-        if ($created->is_active) {
-            UnitPackage::where('id', '!=', $created->id)->update(['is_active' => false]);
-        }
-
-        return redirect()->route('superadmin.units.packages.index')
-            ->with('success', 'Pack créé.');
+        UnitPackage::create($data);
+    
+        return redirect()
+            ->route('superadmin.units.packages.index')
+            ->with('success', $data['is_active'] ? 'Pack activé.' : 'Pack créé.');
     }
 
     public function edit(UnitPackage $unit_package)
@@ -61,25 +52,26 @@ class UnitPackageController extends Controller
     }
 
     public function update(Request $request, UnitPackage $unit_package)
-    {
-        $data = $request->validate([
-            'name'      => ['nullable','string','max:255'],
-            'price_ht'  => ['required','numeric','min:0'],
-            'is_active' => ['sometimes','boolean'],
-        ]);
+{
+    $data = $request->validate([
+        'name'     => 'nullable|string|max:255',
+        'units'    => 'nullable|integer|min:1',
+        'price_ht' => 'required|numeric|min:0',
+        'is_active'=> 'sometimes|boolean',
+    ]);
 
-        $data['is_active'] = (bool)($data['is_active'] ?? false);
-        $data['units']     = 1;
+    $data['is_active'] = $request->boolean('is_active');
 
-        $unit_package->update($data);
-
-        if ($unit_package->is_active) {
-            UnitPackage::where('id','!=',$unit_package->id)->update(['is_active' => false]);
-        }
-
-        return redirect()->route('superadmin.units.packages.index')
-            ->with('success', 'Pack mis à jour.');
+    if ($data['is_active']) {
+        UnitPackage::query()->where('id', '!=', $unit_package->id)->update(['is_active' => false]);
     }
+
+    $unit_package->update($data);
+
+    return redirect()
+        ->route('superadmin.units.packages.index')
+        ->with('success', $data['is_active'] ? 'Pack activé.' : 'Pack mis à jour.');
+}
 
     // "delete" = deactivate current pack
     public function destroy(UnitPackage $unit_package)
@@ -89,4 +81,14 @@ class UnitPackageController extends Controller
         return redirect()->route('superadmin.units.packages.index')
             ->with('success', 'Pack désactivé.');
     }
+
+    public function activate(UnitPackage $unit_package)
+{
+    UnitPackage::query()->update(['is_active' => false]);
+    $unit_package->forceFill(['is_active' => true])->save();
+
+    return redirect()
+        ->route('superadmin.units.packages.index')
+        ->with('success', 'Pack activé.');
+}
 }
