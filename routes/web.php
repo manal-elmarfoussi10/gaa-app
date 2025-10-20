@@ -7,6 +7,8 @@ use App\Http\Middleware\CompanyAccess;
 use App\Http\Middleware\SuperAdminAccess;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ClientSignatureController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
 
 // ===============================
 // Superadmin area controllers
@@ -60,6 +62,11 @@ use App\Http\Controllers\{
 |--------------------------------------------------------------------------
 */
 Route::get('/', fn () => redirect()->route('login'));
+Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->middleware('guest')->name('password.request');
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('guest')->name('password.email');
+Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->middleware('guest')->name('password.reset');
+Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('guest')->name('password.store');
+
 
 Route::get('/attachment/{path}', function ($path) {
     $fullPath = storage_path('app/public/' . $path);
