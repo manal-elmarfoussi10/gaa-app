@@ -35,13 +35,7 @@
         </div>
     </div>
 
-    {{-- Always send a value for is_active --}}
-    <input type="hidden" name="is_active" value="0">
-    <label class="inline-flex items-center gap-2">
-        <input type="checkbox" name="is_active" value="1"
-               @checked( old('is_active', (int)($package->is_active ?? 1)) )>
-        <span class="text-sm text-gray-700">Activer ce tarif</span>
-    </label>
+
 
     <div class="flex items-center gap-3 pt-2">
         <button type="submit"
@@ -49,18 +43,6 @@
             <i data-lucide="save" class="w-4 h-4"></i> Enregistrer
         </button>
 
-        @if($isEdit)
-            {{-- Désactiver / Supprimer --}}
-            <form method="POST"
-                  action="{{ route('superadmin.units.packages.destroy', $package) }}"
-                  onsubmit="return confirm('Désactiver ce pack ?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i> Désactiver
-                </button>
-            </form>
-        @endif
+     
     </div>
 </form>
