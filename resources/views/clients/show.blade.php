@@ -102,14 +102,6 @@
               Envoyer pour signature
             </button>
           </form>
-        @elseif(in_array($client->statut_gsauto, ['sent','viewed','activated','partially_signed']))
-          <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}" class="inline-block m-0">
-            @csrf
-            <button type="submit"
-              class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">
-              Renvoyer
-            </button>
-          </form>
         @elseif($client->statut_gsauto === 'failed')
           <form method="POST" action="{{ route('clients.resend_signature', $client->id) }}" class="inline-block m-0">
             @csrf
