@@ -8,73 +8,90 @@ use Illuminate\Http\Request;
 
 class UnitPackageController extends Controller
 {
+    // One simple list page + “configure” action
     public function index()
     {
-        // Get the single row (or null)
-        $package = UnitPackage::first();
+        $packages = UnitPackage::orderByDesc('is_active')->orderBy('id')->get();
 
-        return view('superadmin.units.packages.form', [
-            'package' => $package,
-        ]);
+        // If you want a single “settings” page instead of a list:
+        $package = UnitPackage::orderBy('id')->first();
+
+        return view('superadmin.units.packages.index', compact('packages', 'package'));
     }
 
+    // We’ll use the same form for create/update
     public function create()
     {
-        // We don’t create multiple; just send to index
-        return redirect()->route('superadmin.units.packages.index');
+        $package = null;
+        return view('superadmin.units.packages.form', compact('package'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'           => 'nullable|string|max:100', // optional label
-            'price_per_unit' => 'required|numeric|min:0',
-            'tax_rate'       => 'required|numeric|min:0|max:100',
-            'is_active'      => 'sometimes|boolean',
+            'name'       => ['nullable', 'string', 'max:255'],
+            'unit_price' => ['required', 'numeric', 'min:0'],
+            'vat_rate'   => ['required', 'numeric', 'min:0', 'max:100'],
+            'is_active'  => ['sometimes', 'boolean'],
         ]);
         $data['is_active'] = (bool) ($data['is_active'] ?? true);
 
-        // Ensure single row: update existing or create one
-        $package = UnitPackage::first();
-        if ($package) {
-            $package->update($data);
-        } else {
-            // force ID=1 if you want, otherwise just create()
-            $package = UnitPackage::create($data + ['id' => 1]);
+        // Ensure single pack behavior: if there is already a pack, update it
+        $existing = UnitPackage::first();
+        if ($existing) {
+            // Deactivate other packs if this one is active
+            if ($data['is_active']) {
+                UnitPackage::where('id', '!=', $existing->id)->update(['is_active' => false]);
+            }
+            $existing->update($data);
+
+            return redirect()
+                ->route('superadmin.units.packages.index')
+                ->with('success', 'Pack mis à jour.');
+        }
+
+        // Create the first pack
+        $created = UnitPackage::create($data);
+        if ($created->is_active) {
+            UnitPackage::where('id', '!=', $created->id)->update(['is_active' => false]);
         }
 
         return redirect()
             ->route('superadmin.units.packages.index')
-            ->with('success', 'Paramètres des unités enregistrés.');
+            ->with('success', 'Pack créé.');
     }
 
     public function edit(UnitPackage $unit_package)
     {
-        // Not used – keep everything on index
-        return redirect()->route('superadmin.units.packages.index');
+        $package = $unit_package;
+        return view('superadmin.units.packages.form', compact('package'));
     }
 
     public function update(Request $request, UnitPackage $unit_package)
     {
-        // Also unused if you only post to store(); kept for completeness
         $data = $request->validate([
-            'name'           => 'nullable|string|max:100',
-            'price_per_unit' => 'required|numeric|min:0',
-            'tax_rate'       => 'required|numeric|min:0|max:100',
-            'is_active'      => 'sometimes|boolean',
+            'name'       => ['nullable', 'string', 'max:255'],
+            'unit_price' => ['required', 'numeric', 'min:0'],
+            'vat_rate'   => ['required', 'numeric', 'min:0', 'max:100'],
+            'is_active'  => ['sometimes', 'boolean'],
         ]);
-        $data['is_active'] = (bool) ($data['is_active'] ?? true);
+        $data['is_active'] = (bool) ($data['is_active'] ?? false);
 
         $unit_package->update($data);
 
+        // If we activate this pack, deactivate all others.
+        if ($unit_package->is_active) {
+            UnitPackage::where('id', '!=', $unit_package->id)->update(['is_active' => false]);
+        }
+
         return redirect()
             ->route('superadmin.units.packages.index')
-            ->with('success', 'Paramètres des unités mis à jour.');
+            ->with('success', 'Pack mis à jour.');
     }
 
+    // “Delete” = deactivate (we keep the record)
     public function destroy(UnitPackage $unit_package)
     {
-        // Prefer disabling instead of deleting the only row
         $unit_package->update(['is_active' => false]);
 
         return redirect()
