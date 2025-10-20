@@ -63,55 +63,58 @@
             </form>
 
             {{-- Liens/Actions --}}
-            <div class="hidden md:flex items-center gap-1.5 font-medium">
-              @php
-                $user = auth()->user();
-                $role = $user->role ?? '';
-                $navItems = [
-                  ['label' => 'FONCTIONNALITÉS', 'href' => url('fonctionnalites')],
-                  ['label' => 'CONTACT',         'href' => url('contact')],
-                  ['label' => 'Mon entreprise',      'href' => url('profile')],
-                  ['label' => 'DASHBOARD',       'href' => $role==='poseur'
-                                                  ? url('dashboard/poseur')
-                                                  : ($role==='superadmin' ? route('superadmin.dashboard') : url('dashboard'))],
-                ];
-              @endphp
+<div class="hidden md:flex items-center gap-1.5 font-medium">
+  @php
+    $user = auth()->user();
+    $role = $user->role ?? '';
 
-              @foreach ($navItems as $item)
-                @php
-                  $isActive = request()->fullUrlIs($item['href'].'*')
-                    || request()->is(trim(parse_url($item['href'], PHP_URL_PATH), '/').'*');
-                @endphp
-                <a href="{{ $item['href'] }}"
-                   class="px-2 py-1 rounded-md transition focus:outline-none focus:ring-1 focus:ring-[#FF4B00]
-                          {{ $isActive ? 'bg-[#FF4B00] text-white' : 'text-[#FF4B00] hover:bg-[#FFA366] hover:text-white' }}">
-                  {{ $item['label'] }}
-                </a>
-              @endforeach
+    // Build items; CONTACT only for non-superadmin users
+    $navItems = array_values(array_filter([
+      ['label' => 'FONCTIONNALITÉS', 'href' => url('fonctionnalites')],
+      $role !== 'superadmin' ? ['label' => 'CONTACT', 'href' => url('contact')] : null,
+      ['label' => 'Mon entreprise', 'href' => url('profile')],
+      ['label' => 'DASHBOARD', 'href' => $role === 'poseur'
+          ? url('dashboard/poseur')
+          : ($role === 'superadmin' ? route('superadmin.dashboard') : url('dashboard'))],
+    ]));
+  @endphp
 
-              @if ($role !== 'superadmin')
-                <a href="{{ url('/acheter-unites') }}"
-                   class="ml-1.5 px-2 py-1 rounded-md text-[#FF4B00] hover:bg-[#FFA366] hover:text-white transition
-                          focus:outline-none focus:ring-1 focus:ring-[#FF4B00]">
-                  NB UNITÉS : <span class="font-bold">{{ $user->company?->units ?? 0 }}</span>
-                </a>
-              @endif
+  @foreach ($navItems as $item)
+    @php
+      $isActive = request()->fullUrlIs($item['href'].'*')
+        || request()->is(trim(parse_url($item['href'], PHP_URL_PATH), '/').'*');
+    @endphp
+    <a href="{{ $item['href'] }}"
+       class="px-2 py-1 rounded-md transition focus:outline-none focus:ring-1 focus:ring-[#FF4B00]
+              {{ $isActive ? 'bg-[#FF4B00] text-white' : 'text-[#FF4B00] hover:bg-[#FFA366] hover:text-white' }}">
+      {{ $item['label'] }}
+    </a>
+  @endforeach
 
-              <button class="ml-1 rounded-full p-1 focus:outline-none focus:ring-1 focus:ring-[#FF4B00]">
-                <i data-lucide="bell" class="w-4 h-4 text-[#FF4B00]"></i>
-              </button>
+  @if ($role !== 'superadmin')
+    <a href="{{ url('/acheter-unites') }}"
+       class="ml-1.5 px-2 py-1 rounded-md text-[#FF4B00] hover:bg-[#FFA366] hover:text-white transition
+              focus:outline-none focus:ring-1 focus:ring-[#FF4B00]">
+      NB UNITÉS : <span class="font-bold">{{ $user->company?->units ?? 0 }}</span>
+    </a>
+  @endif
 
-              <a href="{{ route('mon-compte') }}" class="flex items-center gap-1 ml-2 hover:opacity-80 transition max-w-[140px]">
-                @if ($user && $user->photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->photo))
-                  <img src="{{ asset('/storage/app/public/' . $user->photo) }}" alt="Photo" class="h-7 w-7 rounded-full object-cover border-2 border-[#FF4B00] shadow" />
-                @else
-                  <div class="h-7 w-7 bg-[#FF4B00] text-white rounded-full flex items-center justify-center font-bold text-xs">
-                    {{ strtoupper($user->name[0] ?? 'U') }}
-                  </div>
-                @endif
-                <span class="text-[#FF4B00] truncate text-sm">{{ $user->name ?? 'Utilisateur' }}</span>
-              </a>
-            </div>
+  <button class="ml-1 rounded-full p-1 focus:outline-none focus:ring-1 focus:ring-[#FF4B00]">
+    <i data-lucide="bell" class="w-4 h-4 text-[#FF4B00]"></i>
+  </button>
+
+  <a href="{{ route('mon-compte') }}" class="flex items-center gap-1 ml-2 hover:opacity-80 transition max-w-[140px]">
+    @if ($user && $user->photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->photo))
+      <img src="{{ asset('/storage/app/public/' . $user->photo) }}" alt="Photo"
+           class="h-7 w-7 rounded-full object-cover border-2 border-[#FF4B00] shadow" />
+    @else
+      <div class="h-7 w-7 bg-[#FF4B00] text-white rounded-full flex items-center justify-center font-bold text-xs">
+        {{ strtoupper($user->name[0] ?? 'U') }}
+      </div>
+    @endif
+    <span class="text-[#FF4B00] truncate text-sm">{{ $user->name ?? 'Utilisateur' }}</span>
+  </a>
+</div>
 
             {{-- Raccourcis mobile --}}
             <div class="md:hidden flex items-center gap-2">
