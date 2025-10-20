@@ -1,20 +1,28 @@
 <?php
 
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;          // ← this was missing
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class NewPasswordController extends Controller
 {
+    // GET /reset-password/{token}
     public function create(Request $request, ?string $token = null)
     {
-        // token can come from the route param
         $token = $token ?? $request->route('token');
 
         return view('auth.reset-password', [
             'token' => $token,
-            'email' => $request->query('email'), // prefill if present
+            'email' => $request->query('email'),
         ]);
     }
 
+    // POST /reset-password
     public function store(Request $request)
     {
         $request->validate([
@@ -23,19 +31,19 @@ class NewPasswordController extends Controller
             'password' => 'required|min:8|confirmed',
         ]);
 
-        $status = \Illuminate\Support\Facades\Password::reset(
+        $status = Password::reset(
             $request->only('email','password','password_confirmation','token'),
             function ($user) use ($request) {
                 $user->forceFill([
-                    'password' => \Illuminate\Support\Facades\Hash::make($request->password),
-                    'remember_token' => \Illuminate\Support\Str::random(60),
+                    'password' => Hash::make($request->password),
+                    'remember_token' => Str::random(60),
                 ])->save();
 
-                event(new \Illuminate\Auth\Events\PasswordReset($user));
+                event(new PasswordReset($user));
             }
         );
 
-        return $status === \Illuminate\Support\Facades\Password::PASSWORD_RESET
+        return $status === Password::PASSWORD_RESET
             ? redirect()->route('login')->with('status', __($status))
             : back()->withErrors(['email' => __($status)]);
     }
