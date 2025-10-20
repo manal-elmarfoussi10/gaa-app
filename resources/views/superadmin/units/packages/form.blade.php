@@ -1,33 +1,61 @@
 @extends('layout')
 
 @section('content')
-<div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
-  <h2 class="text-xl font-semibold mb-4">
-    {{ $package->exists ? 'Modifier le pack' : 'Nouveau pack' }}
-  </h2>
+<div class="max-w-xl mx-auto bg-white rounded-xl p-6 shadow">
+    <h1 class="text-xl font-semibold mb-4">Paramètres des unités</h1>
 
-  <form method="POST" action="{{ $package->exists ? route('superadmin.units.packages.update',$package) : route('superadmin.units.packages.store') }}">
-    @csrf
-    @if($package->exists) @method('PUT') @endif
+    @if(session('success'))
+        <div class="mb-3 rounded bg-green-100 text-green-800 px-3 py-2">{{ session('success') }}</div>
+    @endif
+    @if($errors->any())
+        <div class="mb-3 rounded bg-red-100 text-red-800 px-3 py-2">
+            <ul class="list-disc list-inside text-sm">
+                @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+            </ul>
+        </div>
+    @endif
 
-    <label class="block text-sm mt-2">Nom</label>
-    <input name="name" class="w-full border rounded px-3 py-2" value="{{ old('name',$package->name) }}" required>
+    <form method="POST" action="{{ route('superadmin.units.packages.store') }}">
+        @csrf
+        <div class="mb-3">
+            <label class="block text-sm text-gray-600">Nom (optionnel)</label>
+            <input type="text" name="name" class="w-full border rounded px-3 py-2"
+                   value="{{ old('name', $package->name ?? 'Tarif standard') }}">
+        </div>
 
-    <label class="block text-sm mt-4">Unités</label>
-    <input type="number" min="1" name="units" class="w-full border rounded px-3 py-2" value="{{ old('units',$package->units) }}" required>
+        <div class="mb-3">
+            <label class="block text-sm text-gray-600">Prix par unité (€)</label>
+            <input type="number" step="0.01" min="0" name="price_per_unit"
+                   class="w-full border rounded px-3 py-2"
+                   value="{{ old('price_per_unit', $package->price_per_unit ?? 10) }}" required>
+        </div>
 
-    <label class="block text-sm mt-4">Prix HT (€)</label>
-    <input type="number" step="0.01" min="0" name="price_ht" class="w-full border rounded px-3 py-2" value="{{ old('price_ht',$package->price_ht) }}" required>
+        <div class="mb-3">
+            <label class="block text-sm text-gray-600">TVA (%)</label>
+            <input type="number" step="0.01" min="0" max="100" name="tax_rate"
+                   class="w-full border rounded px-3 py-2"
+                   value="{{ old('tax_rate', $package->tax_rate ?? 20) }}" required>
+        </div>
 
-    <label class="inline-flex items-center mt-4">
-      <input type="checkbox" name="is_active" value="1" class="mr-2" {{ old('is_active',$package->is_active) ? 'checked' : '' }}>
-      Actif
-    </label>
+        <label class="inline-flex items-center gap-2 mb-4">
+            <input type="checkbox" name="is_active" value="1"
+                   @checked(old('is_active', $package->is_active ?? true))>
+            <span>Activer ce tarif</span>
+        </label>
 
-    <div class="mt-6 flex gap-2">
-      <button class="px-4 py-2 bg-orange-500 text-white rounded">{{ $package->exists ? 'Mettre à jour' : 'Créer' }}</button>
-      <a href="{{ route('superadmin.units.packages.index') }}" class="px-4 py-2 border rounded">Annuler</a>
-    </div>
-  </form>
+        <div class="flex gap-2">
+            <button class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">
+                Enregistrer
+            </button>
+            @if($package)
+                <form method="POST" action="{{ route('superadmin.units.packages.destroy', $package) }}">
+                    @csrf @method('DELETE')
+                    <button class="px-4 py-2 rounded border" onclick="return confirm('Désactiver ?')">
+                        Désactiver
+                    </button>
+                </form>
+            @endif
+        </div>
+    </form>
 </div>
 @endsection
