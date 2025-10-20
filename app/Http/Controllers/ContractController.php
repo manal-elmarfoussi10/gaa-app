@@ -127,7 +127,7 @@ class ContractController extends Controller
                     // (ex: page 2, x=120, y=680 si votre bloc de signature est en bas de page 2)
                     'page'        => 2,
                     'x'           => 120,
-                    'y'           => 680,
+                    'y'           => 480,
                     'width'       => 180,
                     'height'      => 45,
                 ]],
