@@ -4,56 +4,63 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\VirementRequest;
-use App\Models\User;
 
 class UnitController extends Controller
 {
+    /**
+     * Display the purchase form.
+     */
     public function showPurchaseForm()
     {
         return view('units.purchase');
     }
 
+    /**
+     * Handle a new virement request (bank transfer).
+     */
     public function purchase(Request $request)
     {
         $request->validate([
-            'quantity' => 'required|numeric|min:1',
-            'payment_method' => 'required|in:stripe,virement',
-            'virement_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'quantity'       => 'required|integer|min:1',
+            'virement_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:8192',
         ]);
 
-        $qty = $request->input('quantity');
-        $subtotal = $qty * 10;
-        $tva = $subtotal * 0.2;
-        $total = $subtotal + $tva;
+        $user = $request->user();
+        $company = $user->company; // ✅ Each user belongs to one company
 
-        // ⚠️ Temporarily use fake user (replace ID 1 with any existing user)
-        $user = auth()->user() ?? User::find(1);
-
-        if (!$user) {
-            return redirect()->back()->with('error', 'Aucun utilisateur disponible.');
+        if (!$company) {
+            return back()->with('error', "Aucune entreprise associée à cet utilisateur.");
         }
 
-        if ($request->payment_method === 'stripe') {
-            $user->increment('units', $qty);
+        // 💶 Calculate totals
+        $qty      = (int) $request->input('quantity');
+        $unit     = 10;      // € HT per unit
+        $tvaRate  = 20;      // 20%
+        $subtotal = $qty * $unit;
+        $tva      = (int) round($subtotal * ($tvaRate / 100));
+        $total    = $subtotal + $tva;
 
-            return redirect()->back()->with('success', 'Paiement effectué avec succès. Unités ajoutées à votre compte.');
-        }
+        // 🧾 Upload proof if provided
+        $path = $request->hasFile('virement_proof')
+            ? $request->file('virement_proof')->store('virements', 'public')
+            : null;
 
-        if ($request->payment_method === 'virement') {
-            $path = $request->hasFile('virement_proof')
-                ? $request->file('virement_proof')->store('virements', 'public')
-                : null;
+        // 🧱 Create the virement request (pending)
+        VirementRequest::create([
+            'company_id'  => $company->id,
+            'user_id'     => $user->id,
+            'quantity'    => $qty,
+            'unit_price'  => $unit,
+            'tva_rate'    => $tvaRate,
+            'total_cents' => $total * 100, // store in cents to avoid float issues
+            'proof_path'  => $path,
+            'status'      => 'pending',
+        ]);
 
-            VirementRequest::create([
-                'user_id' => $user->id,
-                'quantity' => $qty,
-                'proof_path' => $path,
-                'status' => 'pending',
-            ]);
-
-            return redirect()->back()->with('success', 'Votre demande de virement a été envoyée. Notre équipe vérifiera le reçu et ajoutera les unités sous peu.');
-        }
-
-        return redirect()->back()->with('error', 'Méthode de paiement invalide.');
+        return back()->with(
+            'success',
+            'Votre demande de virement a été enregistrée. 
+            Notre équipe vérifiera le reçu et ajoutera les unités à votre entreprise sous peu.'
+        );
     }
 }
