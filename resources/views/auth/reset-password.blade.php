@@ -8,8 +8,12 @@
         <img src="{{ asset('images/GS.png') }}" alt="GS Auto" class="h-24 w-auto">
     </div>
 
-    <h2 class="text-2xl font-bold text-center text-gray-900 mb-1">Réinitialiser le mot de passe</h2>
-    <p class="text-gray-500 text-center mb-8">Saisissez votre e-mail et un nouveau mot de passe.</p>
+    <h2 class="text-2xl font-bold text-center text-gray-900 mb-1">
+        Réinitialiser le mot de passe
+    </h2>
+    <p class="text-gray-500 text-center mb-8">
+        Saisissez votre e-mail et un nouveau mot de passe.
+    </p>
 
     {{-- Errors --}}
     @if ($errors->any())
@@ -20,14 +24,20 @@
 
     <form method="POST" action="{{ route('password.store') }}" novalidate>
         @csrf
-        <input id="email" type="email" name="email" value="{{ $email ?? request('email') }}" required ...>
+
+        {{-- Hidden token --}}
+        <input type="hidden" name="token"
+               value="{{ old('token', $token ?? request()->route('token')) }}">
 
         {{-- Email --}}
         <div class="mb-5">
             <label for="email" class="block mb-1 font-medium text-gray-700">Adresse e-mail</label>
-            <input id="email" type="email" name="email" value="{{ request('email') }}" required
+            <input id="email" type="email" name="email"
+                   value="{{ old('email', $email ?? request('email')) }}" required
                    class="w-full rounded border border-gray-300 bg-gray-50 px-3 py-2 outline-none focus:ring-0">
-            @error('email') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+            @error('email')
+                <span class="text-sm text-red-600">{{ $message }}</span>
+            @enderror
         </div>
 
         {{-- Password --}}
@@ -35,7 +45,9 @@
             <label for="password" class="block mb-1 font-medium text-gray-700">Nouveau mot de passe</label>
             <input id="password" type="password" name="password" required
                    class="w-full rounded border border-gray-300 bg-gray-50 px-3 py-2 outline-none focus:ring-0">
-            @error('password') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+            @error('password')
+                <span class="text-sm text-red-600">{{ $message }}</span>
+            @enderror
         </div>
 
         {{-- Confirm --}}
