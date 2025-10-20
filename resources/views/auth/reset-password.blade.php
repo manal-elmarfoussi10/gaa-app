@@ -20,7 +20,7 @@
 
     <form method="POST" action="{{ route('password.store') }}" novalidate>
         @csrf
-        <input type="hidden" name="token" value="{{ $token }}">
+        <input id="email" type="email" name="email" value="{{ $email ?? request('email') }}" required ...>
 
         {{-- Email --}}
         <div class="mb-5">
