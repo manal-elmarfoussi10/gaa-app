@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class VirementRequest extends Model
 {
-    // app/Models/VirementRequest.php
-protected $fillable = [
-    'company_id','user_id','quantity','proof_path','status',
-    // keep your other fields if you added them (unit_price, tva_rate, total_cents, etc.)
-];
+    protected $fillable = [
+        'user_id','company_id','quantity','amount_ht','proof_path','status','notes'
+    ];
 
-public function company() { return $this->belongsTo(\App\Models\Company::class); }
-public function user()    { return $this->belongsTo(\App\Models\User::class);   }
+    public function user()    { return $this->belongsTo(User::class); }
+    public function company() { return $this->belongsTo(Company::class); }
+
+    public function scopePending($q)  { $q->where('status','pending'); }
+    public function scopeApproved($q) { $q->where('status','approved'); }
+    public function scopeRejected($q) { $q->where('status','rejected'); }
 }

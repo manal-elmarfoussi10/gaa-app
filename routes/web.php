@@ -5,6 +5,10 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
+use App\Http\Controllers\SuperAdmin\UnitPackageController;
+use App\Http\Controllers\SuperAdmin\VirementAdminController;
+
+
 use App\Http\Middleware\CompanyAccess;
 use App\Http\Middleware\SuperAdminAccess;
 use App\Http\Controllers\ContractController;
@@ -69,6 +73,22 @@ Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->
 Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->middleware('guest')->name('password.reset');
 Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('guest')->name('password.store');
 
+
+// === Units (packages) ===
+Route::prefix('units')->name('units.')->group(function () {
+    Route::resource('packages', \App\Http\Controllers\SuperAdmin\UnitPackageController::class, [
+        'as' => 'superadmin'
+    ])->parameters(['packages' => 'unit_package'])->except(['show']);
+});
+
+// === Virements review ===
+Route::prefix('virements')->name('virements.')->group(function () {
+    Route::get('/',        [\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'index'])->name('index');
+    Route::get('{virement}',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'show'])->name('show');
+    Route::get('{virement}/proof',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'downloadProof'])->name('proof');
+    Route::post('{virement}/approve',[\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'approve'])->name('approve');
+    Route::post('{virement}/reject', [\App\Http\Controllers\SuperAdmin\VirementAdminController::class, 'reject'])->name('reject');
+});
 
 
 
