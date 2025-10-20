@@ -11,7 +11,7 @@
             </div>
             <div>
                 <h1 class="text-xl md:text-2xl font-semibold text-gray-800">Packs d’unités</h1>
-                <p class="text-sm text-gray-500">Définissez le prix unitaire et la TVA appliquée aux achats d’unités.</p>
+                <p class="text-sm text-gray-500">Définissez le prix unitaire HT et visualisez le TTC appliqué aux achats d’unités.</p>
             </div>
         </div>
 
@@ -73,12 +73,10 @@
         </div>
     @else
         @php
-            $p = $packages->first();
-            $ex = [
-                1   => round($p->price_per_unit * (1 + $p->tax_rate/100), 2),
-                10  => round(10 * $p->price_per_unit * (1 + $p->tax_rate/100), 2),
-                100 => round(100 * $p->price_per_unit * (1 + $p->tax_rate/100), 2),
-            ];
+            $p   = $packages->first();
+            $vat = 20; // fixed VAT for display
+            $ttc = fn($q) => round($q * ($p->price_ht ?? 0) * (1 + $vat/100), 2);
+            $ex  = [ 1 => $ttc(1), 10 => $ttc(10), 100 => $ttc(100) ];
         @endphp
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -103,7 +101,7 @@
 
                     <div class="text-right">
                         <div class="text-3xl font-bold text-gray-900">
-                            {{ number_format($p->price_per_unit, 2, ',', ' ') }} €
+                            {{ number_format($p->price_ht ?? 0, 2, ',', ' ') }} €
                         </div>
                         <div class="text-sm text-gray-500">par unité (HT)</div>
                     </div>
@@ -112,7 +110,7 @@
                 <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="rounded-xl border border-gray-200 p-4">
                         <div class="text-sm text-gray-500">TVA</div>
-                        <div class="text-lg font-semibold text-gray-800">{{ rtrim(rtrim(number_format($p->tax_rate, 2, ',', ' '), '0'), ',') }}%</div>
+                        <div class="text-lg font-semibold text-gray-800">{{ $vat }}%</div>
                     </div>
                     <div class="rounded-xl border border-gray-200 p-4">
                         <div class="text-sm text-gray-500">Créé le</div>
