@@ -78,28 +78,33 @@
         </div>
     </div>
 
-    {{-- Proof preview (if you want a visual hint) --}}
-    @if($virement->proof_path)
-        <div class="bg-white rounded-2xl shadow p-5">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="image" class="w-4 h-4 text-[#FF4B00]"></i>
-                    <h2 class="text-sm font-semibold text-gray-700">Reçu de virement</h2>
-                </div>
-                <a href="{{ route('superadmin.virements.proof', $virement) }}"
-                   class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-sm">
-                    <i data-lucide="download" class="w-4 h-4"></i>
-                    Télécharger
-                </a>
-            </div>
-            <div class="mt-4">
-                {{-- We can’t embed arbitrary file types, so just show a subtle placeholder --}}
-                <div class="w-full h-40 rounded-xl bg-gray-50 border border-dashed flex items-center justify-center text-gray-500 text-sm">
-                    Aperçu non disponible – téléchargez le fichier
-                </div>
-            </div>
+   {{-- Proof preview --}}
+@if($virement->proof_path && $proofUrl)
+@php
+    $ext = strtolower(pathinfo($virement->proof_path, PATHINFO_EXTENSION));
+    $isImage = in_array($ext, ['jpg','jpeg','png','gif','webp']);
+    $isPdf   = $ext === 'pdf';
+@endphp
+
+<div class="mt-4 rounded-xl border border-dashed bg-gray-50">
+    @if($isImage)
+        <img src="{{ $proofUrl }}" alt="Reçu de virement"
+             class="w-full h-auto rounded-xl">
+    @elseif($isPdf)
+        <object data="{{ $proofUrl }}" type="application/pdf" class="w-full h-[650px] rounded-xl">
+            <iframe src="{{ $proofUrl }}" class="w-full h-[650px] rounded-xl"></iframe>
+        </object>
+    @else
+        <div class="w-full h-40 rounded-xl flex items-center justify-center text-gray-500 text-sm">
+            Aperçu non disponible — <a class="text-[#FF4B00] underline" href="{{ route('superadmin.virements.proof',$virement) }}">téléchargez le fichier</a>
         </div>
     @endif
+</div>
+@else
+<div class="mt-4 w-full h-40 rounded-xl bg-gray-50 border border-dashed flex items-center justify-center text-gray-500 text-sm">
+    Aucun reçu fourni.
+</div>
+@endif
 
     {{-- Actions --}}
     @if($virement->status === 'pending')

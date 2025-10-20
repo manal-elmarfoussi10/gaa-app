@@ -22,10 +22,19 @@ class VirementAdminController extends Controller
         return view('superadmin.units.virements.index', compact('requests','states','current'));
     }
 
-    public function show(VirementRequest $virement)
+    public function show(\App\Models\VirementRequest $virement)
     {
-        $virement->load(['company','user']);
-        return view('superadmin.units.virements.show', compact('virement'));
+        $states = ['pending','approved','rejected'];
+    
+        $proofUrl = $virement->proof_path
+            ? route('attachment', ['path' => $virement->proof_path])
+            : null;
+    
+        return view('superadmin.units.virements.show', [
+            'virement'  => $virement,
+            'states'    => $states,
+            'proofUrl'  => $proofUrl,
+        ]);
     }
 
     public function approve(Request $request, VirementRequest $virement)
