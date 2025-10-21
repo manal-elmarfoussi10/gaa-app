@@ -147,6 +147,10 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .no-anim{opacity:1!important;transform:none!important;animation:none!important;}
+@media print{
+  .custom-dashboard-container{opacity:1!important;transform:none!important;animation:none!important;}
+}
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen p-6">
@@ -275,7 +279,7 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full border-collapse">
+                <table id="insuranceTable" class="w-full border-collapse">
                     <thead>
                         <tr>
                             <th class="text-left px-5 py-4 font-semibold text-gray-700 uppercase text-xs tracking-wider border-b border-gray-300 bg-white sticky top-0">Assurance</th>
@@ -330,29 +334,49 @@
     <script>
         // Fonction pour exporter en PDF
         function exportToPDF() {
-            const spinner = document.getElementById('loadingSpinner');
-            spinner.style.display = 'flex';
+  const spinner = document.getElementById('loadingSpinner');
+  const target  = document.querySelector('.custom-dashboard-container');
 
-            setTimeout(() => {
-                // Utilisation de html2canvas pour capturer le dashboard
-                html2canvas(document.querySelector('.container')).then(canvas => {
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-                    const imgProps = pdf.getImageProperties(imgData);
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+  // stop fade-in during capture
+  target.classList.add('no-anim');
 
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                    pdf.save('tableau-de-bord-' + new Date().toISOString().slice(0, 10) + '.pdf');
+  // paint white behind charts (canvas is transparent by default)
+  document.querySelectorAll('canvas').forEach(cv => {
+    const ctx = cv.getContext('2d');
+    const { width, height } = cv;
+    const img = ctx.getImageData(0, 0, width, height);
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  });
 
-                    spinner.style.display = 'none';
-                }).catch(error => {
-                    console.error('Erreur lors de la génération du PDF:', error);
-                    spinner.style.display = 'none';
-                    alert('Une erreur est survenue lors de l\'export PDF');
-                });
-            }, 500);
-        }
+  spinner.style.display = 'flex';
+
+  requestAnimationFrame(() => {
+    html2canvas(target, {
+      background: '#ffffff',
+      scale: window.devicePixelRatio > 1 ? 2 : 1,
+      useCORS: true,
+      logging: false,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight
+    })
+    .then(canvas => {
+      const imgData   = canvas.toDataURL('image/png');
+      const pdf       = new jspdf.jsPDF('p', 'mm', 'a4');
+      const pdfWidth  = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save('tableau-de-bord-' + new Date().toISOString().slice(0,10) + '.pdf');
+    })
+    .finally(() => {
+      spinner.style.display = 'none';
+      target.classList.remove('no-anim');
+    });
+  });
+}
 
         // Fonction pour exporter le tableau en Excel
         function exportTableToExcel() {

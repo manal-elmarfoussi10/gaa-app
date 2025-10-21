@@ -2,11 +2,20 @@
 
 use Illuminate\Support\Facades\Route;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
+use App\Http\Controllers\SuperAdmin\UnitPackageController;
+use App\Http\Controllers\SuperAdmin\VirementAdminController;
+use App\Http\Controllers\SuperAdmin\UnitCreditController;
+
 
 use App\Http\Middleware\CompanyAccess;
 use App\Http\Middleware\SuperAdminAccess;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ClientSignatureController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
 
 // ===============================
 // Superadmin area controllers
@@ -60,11 +69,47 @@ use App\Http\Controllers\{
 |--------------------------------------------------------------------------
 */
 Route::get('/', fn () => redirect()->route('login'));
+Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->middleware('guest')->name('password.request');
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('guest')->name('password.email');
+Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->middleware('guest')->name('password.reset');
+Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('guest')->name('password.store');
 
-Route::get('/attachment/{path}', function ($path) {
-    $fullPath = storage_path('app/public/' . $path);
-    abort_unless(file_exists($fullPath), 404);
-    return response()->file($fullPath);
+
+
+
+
+
+Route::get('/attachment/{path}', function (Request $request, $path) {
+    // Normalize
+    $path = urldecode($path);
+    if (Str::startsWith($path, ['http://', 'https://'])) {
+        // If a full URL was stored, just redirect to it
+        return redirect()->away($path);
+    }
+
+    $path = ltrim($path, '/');
+    if (Str::startsWith($path, 'public/')) {
+        $path = Str::after($path, 'public/');
+    }
+
+    // Try several common locations
+    $candidates = [
+        storage_path('app/public/'.$path),   // disk "public"
+        storage_path('app/'.$path),          // disk "local" (no /public)
+        public_path('storage/'.$path),       // via storage:link
+        public_path($path),                  // accidentally stored in /public
+    ];
+
+    foreach ($candidates as $full) {
+        if (is_file($full)) {
+            if ($request->boolean('download')) {
+                return response()->download($full, basename($full));
+            }
+            return response()->file($full);
+        }
+    }
+
+    abort(404);
 })->where('path', '.*')->name('attachment');
 
 Route::get('/test-pdf', function () {
@@ -280,6 +325,33 @@ Route::prefix('superadmin')
     ->middleware(['auth', SuperAdminAccess::class])
     ->name('superadmin.')
     ->group(function () {
+
+  // --- Units (packages) ---
+  Route::prefix('units')->name('units.')->group(function () {
+    Route::resource('packages', UnitPackageController::class)
+        ->parameters(['packages' => 'unit_package'])
+        ->except(['show']);
+});
+
+// --- Virements review ---
+Route::prefix('virements')->name('virements.')->group(function () {
+    Route::get('/',                 [VirementAdminController::class, 'index'])->name('index');
+    Route::get('{virement}',        [VirementAdminController::class, 'show'])->name('show');
+    Route::get('{virement}/proof',  [VirementAdminController::class, 'downloadProof'])->name('proof');
+    Route::post('{virement}/approve',[VirementAdminController::class, 'approve'])->name('approve');
+    Route::post('{virement}/reject', [VirementAdminController::class, 'reject'])->name('reject');
+});
+
+Route::prefix('units')->name('units.')->group(function () {
+    Route::get('credits/create', [UnitCreditController::class, 'create'])->name('credits.create');
+    Route::post('credits',        [UnitCreditController::class, 'store'])->name('credits.store');
+});
+
+Route::get('units/credits', [UnitCreditController::class, 'index'])
+     ->name('units.credits.index');
+
+Route::patch('packages/{unit_package}/activate', [UnitPackageController::class,'activate'])
+    ->name('units.packages.activate');
 
     Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
 

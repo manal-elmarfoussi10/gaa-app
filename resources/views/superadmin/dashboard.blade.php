@@ -43,6 +43,9 @@
         .custom-loading-spinner { display:none; position:fixed; inset:0; background:rgba(255,255,255,.8); z-index:1000; justify-content:center; align-items:center; }
         .custom-spinner { width:50px; height:50px; border:5px solid var(--primary-extra-light); border-top:5px solid var(--primary); border-radius:50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+
+        .no-anim { opacity: 1 !important; transform: none !important; animation: none !important; }
+  @media print {.custom-dashboard-container{opacity:1!important;transform:none!important;animation:none!important}}
     </style>
 </head>
 
@@ -223,21 +226,51 @@
     <script>
         // PDF export of dashboard
         function exportToPDF() {
-            const spinner = document.getElementById('loadingSpinner');
-            spinner.style.display = 'flex';
-            setTimeout(() => {
-                html2canvas(document.querySelector('.container')).then(canvas => {
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-                    const imgProps = pdf.getImageProperties(imgData);
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                    pdf.save('dashboard-superadmin-' + new Date().toISOString().slice(0,10) + '.pdf');
-                    spinner.style.display = 'none';
-                }).catch(() => spinner.style.display = 'none');
-            }, 350);
-        }
+  const spinner = document.getElementById('loadingSpinner');
+  const target  = document.querySelector('.custom-dashboard-container');
+
+  // Force full opacity / stop animation for capture
+  target.classList.add('no-anim');
+
+  // Ensure chart canvases have a white background (not transparent)
+  document.querySelectorAll('canvas').forEach(cv => {
+    const ctx = cv.getContext('2d');
+    const { width, height } = cv;
+    const img = ctx.getImageData(0, 0, width, height);
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+    // (img already on top; white sits under it now)
+  });
+
+  spinner.style.display = 'flex';
+
+  // Let charts finish their last animation frame
+  requestAnimationFrame(() => {
+    html2canvas(target, {
+      background: '#ffffff',
+      scale: window.devicePixelRatio > 1 ? 2 : 1,
+      useCORS: true,
+      logging: false,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight
+    })
+    .then(canvas => {
+      const imgData   = canvas.toDataURL('image/png');
+      const pdf       = new jspdf.jsPDF('p', 'mm', 'a4');
+      const pdfWidth  = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save('dashboard-superadmin-' + new Date().toISOString().slice(0,10) + '.pdf');
+    })
+    .finally(() => {
+      spinner.style.display = 'none';
+      target.classList.remove('no-anim');
+    });
+  });
+}
 
         // Excel export for the low-units table
         function exportTableToExcel() {

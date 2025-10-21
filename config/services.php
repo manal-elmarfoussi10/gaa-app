@@ -33,6 +33,7 @@ return [
     'base_url'        => env('YOUSIGN_BASE_URL', 'https://api-sandbox.yousign.app/v3'),
     'webhook_secret'  => env('YOUSIGN_WEBHOOK_SECRET'), // <- raw secret (no sha256=)
     'locale'          => env('YOUSIGN_LOCALE', 'fr'),
+    'auth_mode' => env('YOUSIGN_AUTH_MODE', 'no_otp'),
 ],
 
     'slack' => [

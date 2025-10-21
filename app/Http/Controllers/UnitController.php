@@ -3,57 +3,80 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\UnitPackage;
 use App\Models\VirementRequest;
-use App\Models\User;
 
 class UnitController extends Controller
 {
+    /**
+     * Show the purchase form for tenant admins.
+     * Pulls the current HT price from the active UnitPackage.
+     */
     public function showPurchaseForm()
     {
-        return view('units.purchase');
+        // Avoid relying on a scope; use a plain where so it works immediately
+        $package = UnitPackage::where('is_active', true)->latest('id')->first();
+
+        if (!$package) {
+            return back()->with('error', "Aucun pack actif n’est configuré.");
+        }
+
+        $vatRate = 20; // % — if you later store VAT on the package, read it from there
+
+        return view('units.purchase', [
+            'unitPrice' => (float) $package->price_ht, // HT per unit
+            'vatRate'   => $vatRate,                   // percent
+        ]);
     }
 
+    /**
+     * Handle a new virement (bank transfer) request from a tenant admin.
+     * Persists to columns that EXIST in your current virement_requests table.
+     */
     public function purchase(Request $request)
     {
         $request->validate([
-            'quantity' => 'required|numeric|min:1',
-            'payment_method' => 'required|in:stripe,virement',
-            'virement_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'quantity'       => 'required|integer|min:1',
+            'virement_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:8192',
         ]);
 
-        $qty = $request->input('quantity');
-        $subtotal = $qty * 10;
-        $tva = $subtotal * 0.2;
-        $total = $subtotal + $tva;
+        $user = $request->user();
+        $company = $user->company;
 
-        // ⚠️ Temporarily use fake user (replace ID 1 with any existing user)
-        $user = auth()->user() ?? User::find(1);
-
-        if (!$user) {
-            return redirect()->back()->with('error', 'Aucun utilisateur disponible.');
+        if (!$company) {
+            return back()->with('error', "Aucune entreprise associée à cet utilisateur.");
         }
 
-        if ($request->payment_method === 'stripe') {
-            $user->increment('units', $qty);
-
-            return redirect()->back()->with('success', 'Paiement effectué avec succès. Unités ajoutées à votre compte.');
+        // Read the active package price at the moment of the request
+        $package = UnitPackage::where('is_active', true)->latest('id')->first();
+        if (!$package) {
+            return back()->with('error', "Aucun pack actif n’est configuré.");
         }
 
-        if ($request->payment_method === 'virement') {
-            $path = $request->hasFile('virement_proof')
-                ? $request->file('virement_proof')->store('virements', 'public')
-                : null;
+        $qty      = (int) $request->integer('quantity');
+        $unit     = (float) $package->price_ht; // € HT per unit
+        $tvaRate  = 20;                         // %
+        $subtotal = $qty * $unit;               // HT total the user is expected to pay
 
-            VirementRequest::create([
-                'user_id' => $user->id,
-                'quantity' => $qty,
-                'proof_path' => $path,
-                'status' => 'pending',
-            ]);
+        // Upload proof if provided
+        $path = $request->hasFile('virement_proof')
+            ? $request->file('virement_proof')->store('virements', 'public')
+            : null;
 
-            return redirect()->back()->with('success', 'Votre demande de virement a été envoyée. Notre équipe vérifiera le reçu et ajoutera les unités sous peu.');
-        }
+        // 🔐 Persist ONLY the columns that exist in your current schema
+        // virement_requests: company_id, user_id, quantity, amount_ht, proof_path, status, timestamps
+        VirementRequest::create([
+            'company_id' => $company->id,
+            'user_id'    => $user->id,
+            'quantity'   => $qty,
+            'amount_ht'  => $subtotal,  // HT (no VAT here)
+            'proof_path' => $path,
+            'status'     => 'pending',
+        ]);
 
-        return redirect()->back()->with('error', 'Méthode de paiement invalide.');
+        return back()->with(
+            'success',
+            "Votre demande de virement a été enregistrée. Nous vérifierons le reçu et créditerons les unités sous peu."
+        );
     }
 }

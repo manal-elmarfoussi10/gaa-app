@@ -26,30 +26,31 @@
       </div>
     </div>
 
-    <!-- Filters -->
-    <form method="GET" class="bg-white rounded-2xl shadow-sm border p-5 grid grid-cols-1 md:grid-cols-6 gap-3">
-      <div class="md:col-span-2">
-        <label class="text-xs text-gray-500">Type</label>
-        <select name="type" class="border rounded-lg p-2 w-full">
-          @php $t = $filters['type'] ?? 'clients'; @endphp
-          @foreach([
-            'clients'=>'Clients',
-            'devis'=>'Devis',
-            'factures'=>'Factures',
-            'avoirs'=>'Avoirs',
-            'paiements'=>'Paiements',
-            'rdvs'=>'RDV',
-            'expenses'=>'Dépenses',
-            'bons_de_commande'=>'Bons de commandes',
-            'fournisseurs'=>'Fournisseurs',
-            'produits'=>'Produits',
-            'poseurs'=>'Poseurs',
-            'stocks'=>'Stocks',
-          ] as $k=>$v)
-            <option value="{{ $k }}" @selected($t===$k)>{{ $v }}</option>
-          @endforeach
-        </select>
-      </div>
+   <!-- Filters -->
+<form method="GET" class="bg-white rounded-2xl shadow-sm border p-5 grid grid-cols-1 md:grid-cols-6 gap-3">
+  <div class="md:col-span-2">
+    <label class="text-xs text-gray-500">Type</label>
+    <select name="type" class="border rounded-lg p-2 w-full">
+      @php $t = $filters['type'] ?? 'clients'; @endphp
+      @foreach([
+        'clients'           => 'Clients',
+        'devis'             => 'Devis',
+        'factures'          => 'Factures',
+        'avoirs'            => 'Avoirs',
+        'paiements'         => 'Paiements',
+        'rdvs'              => 'Calendrier',
+        'expenses'          => 'Dépenses / achats',
+        'bons_de_commande'  => 'Bons de livraison',
+        'fournisseurs'      => 'Fournisseurs',
+        'produits'          => 'Produits',
+        'poseurs'           => 'Techniciens',
+        'stocks'            => 'Stocks',
+        'messages'          => 'Messages',
+      ] as $k => $v)
+        <option value="{{ $k }}" @selected($t === $k)>{{ $v }}</option>
+      @endforeach
+    </select>
+  </div>
 
       <div class="md:col-span-2">
         <label class="text-xs text-gray-500">Société</label>

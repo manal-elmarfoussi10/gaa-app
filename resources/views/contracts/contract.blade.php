@@ -207,6 +207,7 @@
     <h3>Signature du client</h3>
     <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
     <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
+<<<<<<< HEAD
 
     <!-- Anchor commented out so Yousign ignores it -->
     <div class="y-anchor">&nbsp;</div>
@@ -231,7 +232,22 @@
       {{-- Yousign anchor (if still used) --}}
       <div class="y-anchor">[[SIGN_COMPANY]]</div>
     </div>
+=======
+    <div class="sign-hint">Lu et approuvé</div>
+>>>>>>> dev
   </div>
+
+  <div class="sign-box">
+    <h3>Cachet & signature de {{ $cName }}</h3>
+    <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
+    @if($sigSrc)
+      <img src="{{ $sigSrc }}" alt="Signature {{ $cName }}" class="sig-img">
+    @else
+      <div class="sign-hint">Signature non fournie</div>
+    @endif
+  </div>
+</div>
+
 
   <div class="footer">
     Document généré automatiquement – {{ $cName }} · {{ $cAddr }}

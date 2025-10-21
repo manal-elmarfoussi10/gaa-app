@@ -110,6 +110,8 @@ class ContractController extends Controller
                 $phone = null; // Yousign exige format E.164 si fourni
             }
 
+            $authMode = config('services.yousign.auth_mode', 'no_otp');
+
             $payload = [
                 'info' => [
                     'first_name'   => $client->prenom ?: 'Client',
@@ -119,15 +121,13 @@ class ContractController extends Controller
                     'locale'       => config('services.yousign.locale', 'fr'),
                 ],
                 'signature_level'               => 'electronic_signature',
-                'signature_authentication_mode' => app()->environment('production') ? 'otp_email' : 'no_otp',
+                'signature_authentication_mode' => $authMode,
                 'fields' => [[
                     'document_id' => $doc['id'],
                     'type'        => 'signature',
-                    // ⚠️ Ajustez ces coordonnées à votre template PDF
-                    // (ex: page 2, x=120, y=680 si votre bloc de signature est en bas de page 2)
                     'page'        => 2,
                     'x'           => 120,
-                    'y'           => 680,
+                    'y'           => 480,
                     'width'       => 180,
                     'height'      => 45,
                 ]],

@@ -45,6 +45,7 @@ class ClientSignatureController extends Controller
             $signatureField = [
                 'type'        => 'signature',
                 'document_id' => $doc['id'],
+<<<<<<< HEAD
                 'page'        => 2,                 // keep it on page 2
                 'shape'       => [                  // <- v3 requires shape
                     'x'      => 120,                // right (+)
@@ -55,11 +56,24 @@ class ClientSignatureController extends Controller
                 // no 'anchor' or 'text_anchor'
             ];            
 
+=======
+                'page'        => 2,
+                'shape'       => [
+                    'x'      => 120,
+                    'y'      => 760,   // higher on the page
+                    'width'  => 180,
+                    'height' => 45,
+                ],
+            ];            
+            
+            
+>>>>>>> dev
             // Yousign attend un phone en E.164 si fourni ; sinon laissez null
             $phone = $client->telephone;
             if ($phone && !preg_match('/^\+\d{6,15}$/', $phone)) {
                 $phone = null;
             }
+            
 
             $ys->addSigner($sr['id'], [
                 'info' => [

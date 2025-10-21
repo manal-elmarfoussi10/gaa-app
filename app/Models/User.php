@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\ResetPasswordNotification as CustomResetPasswordNotification;
 
 class User extends Authenticatable
 {
@@ -115,6 +116,12 @@ public function canSeeAllConversations(): bool
 public function isSupport(): bool
 {
     return in_array($this->role, [self::ROLE_SUPERADMIN, self::ROLE_CLIENT_SERVICE], true);
+}
+
+public function sendPasswordResetNotification($token)
+{
+    $url = url(route('password.reset', ['token' => $token, 'email' => $this->email], false));
+    $this->notify(new CustomResetPasswordNotification($url));
 }
 
 }
