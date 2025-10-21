@@ -13,20 +13,16 @@ class UnitController extends Controller
      */
     public function showPurchaseForm()
     {
-        // Get active pack, or the last configured one if none is active
-        $pack = UnitPackage::where('is_active', true)->latest()->first()
-            ?? UnitPackage::latest()->first();
-
-        if (!$pack) {
-            return back()->with('error', "Aucun pack d’unités n’a été défini par le Super Admin.");
+        $package = UnitPackage::active()->first();
+        if (!$package) {
+            return back()->with('error', "Aucun pack actif n’est configuré par l’administrateur.");
         }
 
-        // You said VAT is 20% globally
-        $tvaRate = 20;
+        $vat = 20; // if you later store VAT in the package, swap here
 
         return view('units.purchase', [
-            'pack'    => $pack,
-            'tvaRate' => $tvaRate,
+            'unitPrice' => (float) $package->price_ht,
+            'vatRate'   => $vat,
         ]);
     }
 
@@ -47,20 +43,17 @@ class UnitController extends Controller
             return back()->with('error', "Aucune entreprise associée à cet utilisateur.");
         }
 
-        // Get pricing from the active pack
-        $pack = UnitPackage::where('is_active', true)->latest()->first()
-            ?? UnitPackage::latest()->first();
-
-        if (!$pack) {
-            return back()->with('error', "Aucun pack d’unités n’a été défini par le Super Admin.");
+        $package = UnitPackage::active()->first();
+        if (!$package) {
+            return back()->with('error', "Aucun pack actif n’est configuré.");
         }
 
-        $qty      = (int) $request->input('quantity');
-        $unitHt   = (float) $pack->price_ht; // € HT / unité
-        $tvaRate  = 20; // %
-        $subtotal = $qty * $unitHt;
-        $tva      = round($subtotal * ($tvaRate / 100), 2);
-        $total    = $subtotal + $tva;
+        $qty      = (int) $request->integer('quantity');
+        $unitHt   = (float) $package->price_ht; // ✅ dynamic
+        $tvaRate  = 20;                          // or $package->tax_rate if you add one
+        $amountHt = round($qty * $unitHt, 2);
+        $tva      = round($amountHt * ($tvaRate / 100), 2);
+        $total    = $amountHt + $tva;
 
         $path = $request->hasFile('virement_proof')
             ? $request->file('virement_proof')->store('virements', 'public')
@@ -70,8 +63,9 @@ class UnitController extends Controller
             'company_id'  => $company->id,
             'user_id'     => $user->id,
             'quantity'    => $qty,
-            'unit_price'  => $unitHt,   // ✅ from Super Admin pack
-            'tva_rate'    => $tvaRate,  // 20
+            'unit_price'  => $unitHt,
+            'amount_ht'   => $amountHt,          // ✅ store HT
+            'tva_rate'    => $tvaRate,
             'total_cents' => (int) round($total * 100),
             'proof_path'  => $path,
             'status'      => 'pending',
@@ -79,7 +73,7 @@ class UnitController extends Controller
 
         return back()->with(
             'success',
-            "Votre demande de virement a été enregistrée. Notre équipe vérifiera le reçu et ajoutera les unités sous peu."
+            "Votre demande de virement a été enregistrée. Nous la traiterons sous peu."
         );
     }
 }
