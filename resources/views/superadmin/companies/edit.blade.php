@@ -10,6 +10,19 @@
     <p class="text-gray-500 text-sm">Mettez à jour les informations de la société.</p>
   </div>
 
+  {{-- DEBUG: show changed fields after redirect from update --}}
+@if(session('debug_changed'))
+<div class="rounded-xl bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3">
+  <div class="font-semibold mb-1">Champs modifiés :</div>
+  <div class="text-sm">{{ implode(', ', session('debug_changed')) }}</div>
+</div>
+@endif
+
+{{-- DEBUG: show route name to ensure you’re on superadmin update --}}
+<div class="rounded-xl bg-gray-50 border px-4 py-2 text-xs text-gray-600">
+Route actuelle : {{ request()->route()->getName() ?? 'n/a' }}
+</div>
+
   {{-- Flash messages --}}
   @if(session('success'))
     <div class="rounded-xl bg-green-50 border border-green-200 text-green-800 px-4 py-3">
