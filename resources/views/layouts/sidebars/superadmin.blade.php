@@ -80,37 +80,45 @@
             </a>
         </li>
 
-        {{-- --- NEW: Packs d’unités --- --}}
-        <li>
-            <a href="{{ route('superadmin.units.packages.index') }}"
-               class="flex items-center justify-between px-3 py-2 rounded {{ request()->routeIs('superadmin.units.packages.*') ? 'bg-[#FF4B00] text-white font-semibold' : 'hover:bg-orange-100 text-gray-700' }}">
-                <span class="flex items-center gap-3">
-                    <i data-lucide="layers" class="w-4 h-4"></i> Packs d’unités
-                </span>
-                @if($saInactivePackagesCnt > 0)
-                    <span class="ml-3 inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full text-xs
-                                 {{ request()->routeIs('superadmin.units.packages.*') ? 'bg-white text-[#FF4B00]' : 'bg-[#FF4B00] text-white' }}">
-                        {{ $saInactivePackagesCnt }}
-                    </span>
-                @endif
-            </a>
-        </li>
+{{-- --- NEW: Packs d’unités --- --}}
+<li>
+    <a href="{{ route('superadmin.units.packages.index') }}"
+       class="flex items-center justify-between px-3 py-2 rounded {{ request()->routeIs('superadmin.units.packages.*') ? 'bg-[#FF4B00] text-white font-semibold' : 'hover:bg-orange-100 text-gray-700' }}">
+        <span class="flex items-center gap-3">
+            <i data-lucide="layers" class="w-4 h-4"></i> Packs d’unités
+        </span>
+        @if($saInactivePackagesCnt > 0)
+            <span class="ml-3 inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full text-xs
+                         {{ request()->routeIs('superadmin.units.packages.*') ? 'bg-white text-[#FF4B00]' : 'bg-[#FF4B00] text-white' }}">
+                {{ $saInactivePackagesCnt }}
+            </span>
+        @endif
+    </a>
+</li>
 
-        {{-- --- NEW: Virements --- --}}
-        <li>
-            <a href="{{ route('superadmin.virements.index') }}"
-               class="flex items-center justify-between px-3 py-2 rounded {{ request()->routeIs('superadmin.virements.*') ? 'bg-[#FF4B00] text-white font-semibold' : 'hover:bg-orange-100 text-gray-700' }}">
-                <span class="flex items-center gap-3">
-                    <i data-lucide="banknote" class="w-4 h-4"></i> Virements
-                </span>
-                @if($saPendingVirements > 0)
-                    <span class="ml-3 inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full text-xs
-                                 {{ request()->routeIs('superadmin.virements.*') ? 'bg-white text-[#FF4B00]' : 'bg-[#FF4B00] text-white' }}">
-                        {{ $saPendingVirements }}
-                    </span>
-                @endif
-            </a>
-        </li>
+{{-- --- NEW: Crédits d’unités (historique) --- --}}
+<li>
+    <a href="{{ route('superadmin.units.credits.index') }}"
+       class="flex items-center gap-3 px-3 py-2 rounded {{ request()->routeIs('superadmin.units.credits.*') ? 'bg-[#FF4B00] text-white font-semibold' : 'hover:bg-orange-100 text-gray-700' }}">
+        <i data-lucide="coins" class="w-4 h-4"></i> Crédits d’unités
+    </a>
+</li>
+
+{{-- --- NEW: Virements --- --}}
+<li>
+    <a href="{{ route('superadmin.virements.index') }}"
+       class="flex items-center justify-between px-3 py-2 rounded {{ request()->routeIs('superadmin.virements.*') ? 'bg-[#FF4B00] text-white font-semibold' : 'hover:bg-orange-100 text-gray-700' }}">
+        <span class="flex items-center gap-3">
+            <i data-lucide="banknote" class="w-4 h-4"></i> Virements
+        </span>
+        @if($saPendingVirements > 0)
+            <span class="ml-3 inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full text-xs
+                         {{ request()->routeIs('superadmin.virements.*') ? 'bg-white text-[#FF4B00]' : 'bg-[#FF4B00] text-white' }}">
+                {{ $saPendingVirements }}
+            </span>
+        @endif
+    </a>
+</li>
     </ul>
 
     <ul class="space-y-1 px-2 py-2 border-t border-gray-200">

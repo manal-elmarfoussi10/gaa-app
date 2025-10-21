@@ -4,6 +4,7 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\VirementRequest;
+use App\Models\UnitCredit;
 use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -38,24 +39,36 @@ class VirementAdminController extends Controller
     }
 
     public function approve(Request $request, VirementRequest $virement)
-    {
-        $data = $request->validate([
-            'credit_units' => 'required|integer|min:1',
-            'notes'        => 'nullable|string|max:1000',
-        ]);
+{
+    $request->validate([
+        'credit_units' => 'required|integer|min:1',
+        'notes'        => 'nullable|string|max:2000',
+    ]);
 
-        $company = $virement->company;
-        abort_if(!$company, 404);
+    DB::transaction(function () use ($request, $virement) {
+        $company = Company::findOrFail($virement->company_id);
 
-        $company->increment('units', $data['credit_units']);
+        // 1) increase the live counter on companies
+        $company->increment('units', (int) $request->credit_units);
 
+        // 2) mark virement + keep a ledger line
         $virement->update([
             'status' => 'approved',
-            'notes'  => $data['notes'] ?? null,
+            'notes'  => $request->notes,
         ]);
 
-        return redirect()->route('superadmin.virements.index')->with('success','Virement approuvé et unités créditées.');
-    }
+        UnitCredit::create([
+            'company_id'          => $company->id,
+            'created_by'          => auth()->id(),
+            'units'               => (int) $request->credit_units,
+            'source'              => 'virement',
+            'virement_request_id' => $virement->id,
+            'note'                => $request->notes,
+        ]);
+    });
+
+    return back()->with('success', 'Virement approuvé et unités créditées.');
+}
 
     public function reject(Request $request, VirementRequest $virement)
     {

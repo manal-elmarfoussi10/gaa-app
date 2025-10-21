@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 
 use App\Http\Controllers\SuperAdmin\UnitPackageController;
 use App\Http\Controllers\SuperAdmin\VirementAdminController;
+use App\Http\Controllers\SuperAdmin\UnitCreditController;
 
 
 use App\Http\Middleware\CompanyAccess;
@@ -342,6 +343,14 @@ Route::prefix('virements')->name('virements.')->group(function () {
     Route::post('{virement}/approve',[VirementAdminController::class, 'approve'])->name('approve');
     Route::post('{virement}/reject', [VirementAdminController::class, 'reject'])->name('reject');
 });
+
+Route::prefix('units')->name('units.')->group(function () {
+    Route::get('credits/create', [UnitCreditController::class, 'create'])->name('credits.create');
+    Route::post('credits',        [UnitCreditController::class, 'store'])->name('credits.store');
+});
+
+Route::get('units/credits', [UnitCreditController::class, 'index'])
+     ->name('units.credits.index');
 
 Route::patch('packages/{unit_package}/activate', [UnitPackageController::class,'activate'])
     ->name('units.packages.activate');
