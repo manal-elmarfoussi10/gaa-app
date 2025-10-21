@@ -3,7 +3,6 @@
 
 @section('content')
 <div class="px-6 py-6 max-w-7xl mx-auto">
-  {{-- Header --}}
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-2xl font-bold text-gray-800">
@@ -13,10 +12,6 @@
     </div>
   </div>
 
-  {{-- Flash/errors --}}
-  @if(session('success'))
-    <div class="mb-4 rounded-xl bg-green-50 border border-green-200 text-green-800 px-4 py-3">{{ session('success') }}</div>
-  @endif
   @if ($errors->any())
     <div class="mb-4 rounded-xl bg-red-50 border border-red-200 text-red-800 px-4 py-3">
       <div class="font-semibold mb-1">Veuillez corriger les erreurs :</div>
@@ -36,90 +31,131 @@
         <i data-lucide="building-2" class="w-5 h-5 text-[#FF4B00]"></i> Identité
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <x-sa.input name="name" label="Nom *" required :value="old('name')" />
-        <x-sa.input name="commercial_name" label="Nom commercial" :value="old('commercial_name')" />
-        <x-sa.input name="phone" label="Téléphone" :value="old('phone')" />
-        <x-sa.input type="email" name="email" label="Email" :value="old('email')" />
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Nom *</label>
+          <input name="name" required value="{{ old('name') }}"
+                 class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-[#FF4B00] focus:border-[#FF4B00]">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Nom commercial</label>
+          <input name="commercial_name" value="{{ old('commercial_name') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Téléphone</label>
+          <input name="phone" value="{{ old('phone') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div class="md:col-span-3">
+          <label class="block text-sm font-medium text-gray-600 mb-1">Email</label>
+          <input type="email" name="email" value="{{ old('email') }}" class="w-full border rounded-lg p-3">
+        </div>
       </div>
     </div>
 
     {{-- Adresse --}}
     <div>
-      <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-        <i data-lucide="map-pin" class="w-5 h-5 text-[#FF4B00]"></i> Adresse
-      </h2>
+      <h2 class="text-lg font-semibold text-gray-800 mb-3"><i data-lucide="map-pin" class="w-5 h-5 text-[#FF4B00]"></i> Adresse</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <x-sa.input name="address" label="Adresse" :value="old('address')" class="md:col-span-2" />
-        <x-sa.input name="postal_code" label="Code postal" :value="old('postal_code')" />
-        <x-sa.input name="city" label="Ville" :value="old('city')" />
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-600 mb-1">Adresse</label>
+          <input name="address" value="{{ old('address') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Code postal</label>
+          <input name="postal_code" value="{{ old('postal_code') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div class="md:col-span-3">
+          <label class="block text-sm font-medium text-gray-600 mb-1">Ville</label>
+          <input name="city" value="{{ old('city') }}" class="w-full border rounded-lg p-3">
+        </div>
       </div>
     </div>
 
-    {{-- Juridique --}}
+    {{-- Légal --}}
     <div>
-      <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-        <i data-lucide="scale" class="w-5 h-5 text-[#FF4B00]"></i> Informations légales
-      </h2>
+      <h2 class="text-lg font-semibold text-gray-800 mb-3"><i data-lucide="scale" class="w-5 h-5 text-[#FF4B00]"></i> Informations légales</h2>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <x-sa.input name="legal_form" label="Forme juridique" :value="old('legal_form')" />
-        <x-sa.input type="number" step="0.01" name="capital" label="Capital (EUR)" :value="old('capital')" />
-        <x-sa.input name="siret" label="SIRET" :value="old('siret')" />
-        <x-sa.input name="tva" label="N° TVA" :value="old('tva')" />
-        <x-sa.input name="rcs_number" label="RCS n°" :value="old('rcs_number')" />
-        <x-sa.input name="rcs_city" label="RCS Ville" :value="old('rcs_city')" />
-        <x-sa.input name="ape" label="APE" :value="old('ape')" />
-        <x-sa.input name="naf_code" label="Code NAF" :value="old('naf_code')" />
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Forme juridique</label>
+          <input name="legal_form" value="{{ old('legal_form') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Capital (EUR)</label>
+          <input type="number" step="0.01" name="capital" value="{{ old('capital') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">SIRET</label>
+          <input name="siret" value="{{ old('siret') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">N° TVA</label>
+          <input name="tva" value="{{ old('tva') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">RCS n°</label>
+          <input name="rcs_number" value="{{ old('rcs_number') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">RCS Ville</label>
+          <input name="rcs_city" value="{{ old('rcs_city') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">APE</label>
+          <input name="ape" value="{{ old('ape') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Code NAF</label>
+          <input name="naf_code" value="{{ old('naf_code') }}" class="w-full border rounded-lg p-3">
+        </div>
       </div>
     </div>
 
-    {{-- Bancaire / paiement --}}
+    {{-- Paiement --}}
     <div>
-      <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-        <i data-lucide="credit-card" class="w-5 h-5 text-[#FF4B00]"></i> Paiement
-      </h2>
+      <h2 class="text-lg font-semibold text-gray-800 mb-3"><i data-lucide="credit-card" class="w-5 h-5 text-[#FF4B00]"></i> Paiement</h2>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <x-sa.input name="payment_method" label="Méthode de paiement" :value="old('payment_method')" />
-        <x-sa.input name="iban" label="IBAN" :value="old('iban')" />
-        <x-sa.input name="bic" label="BIC" :value="old('bic')" />
-        <x-sa.input name="penalty_rate" label="Taux pénalités (%)" :value="old('penalty_rate')" />
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Méthode de paiement</label>
+          <input name="payment_method" value="{{ old('payment_method') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">IBAN</label>
+          <input name="iban" value="{{ old('iban') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">BIC</label>
+          <input name="bic" value="{{ old('bic') }}" class="w-full border rounded-lg p-3">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Taux pénalités (%)</label>
+          <input name="penalty_rate" value="{{ old('penalty_rate') }}" class="w-full border rounded-lg p-3">
+        </div>
       </div>
     </div>
 
-    {{-- Divers / conformité --}}
+    {{-- Divers --}}
     <div>
-      <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-        <i data-lucide="file-check-2" class="w-5 h-5 text-[#FF4B00]"></i> Divers
-      </h2>
+      <h2 class="text-lg font-semibold text-gray-800 mb-3"><i data-lucide="file-check-2" class="w-5 h-5 text-[#FF4B00]"></i> Divers</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <x-sa.input name="known_by" label="Connu par" :value="old('known_by')" />
-        <x-sa.input name="contact_permission" label="Permission contact" :value="old('contact_permission')" />
-        <x-sa.input name="garage_type" label="Type de garage" :value="old('garage_type')" />
-        <x-sa.input name="representative" label="Représentant légal" :value="old('representative')" />
-        <x-sa.input name="professional_insurance" label="Assurance pro" :value="old('professional_insurance')" />
-        <x-sa.input name="tva_regime" label="Régime TVA" :value="old('tva_regime')" />
-        <x-sa.input name="eco_contribution" label="Éco-contribution" :value="old('eco_contribution')" />
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Connu par</label>
+          <input name="known_by" value="{{ old('known_by') }}" class="w-full border rounded-lg p-3"></div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Permission contact</label>
+          <input name="contact_permission" value="{{ old('contact_permission') }}" class="w-full border rounded-lg p-3"></div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Type de garage</label>
+          <input name="garage_type" value="{{ old('garage_type') }}" class="w-full border rounded-lg p-3"></div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Représentant légal</label>
+          <input name="representative" value="{{ old('representative') }}" class="w-full border rounded-lg p-3"></div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Assurance pro</label>
+          <input name="professional_insurance" value="{{ old('professional_insurance') }}" class="w-full border rounded-lg p-3"></div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Régime TVA</label>
+          <input name="tva_regime" value="{{ old('tva_regime') }}" class="w-full border rounded-lg p-3"></div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Éco-contribution</label>
+          <input name="eco_contribution" value="{{ old('eco_contribution') }}" class="w-full border rounded-lg p-3"></div>
       </div>
     </div>
 
     {{-- Fichiers --}}
     <div>
-      <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-        <i data-lucide="paperclip" class="w-5 h-5 text-[#FF4B00]"></i> Fichiers
-      </h2>
+      <h2 class="text-lg font-semibold text-gray-800 mb-3"><i data-lucide="paperclip" class="w-5 h-5 text-[#FF4B00]"></i> Fichiers</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <x-sa.file name="logo" label="Logo" />
-        <x-sa.file name="signature_path" label="Signature (png/jpg)" />
-        <x-sa.file name="rib" label="RIB" />
-        <x-sa.file name="kbis" label="KBIS" />
-        <x-sa.file name="id_photo_recto" label="ID recto" />
-        <x-sa.file name="id_photo_verso" label="ID verso" />
-        <x-sa.file name="tva_exemption_doc" label="Justif. TVA" />
-        <x-sa.file name="invoice_terms_doc" label="CG Facturation" />
+        @foreach(['logo'=>'Logo','signature_path'=>'Signature (png/jpg)','rib'=>'RIB','kbis'=>'KBIS','id_photo_recto'=>'ID recto','id_photo_verso'=>'ID verso','tva_exemption_doc'=>'Justif. TVA','invoice_terms_doc'=>'CG Facturation'] as $field=>$label)
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $label }}</label>
+            <input type="file" name="{{ $field }}" class="w-full border rounded-lg p-2">
+          </div>
+        @endforeach
       </div>
       <p class="text-xs text-gray-500 mt-2">Formats: png, jpg, jpeg, pdf. Max 4 Mo / fichier.</p>
     </div>
 
-    {{-- Créer un utilisateur optionnel --}}
+    {{-- Utilisateur optionnel --}}
     @php $wantAdmin = old('create_admin', false); @endphp
     <div class="rounded-xl border bg-gray-50">
       <div class="flex items-center justify-between px-5 py-4">
@@ -132,21 +168,24 @@
 
       <div id="adminFields" class="px-5 pb-5 @if(!$wantAdmin) hidden @endif">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-1">
-          <x-sa.input name="admin[first_name]" label="Prénom *" :value="old('admin.first_name')" />
-          <x-sa.input name="admin[last_name]" label="Nom *" :value="old('admin.last_name')" />
-          <x-sa.input type="email" name="admin[email]" label="Email *" :value="old('admin.email')" />
+          <div><label class="block text-sm font-medium text-gray-600 mb-1">Prénom *</label>
+            <input name="admin[first_name]" value="{{ old('admin.first_name') }}" class="w-full border rounded-lg p-3"></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1">Nom *</label>
+            <input name="admin[last_name]" value="{{ old('admin.last_name') }}" class="w-full border rounded-lg p-3"></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1">Email *</label>
+            <input type="email" name="admin[email]" value="{{ old('admin.email') }}" class="w-full border rounded-lg p-3"></div>
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">Rôle *</label>
-            <select name="admin[role]"
-              class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-[#FF4B00] focus:border-[#FF4B00]">
+            <select name="admin[role]" class="w-full border rounded-lg p-3">
               @foreach($roles as $value => $label)
                 <option value="{{ $value }}" @selected(old('admin.role')==$value)>{{ $label }}</option>
               @endforeach
             </select>
-            @error('admin.role')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
           </div>
-          <x-sa.input type="password" name="admin[password]" label="Mot de passe *" />
-          <x-sa.input type="password" name="admin[password_confirmation]" label="Confirmer *" />
+          <div><label class="block text-sm font-medium text-gray-600 mb-1">Mot de passe *</label>
+            <input type="password" name="admin[password]" class="w-full border rounded-lg p-3"></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1">Confirmer *</label>
+            <input type="password" name="admin[password_confirmation]" class="w-full border rounded-lg p-3"></div>
           <label class="inline-flex items-center gap-2 mt-2">
             <input type="checkbox" name="admin[is_active]" value="1" class="text-[#FF4B00]" @checked(old('admin.is_active', true))>
             <span class="text-sm">Activer le compte</span>
@@ -156,46 +195,13 @@
     </div>
 
     <div class="flex justify-end">
-      <button class="px-6 py-3 bg-[#FF4B00] text-white font-semibold rounded-full shadow hover:bg-[#e04300] transition">
-        Enregistrer
-      </button>
+      <button class="px-6 py-3 bg-[#FF4B00] text-white font-semibold rounded-full shadow hover:bg-[#e04300] transition">Enregistrer</button>
     </div>
   </form>
 </div>
 
-{{-- Inputs components (quick inline to avoid includes) --}}
-@once
-@push('scripts')
 <script>
-  const toggle = document.getElementById('toggleCreateAdmin');
-  const block  = document.getElementById('adminFields');
-  if (toggle) toggle.addEventListener('change', () => block.classList.toggle('hidden', !toggle.checked));
+  const t = document.getElementById('toggleCreateAdmin'), b = document.getElementById('adminFields');
+  if (t) t.addEventListener('change', ()=> b.classList.toggle('hidden', !t.checked));
 </script>
-@endpush
-@endonce
-
-{{-- Tiny component macros to keep markup DRY --}}
-@php
-// simple "component-like" helpers
-@endphp
-
-@verbatim
-{{-- These are pseudo-components. If you use Blade components, move to resources/views/components/sa/*. --}}
-@endverbatim
-
-{{-- text input --}}
-@php
-  if (!function_exists('sa_input')) {
-    function sa_input($name,$label,$type='text',$value=null,$attrs='',$required=false){
-      $req=$required?'required':'';
-      return <<<HTML
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">{$label}</label>
-          <input type="{$type}" name="{$name}" value="{$value}" {$req}
-            class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-[#FF4B00] focus:border-[#FF4B00]" {$attrs}>
-        </div>
-      HTML;
-    }
-  }
-@endphp
 @endsection

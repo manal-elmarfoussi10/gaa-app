@@ -20,7 +20,6 @@ class CompanyController extends Controller
 
     public function create()
     {
-        // roles list (no superadmin here)
         $roles = collect(User::roles())->except(User::ROLE_SUPERADMIN)->toArray();
         return view('superadmin.companies.create', compact('roles'));
     }
@@ -28,32 +27,25 @@ class CompanyController extends Controller
     public function store(StoreCompanyRequest $request)
     {
         $data = $request->validated();
-        $fileFields = [
-            'logo','rib','kbis','id_photo_recto','id_photo_verso',
-            'tva_exemption_doc','invoice_terms_doc','signature_path',
-        ];
 
-        DB::transaction(function () use (&$company, $data, $request, $fileFields) {
-            // upload files
-            $payload = $data;
-            foreach ($fileFields as $f) {
-                if ($request->hasFile($f)) {
-                    $payload[$f] = $request->file($f)->store('company_files', 'public');
-                }
-            }
+        // Handle uploads to public disk and set paths into $data
+        $this->ingestUploads($request, $data);
 
-            // create company with all fields
-            $company = Company::create($payload);
+        $company = null;
 
-            // optionally create first user
-            if (!empty($data['create_admin']) && !empty($data['admin'])) {
+        DB::transaction(function () use (&$company, $data) {
+            // Create company with ALL validated + uploaded fields
+            $company = Company::create($this->onlyFillable($data));
+
+            // Optionally create first user
+            if (!empty($data['create_admin'])) {
                 $a = $data['admin'];
                 $user = new User();
                 $user->first_name = $a['first_name'];
                 $user->last_name  = $a['last_name'];
                 $user->name       = trim($a['first_name'].' '.$a['last_name']);
                 $user->email      = $a['email'];
-                $user->role       = $a['role']; // e.g. 'admin'
+                $user->role       = $a['role'];
                 $user->company_id = $company->id;
                 $user->is_active  = isset($a['is_active']) ? (bool)$a['is_active'] : true;
                 $user->password   = Hash::make($a['password']);
@@ -61,7 +53,8 @@ class CompanyController extends Controller
             }
         });
 
-        return redirect()->route('superadmin.companies.show', $company)
+        return redirect()
+            ->route('superadmin.companies.show', $company)
             ->with('success', 'Société créée avec succès.');
     }
 
@@ -79,33 +72,48 @@ class CompanyController extends Controller
     public function update(UpdateCompanyRequest $request, Company $company)
     {
         $data = $request->validated();
-        $fileFields = [
-            'logo','rib','kbis','id_photo_recto','id_photo_verso',
-            'tva_exemption_doc','invoice_terms_doc','signature_path',
-        ];
 
-        // upload new files, keep old if not replaced
-        foreach ($fileFields as $f) {
-            if ($request->hasFile($f)) {
-                $data[$f] = $request->file($f)->store('company_files', 'public');
-            } else {
-                unset($data[$f]); // avoid nulling existing path if not present in request
-            }
-        }
+        // Files: upload and set paths
+        $this->ingestUploads($request, $data);
 
-        $company->fill($data)->save();
+        $company->fill($this->onlyFillable($data))->save();
 
-        return redirect()->route('superadmin.companies.show', $company)
+        return redirect()
+            ->route('superadmin.companies.show', $company)
             ->with('success', 'Société mise à jour.');
     }
 
     public function destroy(Company $company)
     {
-        // Optional cascade
         $company->users()->delete();
         $company->delete();
 
-        return redirect()->route('superadmin.companies.index')
+        return redirect()
+            ->route('superadmin.companies.index')
             ->with('success', 'Société supprimée avec succès.');
+    }
+
+    /**
+     * Upload known file fields to the public disk and merge back into $data.
+     */
+    private function ingestUploads($request, array &$data): void
+    {
+        foreach ([
+            'logo', 'rib', 'kbis', 'id_photo_recto', 'id_photo_verso',
+            'tva_exemption_doc', 'invoice_terms_doc', 'signature_path',
+        ] as $field) {
+            if ($request->hasFile($field)) {
+                $data[$field] = $request->file($field)->store('company_files', 'public');
+            }
+        }
+    }
+
+    /**
+     * Keep only attributes that are fillable on the Company model.
+     */
+    private function onlyFillable(array $data): array
+    {
+        $fillable = (new Company())->getFillable();
+        return array_intersect_key($data, array_flip($fillable));
     }
 }
