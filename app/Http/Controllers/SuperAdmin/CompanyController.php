@@ -25,52 +25,70 @@ class CompanyController extends Controller
     }
 
     public function store(\App\Http\Requests\SuperAdmin\StoreCompanyRequest $request)
-{
-    // Log incoming (no files)
-    \Log::info('Company STORE request (superadmin)', [
-        'payload' => $request->except(['_token','logo','rib','kbis','id_photo_recto','id_photo_verso','tva_exemption_doc','invoice_terms_doc','signature_path']),
-        'route'   => $request->route()?->getName(),
-    ]);
-
-    // Build from the Company fillable
-    $tmpCompany = new \App\Models\Company();
-    $fillable   = $tmpCompany->getFillable();
-    $data       = collect($request->all())->only($fillable)->toArray();
-
-    foreach ([
-        'logo','rib','kbis','id_photo_recto','id_photo_verso',
-        'tva_exemption_doc','invoice_terms_doc','signature_path',
-    ] as $fileField) {
-        if ($request->hasFile($fileField)) {
-            $data[$fileField] = $request->file($fileField)->store('company_files', 'public');
+    {
+        // Build from fillable (not only validated keys) to keep optional fields
+        $fillable = (new \App\Models\Company())->getFillable();
+    
+        // Take all request keys that are in fillable
+        $data = collect($request->all())->only($fillable)->toArray();
+    
+        // Normalize empty text fields to "" to avoid NOT NULL violations (e.g. contact_permission)
+        foreach ($data as $k => $v) {
+            if (is_null($v)) {
+                $data[$k] = ''; // safe for VARCHAR/TEXT columns that are NOT NULL
+            }
+        }
+    
+        // Files
+        foreach ([
+            'logo','rib','kbis','id_photo_recto','id_photo_verso',
+            'tva_exemption_doc','invoice_terms_doc','signature_path',
+        ] as $fileField) {
+            if ($request->hasFile($fileField)) {
+                $data[$fileField] = $request->file($fileField)->store('company_files', 'public');
+            }
+        }
+    
+        try {
+            $company = null;
+    
+            \DB::transaction(function () use (&$company, $data, $request) {
+                // 1) create company
+                $company = \App\Models\Company::create($data);
+    
+                // 2) optionally create first user
+                if ($request->boolean('create_admin')) {
+                    $a = $request->input('admin', []);
+    
+                    $user = new \App\Models\User();
+                    $user->first_name = $a['first_name'] ?? '';
+                    $user->last_name  = $a['last_name']  ?? '';
+                    $user->name       = trim(($a['first_name'] ?? '').' '.($a['last_name'] ?? ''));
+                    $user->email      = $a['email'] ?? null;
+                    $user->role       = $a['role'] ?? \App\Models\User::ROLE_ADMIN;
+                    $user->company_id = $company->id;
+                    $user->is_active  = isset($a['is_active']) ? (bool) $a['is_active'] : true;
+    
+                    // The FormRequest already enforced required admin fields when checkbox is checked
+                    $user->password   = \Illuminate\Support\Facades\Hash::make($a['password']);
+                    $user->save();
+                }
+            });
+    
+            return redirect()
+                ->route('superadmin.companies.show', $company)
+                ->with('success', 'Société créée avec succès.');
+    
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Friendly message in FR; also log exact DB error for us
+            \Log::error('Company STORE failed', ['error' => $e->getMessage(), 'payload' => $data]);
+    
+            return back()
+                ->withInput()
+                ->withErrors(['global' => "Impossible de créer la société. Vérifiez les champs obligatoires. ".
+                    "Si vous avez coché « Créer aussi un utilisateur », vous devez renseigner l’ensemble de ses informations."]);
         }
     }
-
-    $company = null;
-
-    \DB::transaction(function () use (&$company, $data, $request) {
-        $company = \App\Models\Company::create($data);
-
-        // Optional embedded admin creation
-        if ($request->boolean('create_admin') && $request->filled('admin.email')) {
-            $a = $request->input('admin');
-            $user = new \App\Models\User();
-            $user->first_name = $a['first_name'] ?? '';
-            $user->last_name  = $a['last_name']  ?? '';
-            $user->name       = trim(($a['first_name'] ?? '').' '.($a['last_name'] ?? ''));
-            $user->email      = $a['email'];
-            $user->role       = $a['role'] ?? \App\Models\User::ROLE_ADMIN;
-            $user->company_id = $company->id;
-            $user->is_active  = isset($a['is_active']) ? (bool)$a['is_active'] : true;
-            $user->password   = \Illuminate\Support\Facades\Hash::make($a['password']);
-            $user->save();
-        }
-    });
-
-    return redirect()
-        ->route('superadmin.companies.show', $company)
-        ->with('success','Société créée avec succès.');
-}
 
     public function show(Company $company)
     {
