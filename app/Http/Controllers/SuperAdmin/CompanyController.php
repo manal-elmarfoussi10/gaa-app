@@ -28,18 +28,26 @@ class CompanyController extends Controller
     {
         $data = $request->validated();
 
-        // Handle uploads to public disk and set paths into $data
-        $this->ingestUploads($request, $data);
+        // Handle files if any were posted from the create form (optional)
+        foreach ([
+            'logo','rib','kbis','id_photo_recto','id_photo_verso',
+            'tva_exemption_doc','invoice_terms_doc','signature_path',
+        ] as $fileField) {
+            if ($request->hasFile($fileField)) {
+                $data[$fileField] = $request->file($fileField)->store('company_files', 'public');
+            }
+        }
 
         $company = null;
 
         DB::transaction(function () use (&$company, $data) {
-            // Create company with ALL validated + uploaded fields
-            $company = Company::create($this->onlyFillable($data));
+            // Create company with full validated payload
+            $company = Company::create($data);
 
             // Optionally create first user
-            if (!empty($data['create_admin'])) {
+            if (!empty($data['create_admin']) && !empty($data['admin'])) {
                 $a = $data['admin'];
+
                 $user = new User();
                 $user->first_name = $a['first_name'];
                 $user->last_name  = $a['last_name'];
@@ -47,7 +55,7 @@ class CompanyController extends Controller
                 $user->email      = $a['email'];
                 $user->role       = $a['role'];
                 $user->company_id = $company->id;
-                $user->is_active  = isset($a['is_active']) ? (bool)$a['is_active'] : true;
+                $user->is_active  = (bool)($a['is_active'] ?? true);
                 $user->password   = Hash::make($a['password']);
                 $user->save();
             }
@@ -73,10 +81,17 @@ class CompanyController extends Controller
     {
         $data = $request->validated();
 
-        // Files: upload and set paths
-        $this->ingestUploads($request, $data);
+        // Files: only overwrite if a new file is uploaded
+        foreach ([
+            'logo','rib','kbis','id_photo_recto','id_photo_verso',
+            'tva_exemption_doc','invoice_terms_doc','signature_path',
+        ] as $fileField) {
+            if ($request->hasFile($fileField)) {
+                $data[$fileField] = $request->file($fileField)->store('company_files', 'public');
+            }
+        }
 
-        $company->fill($this->onlyFillable($data))->save();
+        $company->fill($data)->save();
 
         return redirect()
             ->route('superadmin.companies.show', $company)
@@ -91,29 +106,5 @@ class CompanyController extends Controller
         return redirect()
             ->route('superadmin.companies.index')
             ->with('success', 'Société supprimée avec succès.');
-    }
-
-    /**
-     * Upload known file fields to the public disk and merge back into $data.
-     */
-    private function ingestUploads($request, array &$data): void
-    {
-        foreach ([
-            'logo', 'rib', 'kbis', 'id_photo_recto', 'id_photo_verso',
-            'tva_exemption_doc', 'invoice_terms_doc', 'signature_path',
-        ] as $field) {
-            if ($request->hasFile($field)) {
-                $data[$field] = $request->file($field)->store('company_files', 'public');
-            }
-        }
-    }
-
-    /**
-     * Keep only attributes that are fillable on the Company model.
-     */
-    private function onlyFillable(array $data): array
-    {
-        $fillable = (new Company())->getFillable();
-        return array_intersect_key($data, array_flip($fillable));
     }
 }
