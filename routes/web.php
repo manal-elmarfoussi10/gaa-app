@@ -182,6 +182,8 @@ Route::middleware(['auth', CompanyAccess::class])
     // Factures
     Route::resource('factures', FactureController::class);
     Route::get('/factures/export/excel', [FactureController::class, 'exportExcel'])->name('factures.export.excel');
+    Route::get('/factures/{facture}/edit', [FactureController::class, 'edit'])->name('factures.edit');
+Route::put('/factures/{facture}',        [FactureController::class, 'update'])->name('factures.update');
     Route::get('/factures/export/pdf', [FactureController::class, 'exportFacturesPDF'])->name('factures.export.pdf');
     Route::get('/factures/{id}/pdf', [FactureController::class, 'downloadPdf'])->name('factures.download.pdf');
     Route::match(['get', 'post'], '/factures/{facture}/acquitter', [FactureController::class, 'acquitter'])->name('factures.acquitter');
