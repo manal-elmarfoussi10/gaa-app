@@ -4,19 +4,34 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\VirementRequest;
+use App\Models\UnitPackage; // ✅ make sure this model exists
 
 class UnitController extends Controller
 {
     /**
-     * Display the purchase form.
+     * Purchase form (shows live price coming from the active UnitPackage)
      */
     public function showPurchaseForm()
     {
-        return view('units.purchase');
+        // Get active pack, or the last configured one if none is active
+        $pack = UnitPackage::where('is_active', true)->latest()->first()
+            ?? UnitPackage::latest()->first();
+
+        if (!$pack) {
+            return back()->with('error', "Aucun pack d’unités n’a été défini par le Super Admin.");
+        }
+
+        // You said VAT is 20% globally
+        $tvaRate = 20;
+
+        return view('units.purchase', [
+            'pack'    => $pack,
+            'tvaRate' => $tvaRate,
+        ]);
     }
 
     /**
-     * Handle a new virement request (bank transfer).
+     * Create the virement request with the current UnitPackage price
      */
     public function purchase(Request $request)
     {
@@ -25,42 +40,46 @@ class UnitController extends Controller
             'virement_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:8192',
         ]);
 
-        $user = $request->user();
-        $company = $user->company; // ✅ Each user belongs to one company
+        $user    = $request->user();
+        $company = $user->company;
 
         if (!$company) {
             return back()->with('error', "Aucune entreprise associée à cet utilisateur.");
         }
 
-        // 💶 Calculate totals
+        // Get pricing from the active pack
+        $pack = UnitPackage::where('is_active', true)->latest()->first()
+            ?? UnitPackage::latest()->first();
+
+        if (!$pack) {
+            return back()->with('error', "Aucun pack d’unités n’a été défini par le Super Admin.");
+        }
+
         $qty      = (int) $request->input('quantity');
-        $unit     = 10;      // € HT per unit
-        $tvaRate  = 20;      // 20%
-        $subtotal = $qty * $unit;
-        $tva      = (int) round($subtotal * ($tvaRate / 100));
+        $unitHt   = (float) $pack->price_ht; // € HT / unité
+        $tvaRate  = 20; // %
+        $subtotal = $qty * $unitHt;
+        $tva      = round($subtotal * ($tvaRate / 100), 2);
         $total    = $subtotal + $tva;
 
-        // 🧾 Upload proof if provided
         $path = $request->hasFile('virement_proof')
             ? $request->file('virement_proof')->store('virements', 'public')
             : null;
 
-        // 🧱 Create the virement request (pending)
         VirementRequest::create([
             'company_id'  => $company->id,
             'user_id'     => $user->id,
             'quantity'    => $qty,
-            'unit_price'  => $unit,
-            'tva_rate'    => $tvaRate,
-            'total_cents' => $total * 100, // store in cents to avoid float issues
+            'unit_price'  => $unitHt,   // ✅ from Super Admin pack
+            'tva_rate'    => $tvaRate,  // 20
+            'total_cents' => (int) round($total * 100),
             'proof_path'  => $path,
             'status'      => 'pending',
         ]);
 
         return back()->with(
             'success',
-            'Votre demande de virement a été enregistrée. 
-            Notre équipe vérifiera le reçu et ajoutera les unités à votre entreprise sous peu.'
+            "Votre demande de virement a été enregistrée. Notre équipe vérifiera le reçu et ajoutera les unités sous peu."
         );
     }
 }
