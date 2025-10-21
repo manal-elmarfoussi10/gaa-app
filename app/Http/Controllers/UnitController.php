@@ -3,34 +3,35 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use App\Models\UnitPackage;
 use App\Models\VirementRequest;
 
 class UnitController extends Controller
 {
     /**
-     * Display the purchase form (uses price from the active UnitPackage).
+     * Show the purchase form for tenant admins.
+     * Pulls the current HT price from the active UnitPackage.
      */
     public function showPurchaseForm()
     {
-        // Use the scope we added (or swap to where('is_active', true))
-        $package = UnitPackage::active()->latest('id')->first();
+        // Avoid relying on a scope; use a plain where so it works immediately
+        $package = UnitPackage::where('is_active', true)->latest('id')->first();
 
         if (!$package) {
             return back()->with('error', "Aucun pack actif n’est configuré.");
         }
 
-        $vatRate = 20; // % — if you later store VAT in the package, read it there
+        $vatRate = 20; // % — if you later store VAT on the package, read it from there
 
         return view('units.purchase', [
-            'unitPrice' => $package->price_ht, // HT per unit
-            'vatRate'   => $vatRate,           // percent
+            'unitPrice' => (float) $package->price_ht, // HT per unit
+            'vatRate'   => $vatRate,                   // percent
         ]);
     }
 
     /**
      * Handle a new virement (bank transfer) request from a tenant admin.
+     * Persists to columns that EXIST in your current virement_requests table.
      */
     public function purchase(Request $request)
     {
@@ -39,7 +40,7 @@ class UnitController extends Controller
             'virement_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:8192',
         ]);
 
-        $user    = $request->user();
+        $user = $request->user();
         $company = $user->company;
 
         if (!$company) {
@@ -47,7 +48,7 @@ class UnitController extends Controller
         }
 
         // Read the active package price at the moment of the request
-        $package = UnitPackage::active()->latest('id')->first();
+        $package = UnitPackage::where('is_active', true)->latest('id')->first();
         if (!$package) {
             return back()->with('error', "Aucun pack actif n’est configuré.");
         }
@@ -55,25 +56,22 @@ class UnitController extends Controller
         $qty      = (int) $request->integer('quantity');
         $unit     = (float) $package->price_ht; // € HT per unit
         $tvaRate  = 20;                         // %
-        $subtotal = $qty * $unit;               // HT
-        $tva      = round($subtotal * ($tvaRate / 100), 2);
-        $total    = $subtotal + $tva;
+        $subtotal = $qty * $unit;               // HT total the user is expected to pay
 
         // Upload proof if provided
         $path = $request->hasFile('virement_proof')
             ? $request->file('virement_proof')->store('virements', 'public')
             : null;
 
-        // Persist the request (keep the price used at this time!)
+        // 🔐 Persist ONLY the columns that exist in your current schema
+        // virement_requests: company_id, user_id, quantity, amount_ht, proof_path, status, timestamps
         VirementRequest::create([
-            'company_id'  => $company->id,
-            'user_id'     => $user->id,
-            'quantity'    => $qty,
-            'unit_price'  => $unit,          // <— store unit price snapshot
-            'tva_rate'    => $tvaRate,       // %
-            'total_cents' => (int) round($total * 100),
-            'proof_path'  => $path,
-            'status'      => 'pending',
+            'company_id' => $company->id,
+            'user_id'    => $user->id,
+            'quantity'   => $qty,
+            'amount_ht'  => $subtotal,  // HT (no VAT here)
+            'proof_path' => $path,
+            'status'     => 'pending',
         ]);
 
         return back()->with(
