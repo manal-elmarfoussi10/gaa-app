@@ -111,9 +111,6 @@
     {{-- ============ HEADER ============ --}}
     <div class="header no-break">
         <div class="company-block">
-            @if($logoUrl)
-                <img src="{{ $logoUrl }}" class="logo" alt="Logo">
-            @endif
             <div class="company-info">
                 <strong style="font-size:12px">{{ $companyName }}</strong><br>
                 @if($company?->address)
@@ -162,14 +159,7 @@
                     <th>Forme</th>
                     <td>{{ $company->legal_form ?? '—' }}</td>
                 </tr>
-                <tr>
-                    <th>Capital</th>
-                    <td>
-                        @if(!is_null($company?->capital))
-                            {{ number_format((float)$company->capital, 0, ',', ' ') }} €
-                        @else — @endif
-                    </td>
-                </tr>
+         
                 <tr>
                     <th>SIRET</th>
                     <td>{{ $company->siret ?? '—' }}</td>
