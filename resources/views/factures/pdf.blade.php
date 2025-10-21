@@ -152,38 +152,6 @@
             </div>
         </div>
 
-        <div class="col">
-            <div class="section-title">Émetteur — Informations légales</div>
-            <table class="kv">
-                <tr>
-                    <th>Forme</th>
-                    <td>{{ $company->legal_form ?? '—' }}</td>
-                </tr>
-         
-                <tr>
-                    <th>SIRET</th>
-                    <td>{{ $company->siret ?? '—' }}</td>
-                </tr>
-                <tr>
-                    <th>TVA</th>
-                    <td>{{ $company->tva ?? '—' }}</td>
-                </tr>
-                <tr>
-                    <th>NAF/APE</th>
-                    <td>{{ $company->ape ?? $company->naf_code ?? '—' }}</td>
-                </tr>
-                <tr>
-                    <th>RCS</th>
-                    <td>
-                        @if($company?->rcs_number || $company?->rcs_city)
-                            {{ $company->rcs_number }} {{ $company->rcs_city }}
-                        @else — @endif
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-
     {{-- ============ VÉHICULE / SINISTRE / ASSURANCE (tight) ============ --}}
     @if($client)
     <div class="section no-break">
@@ -195,12 +163,7 @@
                 <th>Kilométrage</th>
                 <td>{{ $fmtKm($client->kilometrage) ?: '—' }}</td>
             </tr>
-            <tr>
-                <th>Ancien modèle de plaque</th>
-                <td>{{ $client->ancien_modele_plaque ? 'Oui' : 'Non' }}</td>
-                <th>Professionnel</th>
-                <td>{{ $client->professionnel ?: '—' }}</td>
-            </tr>
+      
             <tr>
                 <th>Type de vitrage</th>
                 <td>{{ $client->type_vitrage ?: '—' }}</td>
@@ -226,15 +189,10 @@
             <tr>
                 <th>Assurance</th>
                 <td>{{ $client->nom_assurance ?: '—' }}</td>
-                <th>Autre assurance</th>
-                <td>{{ $client->autre_assurance ?: '—' }}</td>
-            </tr>
-            <tr>
                 <th>N° de sinistre</th>
                 <td>{{ $client->numero_sinistre ?: '—' }}</td>
-                <th>Adresse de pose</th>
-                <td>{{ $client->adresse_pose ?: '—' }}</td>
             </tr>
+         
         </table>
     </div>
     @endif
