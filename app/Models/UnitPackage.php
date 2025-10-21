@@ -6,19 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class UnitPackage extends Model
 {
+    protected $table = 'unit_packages';
+
     protected $fillable = [
         'name',
-        'units',       // keep = 1 (price is for 1 unit)
-        'price_ht',    // HT price per unit
+        'units',
+        'price_ht',
         'is_active',
     ];
 
     protected $casts = [
-        'units'     => 'int',
-        'price_ht'  => 'float',
+        'price_ht' => 'float',
         'is_active' => 'bool',
     ];
-    public function getPriceTtcAttribute(): float {
-        return round($this->price_ht * 1.2, 2);
+
+    // <— Add this so you can call UnitPackage::active()
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
     }
 }
