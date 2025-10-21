@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\VirementRequest;
-use App\Models\UnitCredit;
-use App\Models\Company;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;           // ⬅️ add this
+use App\Models\Company;                      // ⬅️ and this (if you use it)
+use App\Models\VirementRequest;
+use App\Models\UnitCredit;  
 
 class VirementAdminController extends Controller
 {
@@ -40,46 +40,59 @@ class VirementAdminController extends Controller
 
     public function approve(Request $request, VirementRequest $virement)
 {
-    $request->validate([
-        'credit_units' => 'required|integer|min:1',
-        'notes'        => 'nullable|string|max:2000',
+    if ($virement->status !== 'pending') {
+        return back()->with('error', 'Cette demande a déjà été traitée.');
+    }
+
+    $data = $request->validate([
+        'credit_units' => ['required','integer','min:1'],
+        'notes'        => ['nullable','string','max:2000'],
     ]);
 
-    DB::transaction(function () use ($request, $virement) {
+    DB::transaction(function () use ($virement, $data, $request) {
+        // 1) credit company units
         $company = Company::findOrFail($virement->company_id);
+        $company->increment('units', (int) $data['credit_units']);
 
-        // 1) increase the live counter on companies
-        $company->increment('units', (int) $request->credit_units);
+        // 2) optional: keep a ledger entry if your table exists
+        if (class_exists(UnitCredit::class)) {
+            UnitCredit::create([
+                'company_id'          => $company->id,
+                'created_by'          => $request->user()->id,
+                'units'               => (int) $data['credit_units'],
+                'source'              => 'virement',
+                'virement_request_id' => $virement->id,
+                'note'                => $data['notes'] ?? null,
+            ]);
+        }
 
-        // 2) mark virement + keep a ledger line
+        // 3) mark request approved
         $virement->update([
             'status' => 'approved',
-            'notes'  => $request->notes,
-        ]);
-
-        UnitCredit::create([
-            'company_id'          => $company->id,
-            'created_by'          => auth()->id(),
-            'units'               => (int) $request->credit_units,
-            'source'              => 'virement',
-            'virement_request_id' => $virement->id,
-            'note'                => $request->notes,
+            'notes'  => $data['notes'] ?? $virement->notes,
         ]);
     });
 
-    return back()->with('success', 'Virement approuvé et unités créditées.');
+    return back()->with('success', 'Unité(s) créditée(s) et demande approuvée.');
 }
 
-    public function reject(Request $request, VirementRequest $virement)
-    {
-        $data = $request->validate(['notes'=>'nullable|string|max:1000']);
-        $virement->update([
-            'status' => 'rejected',
-            'notes'  => $data['notes'] ?? null,
-        ]);
-
-        return back()->with('success','Virement rejeté.');
+public function reject(Request $request, VirementRequest $virement)
+{
+    if ($virement->status !== 'pending') {
+        return back()->with('error', 'Cette demande a déjà été traitée.');
     }
+
+    $data = $request->validate([
+        'notes' => ['nullable','string','max:2000'],
+    ]);
+
+    $virement->update([
+        'status' => 'rejected',
+        'notes'  => $data['notes'] ?? $virement->notes,
+    ]);
+
+    return back()->with('success', 'Demande rejetée.');
+}
 
     public function downloadProof(VirementRequest $virement)
     {

@@ -1,6 +1,15 @@
 @extends('layout')
 
 @section('content')
+@php
+    // Determine price to display:
+    // - prefer stored unit_price on the request
+    // - else fallback to active package
+    $fallbackPrice = optional(\App\Models\UnitPackage::where('is_active', true)->first())->price_ht ?? 0;
+    $unitPrice = $virement->unit_price ?? $fallbackPrice;
+    $amountHt = $unitPrice * (int)$virement->quantity;
+@endphp
+
 <div class="max-w-5xl mx-auto mt-8 space-y-6">
 
     {{-- Header / breadcrumb-ish --}}
@@ -60,9 +69,15 @@
         <div class="bg-white rounded-2xl shadow p-5">
             <div class="text-xs uppercase tracking-wide text-gray-500">Quantité demandée</div>
             <div class="mt-1 text-gray-900 font-semibold">{{ $virement->quantity }}</div>
+
+            <div class="mt-3 text-xs text-gray-500">Prix unitaire (HT)</div>
+            <div class="text-gray-900 font-semibold">
+                {{ number_format($unitPrice, 2, ',', ' ') }} €
+            </div>
+
             <div class="mt-3 text-xs text-gray-500">Montant HT estimé</div>
             <div class="text-gray-900 font-semibold">
-                {{ number_format($virement->amount_ht ?? 0, 2, ',', ' ') }} €
+                {{ number_format($amountHt, 2, ',', ' ') }} €
             </div>
         </div>
 
@@ -78,33 +93,36 @@
         </div>
     </div>
 
-   {{-- Proof preview --}}
-@if($virement->proof_path && $proofUrl)
-@php
-    $ext = strtolower(pathinfo($virement->proof_path, PATHINFO_EXTENSION));
-    $isImage = in_array($ext, ['jpg','jpeg','png','gif','webp']);
-    $isPdf   = $ext === 'pdf';
-@endphp
+    {{-- Proof preview --}}
+    @php
+        $proofUrl = $proofUrl ?? null;
+    @endphp
 
-<div class="mt-4 rounded-xl border border-dashed bg-gray-50">
-    @if($isImage)
-        <img src="{{ $proofUrl }}" alt="Reçu de virement"
-             class="w-full h-auto rounded-xl">
-    @elseif($isPdf)
-        <object data="{{ $proofUrl }}" type="application/pdf" class="w-full h-[650px] rounded-xl">
-            <iframe src="{{ $proofUrl }}" class="w-full h-[650px] rounded-xl"></iframe>
-        </object>
+    @if($virement->proof_path && $proofUrl)
+        @php
+            $ext = strtolower(pathinfo($virement->proof_path, PATHINFO_EXTENSION));
+            $isImage = in_array($ext, ['jpg','jpeg','png','gif','webp']);
+            $isPdf   = $ext === 'pdf';
+        @endphp
+
+        <div class="mt-4 rounded-xl border border-dashed bg-gray-50">
+            @if($isImage)
+                <img src="{{ $proofUrl }}" alt="Reçu de virement" class="w-full h-auto rounded-xl">
+            @elseif($isPdf)
+                <object data="{{ $proofUrl }}" type="application/pdf" class="w-full h-[650px] rounded-xl">
+                    <iframe src="{{ $proofUrl }}" class="w-full h-[650px] rounded-xl"></iframe>
+                </object>
+            @else
+                <div class="w-full h-40 rounded-xl flex items-center justify-center text-gray-500 text-sm">
+                    Aperçu non disponible — <a class="text-[#FF4B00] underline" href="{{ route('superadmin.virements.proof',$virement) }}">téléchargez le fichier</a>
+                </div>
+            @endif
+        </div>
     @else
-        <div class="w-full h-40 rounded-xl flex items-center justify-center text-gray-500 text-sm">
-            Aperçu non disponible — <a class="text-[#FF4B00] underline" href="{{ route('superadmin.virements.proof',$virement) }}">téléchargez le fichier</a>
+        <div class="mt-4 w-full h-40 rounded-xl bg-gray-50 border border-dashed flex items-center justify-center text-gray-500 text-sm">
+            Aucun reçu fourni.
         </div>
     @endif
-</div>
-@else
-<div class="mt-4 w-full h-40 rounded-xl bg-gray-50 border border-dashed flex items-center justify-center text-gray-500 text-sm">
-    Aucun reçu fourni.
-</div>
-@endif
 
     {{-- Actions --}}
     @if($virement->status === 'pending')

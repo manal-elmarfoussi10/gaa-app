@@ -1,6 +1,15 @@
 @extends('layout')
 
 @section('content')
+@php
+    // Try to get a unit price for display/calculation:
+    // - Prefer a value injected by the controller ($unitPrice), else
+    // - Fall back to the active package price, else 0.
+    $unitPrice = $unitPrice
+        ?? optional(\App\Models\UnitPackage::where('is_active', true)->first())->price_ht
+        ?? 0;
+@endphp
+
 <div class="max-w-7xl mx-auto mt-8 space-y-6">
 
     {{-- Header card --}}
@@ -85,6 +94,11 @@
                 </thead>
                 <tbody class="divide-y">
                     @forelse($requests as $r)
+                        @php
+                            // Prefer a per-request stored price, else fallback to global active price
+                            $price = $r->unit_price ?? $unitPrice;
+                            $amountHt = $price * (int)$r->quantity;
+                        @endphp
                         <tr class="hover:bg-gray-50/60">
                             <td class="px-6 py-3 whitespace-nowrap text-gray-800">
                                 {{ $r->created_at->format('d/m/Y H:i') }}
@@ -99,7 +113,8 @@
                             </td>
                             <td class="px-6 py-3 text-gray-800">{{ $r->quantity }}</td>
                             <td class="px-6 py-3 text-gray-800">
-                                {{ number_format($r->amount_ht ?? 0, 2, ',', ' ') }} €
+                                {{ number_format($amountHt, 2, ',', ' ') }} €
+                                <span class="text-xs text-gray-500">( {{ number_format($price, 2, ',', ' ') }} € / u )</span>
                             </td>
                             <td class="px-6 py-3">
                                 @php
@@ -133,6 +148,8 @@
                                     @if($r->status === 'pending')
                                         <form method="POST" action="{{ route('superadmin.virements.approve', $r) }}">
                                             @csrf
+                                            {{-- controller expects credit_units --}}
+                                            <input type="hidden" name="credit_units" value="{{ (int)$r->quantity }}">
                                             <button type="submit"
                                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700">
                                                 <i data-lucide="check" class="w-4 h-4"></i>
