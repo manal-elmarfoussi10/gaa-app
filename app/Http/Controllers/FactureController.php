@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf as DomPDF;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class FactureController extends Controller
 {
@@ -40,6 +41,26 @@ class FactureController extends Controller
             abort(403, 'Accès refusé à cette facture.');
         }
     }
+
+    public function destroy(Facture $facture)
+    {
+        $this->authorizeFactureCompany($facture);
+
+        if ($facture->paiements()->exists() || $facture->avoirs()->exists()) {
+            return back()->with(
+                'error',
+                'Impossible de supprimer une facture qui possède des paiements ou des avoirs. Supprimez-les d’abord.'
+            );
+        }
+
+        DB::transaction(function () use ($facture) {
+            $facture->items()->delete();
+            $facture->delete();
+        });
+
+        return redirect()->route('factures.index')->with('success', 'Facture supprimée avec succès.');
+    }
+
 
     public function index()
     {
