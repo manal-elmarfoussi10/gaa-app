@@ -41,6 +41,35 @@ class FactureController extends Controller
         }
     }
 
+    public function destroy(Facture $facture)
+{
+    // Company/role guard
+    $this->authorizeFactureCompany($facture);
+
+    // Business rule: do not delete if there are payments or credit notes
+    if ($facture->paiements()->exists() || $facture->avoirs()->exists()) {
+        return back()->with(
+            'error',
+            'Impossible de supprimer une facture qui possède des paiements ou des avoirs. Supprimez-les d’abord.'
+        );
+    }
+
+    DB::transaction(function () use ($facture) {
+        // delete detail lines
+        $facture->items()->delete();
+
+        // If you WANT to also delete paiements/avoirs when present, replace the guard
+        // above and uncomment these two lines:
+        // $facture->paiements()->delete();
+        // $facture->avoirs()->delete();
+
+        $facture->delete();
+    });
+
+    return redirect()->route('factures.index')->with('success', 'Facture supprimée avec succès.');
+}
+
+
     public function index()
     {
         $q = Facture::with([

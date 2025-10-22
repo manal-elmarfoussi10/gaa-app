@@ -190,6 +190,10 @@ Route::middleware(['auth', CompanyAccess::class])
     // Tenant inline preview
     Route::get('/factures/{id}/preview', [FactureController::class, 'previewPdf'])->name('factures.preview');
 
+    Route::delete('/factures/{facture}', [FactureController::class, 'destroy'])
+    ->name('factures.destroy');
+
+    
     // Avoirs
     Route::get('/avoirs/export/excel', [AvoirController::class, 'exportExcel'])->name('avoirs.export.excel');
     Route::get('/avoirs/export/pdf', [AvoirController::class, 'exportPDF'])->name('avoirs.export.pdf');
