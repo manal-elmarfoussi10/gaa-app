@@ -212,6 +212,14 @@
     </tr>
 </table>
 
+{{-- Signature de l'entreprise --}}
+@if($sigSrc)
+<div class="section-title">Cachet et signature</div>
+<div style="text-align: center; margin-top: 20px; margin-bottom: 30px;">
+    <img src="{{ $sigSrc }}" alt="Signature de l'entreprise" style="height: 60px; object-fit: contain;">
+</div>
+@endif
+
 {{-- Modalités & conditions de règlement --}}
 <div class="section-title">Modalités & conditions de règlement</div>
 <div class="terms-box">{!! nl2br(e($termsText)) !!}</div>
