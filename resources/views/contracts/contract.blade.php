@@ -90,7 +90,7 @@
         --white: #FFFFFF;
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--light-bg);color:var(--primary);font:12px/1.4 "Segoe UI",system-ui,-apple-system,sans-serif}
+    body{margin:0;background:var(--light-bg);color:var(--primary);font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
     .sheet{max-width:800px;margin:24px auto;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
     .bar{background:linear-gradient(90deg,var(--accent),#fed7aa);height:4px}
     .pad{padding:20px}
@@ -98,9 +98,9 @@
     .co{display:flex;align-items:center;gap:16px}
     .co img{height:60px;width:auto;border-radius:8px;border:2px solid var(--border);background:var(--white)}
     h1,h2,h3{margin:0 0 10px}
-    h1{font-size:20px;font-weight:700;letter-spacing:-.5px;color:var(--primary)}
-    h2{font-size:16px;color:var(--accent);font-weight:600}
-    h3{font-size:14px;color:var(--primary);margin-top:12px;font-weight:600}
+    h1{font-size:22px;font-weight:700;letter-spacing:-.5px;color:var(--primary)}
+    h2{font-size:18px;color:var(--accent);font-weight:600}
+    h3{font-size:16px;color:var(--primary);margin-top:12px;font-weight:600}
     .muted{color:var(--secondary)}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .card{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--white);box-shadow:0 1px 3px rgba(0,0,0,.05)}
@@ -108,7 +108,7 @@
     .kv div{padding:4px 0;border-bottom:1px solid var(--light-bg)}
     .kv div span{display:block;font-weight:500}
     .sec{margin-top:12px}
-    .lead{font-size:12px;line-height:1.4}
+    .lead{font-size:14px;line-height:1.5}
     .tag{display:inline-block;padding:4px 12px;border-radius:20px;background:#fef3c7;color:var(--accent);font-weight:600;border:1px solid #fde68a}
     .signs{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px}
     .sigbox{border:2px dashed var(--border);border-radius:8px;padding:8px;min-height:60px;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--light-bg)}
@@ -120,7 +120,7 @@
     .btn:hover{background:#ea580c}
     .btn.out{background:var(--white);color:var(--accent);border:2px solid var(--accent)}
     table{width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
-    th,td{padding:8px;border-bottom:1px solid var(--border);font-size:12px}
+    th,td{padding:10px;border-bottom:1px solid var(--border);font-size:14px}
     th{text-align:left;background:var(--light-bg);font-weight:600;color:var(--primary)}
     .t-right{text-align:right}
     .water{position:absolute;inset:auto auto 16px 16px;color:var(--accent);font-size:12px;font-weight:700}
@@ -143,11 +143,10 @@
     <div class="pad">
         <div class="hdr">
             <div class="co">
-                @if($logoSrc)
-                    <img src="{{ $logoSrc }}" alt="Logo {{ $garageName }}">
-                @else
-                    <div style="height:48px;width:48px;border-radius:8px;border:1px solid var(--border);display:grid;place-items:center;font-weight:800;color:var(--brand)">GS</div>
-                @endif
+                
+                <div class="p-3 border-b border-gray-200 flex justify-left">
+                    <img src="{{ asset('images/GS.png') }}" alt="GG AUTO Logo" class="h-20" />
+                </div>
             
             </div>
             <div style="text-align:right">
