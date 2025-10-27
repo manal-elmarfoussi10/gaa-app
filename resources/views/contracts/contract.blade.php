@@ -86,52 +86,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
     :root{
-        --brand: #FF4B00; /* orange modern */
-        --ink: #111827;
-        --muted: #6B7280;
-        --border:#E5E7EB;
-        --bg:#ffffff;
+        --primary: #1F2937; /* Dark gray */
+        --secondary: #6B7280; /* Medium gray */
+        --accent: #F97316; /* Orange */
+        --light-bg: #F9FAFB; /* Light background */
+        --border: #E5E7EB; /* Border color */
+        --white: #FFFFFF;
     }
     *{box-sizing:border-box}
-    body{margin:0;background:#f7f7f8;color:var(--ink);font:14px/1.45 "Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    .sheet{max-width:800px;margin:24px auto;background:var(--bg);border:1px solid #eee;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.06);overflow:hidden}
-    .bar{background:linear-gradient(90deg,var(--brand),#ffa36a);height:6px}
-    .pad{padding:28px}
-    .hdr{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:6px}
-    .co{display:flex;align-items:center;gap:12px}
-    .co img{height:48px;width:auto;border-radius:8px;border:1px solid var(--border);background:#fff}
-    h1,h2,h3{margin:0 0 8px}
-    h1{font-size:20px;letter-spacing:.2px}
-    h2{font-size:16px;color:var(--brand)}
-    h3{font-size:14px;color:#374151;margin-top:18px}
-    .muted{color:var(--muted)}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .card{border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff}
-    .kv{display:grid;grid-template-columns:180px 1fr;gap:8px 12px;margin-top:6px}
-    .kv div{padding:6px 0;border-bottom:1px dashed #eee}
-    .kv div span{display:block}
-    .sec{margin-top:18px}
-    .lead{font-size:13px}
-    .tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#fff3ee;color:var(--brand);font-weight:600;border:1px solid #ffd8c7}
-    .signs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:18px}
-    .sigbox{border:1px dashed #d1d5db;border-radius:10px;padding:12px;min-height:88px;display:flex;align-items:center;justify-content:center;text-align:center}
-    .sigimg{max-height:70px;max-width:100%}
-    .foot{display:flex;gap:12px;align-items:center;color:var(--muted);font-size:12px;margin-top:12px}
+    body{margin:0;background:var(--light-bg);color:var(--primary);font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+    .sheet{max-width:800px;margin:24px auto;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
+    .bar{background:linear-gradient(90deg,var(--accent),#fed7aa);height:4px}
+    .pad{padding:32px}
+    .hdr{display:flex;gap:20px;align-items:center;justify-content:space-between;margin-bottom:12px;border-bottom:2px solid var(--light-bg);padding-bottom:16px}
+    .co{display:flex;align-items:center;gap:16px}
+    .co img{height:60px;width:auto;border-radius:8px;border:2px solid var(--border);background:var(--white)}
+    h1,h2,h3{margin:0 0 10px}
+    h1{font-size:24px;font-weight:700;letter-spacing:-.5px;color:var(--primary)}
+    h2{font-size:18px;color:var(--accent);font-weight:600}
+    h3{font-size:16px;color:var(--primary);margin-top:24px;font-weight:600}
+    .muted{color:var(--secondary)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .card{border:1px solid var(--border);border-radius:10px;padding:20px;background:var(--white);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+    .kv{display:grid;grid-template-columns:200px 1fr;gap:10px 15px;margin-top:8px}
+    .kv div{padding:8px 0;border-bottom:1px solid var(--light-bg)}
+    .kv div span{display:block;font-weight:500}
+    .sec{margin-top:24px}
+    .lead{font-size:14px;line-height:1.6}
+    .tag{display:inline-block;padding:4px 12px;border-radius:20px;background:#fef3c7;color:var(--accent);font-weight:600;border:1px solid #fde68a}
+    .signs{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:24px}
+    .sigbox{border:2px dashed var(--border);border-radius:12px;padding:16px;min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--light-bg)}
+    .sigimg{max-height:80px;max-width:100%;object-fit:contain}
+    .foot{display:flex;gap:16px;align-items:center;color:var(--secondary);font-size:12px;margin-top:16px;border-top:1px solid var(--border);padding-top:12px}
     .pb{page-break-before:always}
-    .actions{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;background:#fff;border-top:1px solid #eee}
-    .btn{background:var(--brand);color:#fff;border:none;border-radius:999px;padding:8px 14px;font-weight:600;cursor:pointer}
-    .btn.out{background:#fff;color:var(--brand);border:1px solid #ffc7b0}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px;border-bottom:1px solid #eee;font-size:13px}
-    th{text-align:left;background:#fff7f3}
+    .actions{display:flex;justify-content:flex-end;gap:10px;padding:16px 20px;background:var(--white);border-top:1px solid var(--border)}
+    .btn{background:var(--accent);color:var(--white);border:none;border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;transition:background .2s}
+    .btn:hover{background:#ea580c}
+    .btn.out{background:var(--white);color:var(--accent);border:2px solid var(--accent)}
+    table{width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+    th,td{padding:12px;border-bottom:1px solid var(--border);font-size:14px}
+    th{text-align:left;background:var(--light-bg);font-weight:600;color:var(--primary)}
     .t-right{text-align:right}
-    .water{position:absolute;inset:auto auto 16px 16px;color:#F97316;font-size:12px;font-weight:700}
+    .water{position:absolute;inset:auto auto 16px 16px;color:var(--accent);font-size:12px;font-weight:700}
     .wrap{position:relative}
+    .legal-text{margin:16px 0;line-height:1.6;color:var(--primary)}
+    .legal-text p{margin:0 0 12px}
     @media print{
-        body{background:#fff}
+        body{background:var(--white)}
         .sheet{box-shadow:none;border:0;margin:0;max-width:100%}
         .actions{display:none}
-        .bar{height:4px}
+        .bar{height:3px}
         a{color:inherit;text-decoration:none}
     }
 </style>
