@@ -36,6 +36,17 @@
 
   $fullName = $client->nom_complet
            ?? trim(($client->prenom ?? '').' '.($client->nom_assure ?? $client->nom ?? ''));
+
+  // Dynamic data for the contract content
+  $clientAddress = trim(($client->adresse ?? '') . ' ' . ($client->code_postal ?? '') . ' ' . ($client->ville ?? ''));
+  $clientPhone = $client->telephone ?? '';
+  $assureur = $client->nom_assurance ?? 'Assureur';
+  $immatriculation = $client->plaque ?? 'AW-053-JD';
+  $vehicule = $client->marque_modele ?? 'RENAULT MASTER';
+  $contratAssurance = $client->numero_police ?? 'F/375/147 512 012 F';
+  $dateDeclaration = now()->format('d/m/Y');
+  $dateSinistre = $client->date_sinistre ? \Carbon\Carbon::parse($client->date_sinistre)->format('d/m/Y') : now()->format('d/m/Y');
+  $kilometrage = $client->kilometrage ? number_format($client->kilometrage, 0, ',', ' ') : '349709';
 @endphp
 <!doctype html>
 <html lang="fr">
@@ -137,89 +148,168 @@
     Contrat n° {{ $client->id }} · Édité le {{ now()->format('d/m/Y') }}
   </div>
 
-  {{-- CLIENT / VÉHICULE --}}
-  <div class="grid">
-    <div class="card">
-      <div class="section-title">Client</div>
-      <table class="meta">
-        <tr><th>Nom</th><td>{{ $fullName }}</td></tr>
-        <tr><th>Email</th><td>{{ $client->email ?? '—' }}</td></tr>
-        <tr><th>Téléphone</th><td>{{ $client->telephone ?? '—' }}</td></tr>
-        <tr><th>Adresse</th><td>{{ $client->adresse ?? '—' }}</td></tr>
-        <tr><th>Réf. Interne</th><td>{{ $client->reference_interne ?? '—' }}</td></tr>
-        <tr><th>Réf. Client</th><td>{{ $client->reference_client ?? '—' }}</td></tr>
-      </table>
-    </div>
-    <div class="card">
-      <div class="section-title">Véhicule</div>
-      <table class="meta">
-        <tr><th>Immatriculation</th><td>{{ $client->plaque ?? '—' }}</td></tr>
-        <tr><th>Kilométrage</th><td>{{ $client->kilometrage ? number_format($client->kilometrage,0,',',' ') . ' km' : '—' }}</td></tr>
-        <tr><th>Type de vitrage</th><td>{{ $client->type_vitrage ?? '—' }}</td></tr>
-        <tr><th>Anc. modèle plaque</th><td>{{ $client->ancien_modele_plaque ?? '—' }}</td></tr>
-        <tr><th>Adresse de pose</th><td>{{ $client->adresse_pose ?? '—' }}</td></tr>
-      </table>
-    </div>
-  </div>
-
-  {{-- ASSURANCE --}}
+  {{-- DÉCLARATION DE BRIS DE GLACE --}}
   <div class="card">
-    <div class="section-title">Assurance</div>
-    <table class="meta">
-      <tr><th>Assureur</th><td>{{ $client->nom_assurance ?? '—' }}</td></tr>
-      <tr><th>N° Police</th><td>{{ $client->numero_police ?? '—' }}</td></tr>
-      <tr><th>N° Sinistre</th><td>{{ $client->numero_sinistre ?? '—' }}</td></tr>
-      <tr><th>Autre assurance</th><td>{{ $client->autre_assurance ?? '—' }}</td></tr>
-      <tr><th>Date du sinistre</th><td>{{ $client->date_sinistre ? \Carbon\Carbon::parse($client->date_sinistre)->format('d/m/Y') : '—' }}</td></tr>
-      <tr><th>Date de déclaration</th><td>{{ $client->date_declaration ? \Carbon\Carbon::parse($client->date_declaration)->format('d/m/Y') : '—' }}</td></tr>
-    </table>
+    <h1>DÉCLARATION DE BRIS DE GLACE</h1>
+    <p><strong>{{ $fullName }}</strong><br>
+    {{ $clientAddress }}<br>
+    Tél : {{ $clientPhone }}<br>
+    {{ $assureur }}<br>
+    DÉCLARATION DE BRIS DE GLACE<br>
+    Véhicule : {{ $vehicule }}<br>
+    Immatriculation : {{ $immatriculation }}<br>
+    Contrat n°{{ $contratAssurance }}<br>
+    Date de déclaration : {{ $dateDeclaration }}<br>
+    Sinistre du {{ $dateSinistre }}</p>
+
+    <p>Madame, Monsieur,</p>
+
+    <p>Je soussigné {{ $fullName }} demeurant à : {{ $clientAddress }}, déclare par la présente que conformément à l'Arrêté du 29 décembre 2014 relatif aux modalités d'information de l'assuré au moment du sinistre (et en cas de dommage garanti par mon contrat d'assurance), avoir la faculté de choisir le réparateur professionnel auquel je souhaite recourir et ce, comme indiqué dans l'article L.211-5-1 du code des assurances.</p>
+
+    <p>Je déclare également que mon véhicule {{ $vehicule }}, immatriculé {{ $immatriculation }} qui est assuré auprès de votre compagnie d'assurance par le contrat numéro : {{ $contratAssurance }} a subi un important bris de glace le {{ $dateSinistre }}, par suite d’une projection sur la route. Le vitrage concerné est : pare-brise.</p>
+
+    <p>Mon vitrage ayant été endommagé et m'empêchant d'avoir une bonne visibilité (dans le sens de l'article R316-1 et R316-3 du code de la route), Je suis dans l'obligation de le remplacer par un neuf en urgence chez mon Réparateur.</p>
+
+    <p>Selon le principe de libre choix du consommateur et la loi du libre choix du réparateur (article L.211.5.1 du code des assurances), j’ai décidé d’effectuer ces travaux chez mon réparateur {{ $cName }}.</p>
+
+    <p>Une fois la prestation réalisée, mon réparateur vous adressera la facture de sa prestation, pour laquelle je vous prie de procéder au règlement de l’indemnité qui me revient, directement entre ses mains.</p>
+
+    <p>Je vous prie d’agréer Madame, Monsieur, l'expression de mes salutations distinguées.</p>
+
+    <p>Client: {{ $fullName }}</p>
+    <p>Signature</p>
+
+    <p>Je certifie avoir rempli cette déclaration en toute bonne foi</p>
+    <p>{{ $fullName }}</p>
+    <p>{{ $clientAddress }}</p>
+    <p>Tél : {{ $clientPhone }}</p>
   </div>
 
-  {{-- Mandat / Cession --}}
-  <div class="grid">
-    <div class="block legal">
-      <h2>Mandat</h2>
-      <p>
-        Le client mandate {{ $cName }} pour effectuer les démarches nécessaires auprès de l’assureur,
-        gérer la relation sinistre et procéder, le cas échéant, au remplacement / à la réparation du vitrage.
-      </p>
-    </div>
-    <div class="block legal">
-      <h2>Cession de créance</h2>
-      <p>
-        En cas de prise en charge par l’assureur, le client cède à {{ $cName }} sa créance d’indemnisation
-        à hauteur du montant de la facture émise par {{ $cName }} au titre de l’intervention réalisée.
-      </p>
-    </div>
+  {{-- NOTIFICATION DE CESSION DE CREANCE --}}
+  <div class="card">
+    <h1>NOTIFICATION DE CESSION DE CREANCE</h1>
+    <p>RECOMMANDEE avec A/R</p>
+    <p>Le {{ $dateDeclaration }}</p>
+    <p>{{ $assureur }}</p>
+    <p>(ci-après désignée « l’Assurance »)</p>
+
+    <p>Véhicule : {{ $vehicule }}</p>
+    <p>Immatriculation : {{ $immatriculation }}</p>
+    <p>Contrat n°{{ $contratAssurance }}</p>
+    <p>Date du sinistre : {{ $dateSinistre }}</p>
+    <p>Nature du sinistre : Bris de glace</p>
+
+    <p>Madame, Monsieur,</p>
+
+    <p>Je vous prie de trouver ci-joint une convention de cession de créance consentie par mes soins au garage {{ $cName }} en application des dispositions de l'article 1324 du code civil.</p>
+
+    <p>Conformément à l'ordonnance n°2016-131 du 10 février 2016, la présente lettre recommandée avec accusé de réception fait office de notification et suffit à faire respecter la convention de cession de créance jointe au verso et par laquelle je vous prie de bien vouloir procéder directement entre les mains de mon réparateur professionnel au paiement des réparations.</p>
+
+    <p>N’ayant plus la faculté de recevoir de paiement de votre part, je vous prie de vouloir régler la somme directement auprès de mon réparateur désigné. Je lui ai accordé tous les pouvoirs nécessaires pour le recouvrement.</p>
+
+    <p>Veuillez agréer, Madame, Monsieur, l’expression de mes salutations distinguées.</p>
+
+    <p>L'Assuré {{ $fullName }}</p>
+    <p>{{ $clientAddress }}</p>
+    <p>Tél : {{ $clientPhone }}</p>
+
+    <p>Le Garage</p>
+    <p>{{ $cName }}</p>
+    <p>{{ $cAddr }}</p>
+    <p>Tél : {{ $cPhone }}</p>
+    <p>{{ $cMail }}</p>
+    <p>Gestionnaire : {{ $cMail }}</p>
   </div>
 
-  {{-- Conditions --}}
-  <div class="card legal">
-    <h2>Conditions & Informations</h2>
-    <p>• La prise en charge reste conditionnée à la garantie du contrat d’assurance et aux plafonds applicables.</p>
-    <p>• Le reste à charge éventuel (franchise, exclusions, non-garanti) demeure dû par le client.</p>
-    <p>• Le client confirme l’exactitude des informations communiquées et autorise leur transmission à l’assureur.</p>
+  {{-- CONVENTION DE CESSION DE CREANCE --}}
+  <div class="card">
+    <h1>CONVENTION DE CESSION DE CREANCE DE RÉPARATION</h1>
+
+    <p>Il a été décidé, entre l'Assuré et le Garage :</p>
+
+    <h2>Nature de la cession</h2>
+    <p>L'assuré a subi un sinistre dont les réparations sont couvertes par la police d'assurance n°{{ $contratAssurance }} émise par la compagnie d'assurance indiquée en marge. L'assuré assure détenir un droit à indemnisation au titre des garanties souscrites dans sa police d'assurance et s'engage par la présente convention à céder au garage l'ensemble de ses droits à indemnisation en contrepartie des réparations effectuées sur son véhicule.</p>
+
+    <h2>Engagement des parties</h2>
+    <p>Le garage s'engage à effectuer toutes les réparations liées au sinistre et nécessaires à la remise en état du véhicule conformément à l'ordre de réparation établi. Le montant des travaux fixé par le réparateur conformément au barème constructeur, constitue la valeur pécuniaire de la créance.</p>
+
+    <p>L’assuré renonce à toute indemnisation de son assurance concernant le sinistre dont les références sont citées en marge. Comme nous précise l’article 1302-1 du code civil « Celui qui reçoit par erreur ou sciemment ce qui ne lui est pas dû doit le restituer à celui de qui il l'a indûment reçu ». Ainsi, l’assuré s’engage à restituer à son assurance tout paiement reçu par erreur de celle-ci. Il s’interdit également toute nouvelle cession de créance qui serait de ce fait nulle et sans effet.</p>
+
+    <p>L'assuré se reconnaît débiteur, sans exception ni réserve, du montant de la facture des réparations qui sera établie à l'issue des travaux et dont le paiement sera exigible immédiatement.</p>
+
+    <p>L'assuré garantie au garage de sa qualité de propriétaire du véhicule à réparer et de bénéficiaire du contrat d'assurance. En cas de situation particulière telle que la location ou un véhicule d'entreprise, il déclare formellement agir en tant que mandaté par le propriétaire du véhicule ou le bénéficiaire de l'indemnité d'assurance pour formaliser cette convention. Il assure également de la conformité personnelle ou au nom de son mandant vis-à-vis de sa compagnie d'assurance, incluant le paiement de toutes les primes, et atteste qu'aucun motif, de quelque nature que ce soit, ne remet en question son droit à indemnisation (y compris des causes de nullité telles que la compensation ou fausse déclaration). Le client déclare que sa compagnie d'assurance effectuera correctement le paiement de l'indemnité faisant l'objet de cette cession. En cas de besoin, le client autorise le garage à engager une procédure de recouvrement. En tout état de cause, le client reste responsable et garant de la véracité des informations fournues dans la cession de créance.</p>
+
+    <h2>Acquittement intégral du montant des réparations</h2>
+    <p>En contrepartie des réparations effectuées, l'assuré cède au garage l'ensemble des droits et actions qu’il détient sur sa compagnie d’assurance au titre de l'indemnisation du sinistre garanti contractuellement par celle-ci et en application de l'article 1321 et suivants du code civil. Cette cession n’est valable que pour ce sinistre dont les références sont indiquées plus haut.</p>
+
+    <h2>Conséquences de la cession de créance</h2>
+    <p>L’article 1323 du code civil indique que : « Entre les parties, le transfert de la créance, présente ou future, s'opère à la date de l'acte ». La créance est ainsi transférée automatiquement ce jour.</p>
+
+    <h2>Clause de Médiation</h2>
+    <p>L’Assuré donne expressément mandat au Garage, en qualité de cessionnaire de la créance, pour entreprendre en son nom et pour son compte toutes démarches amiables, y compris la saisine de La Médiation de l’Assurance, en cas de litige avec l’assureur concernant le règlement de la présente créance. Le Garage est autorisé à transmettre au Médiateur l’ensemble des informations et pièces nécessaires et à recevoir toute correspondance relative à cette procédure. L’Assuré reconnaît être informé que la saisine du Médiateur est gratuite, qu’elle suspend la prescription pendant toute la durée de la médiation, et qu’il conserve la possibilité de mettre fin au mandat à tout moment par simple notification écrite au Garage.</p>
+
+    <p>Le {{ $dateDeclaration }}</p>
+
+    <p>Signature de l'Assuré</p>
+    <p>Avec la mention « Lu et approuvé, bon pour cession de créance »</p>
+
+    <p>Signature du Garage</p>
+    <p>Avec la mention « Bon pour acceptation »</p>
+
+    <p>{{ $cName }}</p>
+    <p>{{ $cAddr }}</p>
+    <p>{{ $cMail }}</p>
+    <p>Siret : {{ $cSiret }}</p>
+  </div>
+
+  {{-- ORDRE DE RÉPARATION --}}
+  <div class="card">
+    <h1>ORDRE DE RÉPARATION</h1>
+    <p>{{ $cAddr }}, le {{ $dateDeclaration }}</p>
+
+    <p>{{ $fullName }}</p>
+    <p>{{ $clientAddress }}</p>
+
+    <h2>Véhicule</h2>
+    <p>Immatriculation : {{ $immatriculation }} Marque : {{ explode(' ', $vehicule)[0] }}</p>
+    <p>Modèle : {{ implode(' ', array_slice(explode(' ', $vehicule), 1)) }} Kilométrage : {{ $kilometrage }}</p>
+
+    <h2>Description Quantité</h2>
+    <p>PARE-BRISE 1,0</p>
+    <p>REMPLACEMENT PARE-BRISE</p>
+    <p>MO-MECA T2 1,0</p>
+    <p>KIT AGRAFES ET/OU JOINTS 1,0</p>
+    <p>KIT COLLAGE 1,0</p>
+    <p>NETTOYAGE BRIS DE GLACE 1,0</p>
+    <p>RETRAITEMENT DES DECHETS 1,0</p>
+
+    <p>Je soussigné(e), {{ $fullName }}, donne l'ordre d'effectuer les travaux décrits ci-dessus et reconnait avoir pris connaissance des conditions générales.</p>
+
+    <p>{{ $cName }}</p>
+    <p>N° Siret : {{ $cSiret }}</p>
+    <p>Code APE : {{ $company->ape ?? '' }}</p>
+    <p>TVA intracommunautaire : FR{{ $cTva }}</p>
   </div>
 
   {{-- Signatures --}}
-<div class="sign-grid">
-  <div class="sign-box">
-    <h3>Signature du client</h3>
-    <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
-    <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
-    <div class="sign-hint">Lu et approuvé</div>
-  </div>
+  <div class="sign-grid">
+    <div class="sign-box">
+      <h3>Signature du client</h3>
+      <div class="sign-row">Nom : <strong>{{ $fullName }}</strong></div>
+      <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
+      <div class="sign-hint">Lu et approuvé</div>
+    </div>
 
-  <div class="sign-box">
-    <h3>Cachet & signature de {{ $cName }}</h3>
-    <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
-    @if($sigSrc)
-      <img src="{{ $sigSrc }}" alt="Signature {{ $cName }}" class="sig-img">
-    @else
-      <div class="sign-hint">Signature non fournie</div>
-    @endif
+    <div class="sign-box">
+      <h3>Cachet & signature de {{ $cName }}</h3>
+      <div class="sign-row">Fait le : {{ now()->format('d/m/Y') }}</div>
+      @if($sigSrc)
+        <img src="{{ $sigSrc }}" alt="Signature {{ $cName }}" class="sig-img">
+      @else
+        <div class="sign-hint">Signature non fournie</div>
+      @endif
+    </div>
   </div>
-</div>
 
 
   <div class="footer">
