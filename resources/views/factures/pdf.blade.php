@@ -215,7 +215,7 @@
 {{-- Signature de l'entreprise --}}
 @if($sigSrc)
 <div class="section-title">Cachet et signature</div>
-<div style="text-align: center; margin-top: 20px; margin-bottom: 30px;">
+<div style="text-align: left; margin-top: 20px; margin-bottom: 30px;">
     <img src="{{ $sigSrc }}" alt="Signature de l'entreprise" style="height: 60px; object-fit: contain;">
 </div>
 @endif
@@ -232,11 +232,7 @@
     @if($company?->rcs_number) — RCS: {{ $company->rcs_number }} {{ $company->rcs_city }} @endif
 </div>
 
-@if($sigSrc)
-<div class="signature" style="margin-top: 40px; text-align: center;">
-    <img src="{{ $sigSrc }}" alt="Signature" style="height: 60px; object-fit: contain;">
-</div>
-@endif
+
 
 </body>
 </html>
