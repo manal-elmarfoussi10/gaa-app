@@ -137,7 +137,7 @@ class ContractController extends Controller
                         'type'        => 'signature',
                         'page'        => 2,
                         'x'           => 100,
-                        'y'           => 680,
+                        'y'           => 670,
                         'width'       => 180,
                         'height'      => 45,
                     ],
