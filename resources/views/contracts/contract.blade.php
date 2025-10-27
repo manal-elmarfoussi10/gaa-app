@@ -146,7 +146,7 @@
             <div class="co">
 
                 <div class="p-3 border-b border-gray-200 flex justify-left">
-                    <img src="{{ $logoSrc ?: asset('images/GS.png') }}" alt="GG AUTO Logo" class="h-20" />
+                    <img src="{{ $logoSrc ?: asset('images/GS.png') }}" alt="GS AUTO" class="h-20" />
                 </div>
 
             </div>
@@ -184,7 +184,16 @@
                 <p>Une fois la prestation réalisée, mon réparateur vous adressera la facture de sa prestation, pour laquelle je vous prie de procéder au règlement de l’indemnité qui me revient, directement entre ses mains.</p>
                 <p>Je vous prie d’agréer Madame, Monsieur, l'expression de mes salutations distinguées.</p>
             </div>
-           
+
+            <div class="signs" style="margin-top:20px">
+                <div>
+                    <h3>Signature de l'Assuré</h3>
+                    <div class="sigbox">
+                        <div>Lu et approuvé<br>Signature</div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -229,6 +238,15 @@
             </div>
             
 
+            <div class="signs" style="margin-top:20px">
+                <div>
+                    <h3>Signature de l'Assuré</h3>
+                    <div class="sigbox">
+                        <div>Lu et approuvé<br>Signature</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="foot">
                 <span>Contact garage:</span>
                 <span>{{ $coEmail }}</span> • <span>{{ $coTel }}</span> • <span>{{ $coAdr ?: '—' }}</span>
@@ -259,6 +277,15 @@
                 <p><strong>Conséquences de la cession de créance</strong><br>L’article 1323 du code civil indique que : « Entre les parties, le transfert de la créance, présente ou future, s'opère à la date de l'acte ». La créance est ainsi transférée automatiquement ce jour.</p>
                 <p><strong>Clause de Médiation</strong><br>L’Assuré donne expressément mandat au Garage, en qualité de cessionnaire de la créance, pour entreprendre en son nom et pour son compte toutes démarches amiables, y compris la saisine de La Médiation de l’Assurance, en cas de litige avec l’assureur concernant le règlement de la présente créance. Le Garage est autorisé à transmettre au Médiateur l’ensemble des informations et pièces nécessaires et à recevoir toute correspondance relative à cette procédure. L’Assuré reconnaît être informé que la saisine du Médiateur est gratuite, qu’elle suspend la prescription pendant toute la durée de la médiation, et qu’il conserve la possibilité de mettre fin au mandat à tout moment par simple notification écrite au Garage.</p>
                 <p>Le {{ $dateDeclaration }}</p>
+            </div>
+
+            <div class="signs" style="margin-top:20px">
+                <div>
+                    <h3>Signature de l'Assuré</h3>
+                    <div class="sigbox">
+                        <div>Lu et approuvé<br>Signature</div>
+                    </div>
+                </div>
             </div>
        
             <div class="water">GS AUTO — Convention de cession</div>
