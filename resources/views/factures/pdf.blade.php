@@ -216,7 +216,7 @@
 @if($sigSrc)
 <div class="section-title">Cachet et signature</div>
 <div style="text-align: left; margin-top: 20px; margin-bottom: 30px;">
-    <img src="{{ $sigSrc }}" alt="Signature de l'entreprise" style="height: 80px; object-fit: contain;">
+    <img src="{{ $sigSrc }}" alt="Signature de l'entreprise" style="height: 200px; object-fit: contain;">
 </div>
 @endif
 
