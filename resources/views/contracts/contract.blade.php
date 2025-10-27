@@ -40,17 +40,13 @@
     $coTVA = $co->tva ?: '—';
     $coRCS = ($co->rcs_number && $co->rcs_city) ? ($co->rcs_number.' '.$co->rcs_city) : ($co->rcs_number ?? '—');
 
-    // Company logo -> build a data URI for PDF
+    // Company logo -> build a data URI for PDF using GA GESTION LOGO.png
     $logoSrc = null;
-    if (!empty($coLogo)) {
-        try {
-            $abs = \Illuminate\Support\Facades\Storage::disk('public')->path($coLogo);
-            if (is_file($abs)) {
-                $mime = function_exists('mime_content_type') ? mime_content_type($abs) : 'image/png';
-                $data = base64_encode(file_get_contents($abs));
-                $logoSrc = "data:{$mime};base64,{$data}";
-            }
-        } catch (\Throwable $e) {}
+    $logoPath = public_path('images/GA GESTION LOGO.png');
+    if (file_exists($logoPath)) {
+        $mime = mime_content_type($logoPath);
+        $data = base64_encode(file_get_contents($logoPath));
+        $logoSrc = "data:{$mime};base64,{$data}";
     }
 
     // Signatures
@@ -152,11 +148,7 @@
                 @else
                     <div style="height:48px;width:48px;border-radius:8px;border:1px solid var(--border);display:grid;place-items:center;font-weight:800;color:var(--brand)">GS</div>
                 @endif
-                <div>
-                    <h1>{{ $garageName }}</h1>
-                    <div class="muted">{{ $coAdr ?: 'Adresse non renseignée' }}</div>
-                    <div class="muted">{{ $coEmail }} • {{ $coTel }}</div>
-                </div>
+            
             </div>
             <div style="text-align:right">
                 <span class="tag">Dossier bris de glace</span>
@@ -178,7 +170,6 @@
             </div>
             <h2 style="text-align:center;font-size:20px;margin:20px 0">DÉCLARATION DE BRIS DE GLACE</h2>
             <div style="margin-bottom:20px">
-                <div><strong>Véhicule :</strong> {{ $client->marque ?: '—' }} {{ $client->modele ?: '—' }}</div>
                 <div><strong>Immatriculation :</strong> {{ $immat }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
                 <div><strong>Date de déclaration :</strong> {{ $dateDeclaration }}</div>
@@ -187,32 +178,13 @@
             <div class="legal-text">
                 <p>Madame, Monsieur,</p>
                 <p>Je soussigné {{ $clientNomComplet }} demeurant à : {{ $clientAdresse ?: '—' }}, déclare par la présente que conformément à l'Arrêté du 29 décembre 2014 relatif aux modalités d'information de l'assuré au moment du sinistre (et en cas de dommage garanti par mon contrat d'assurance), avoir la faculté de choisir le réparateur professionnel auquel je souhaite recourir et ce, comme indiqué dans l'article L.211-5-1 du code des assurances.</p>
-                <p>Je déclare également que mon véhicule {{ $client->modele ?: '—' }}, immatriculé {{ $immat }} qui est assuré auprès de votre compagnie d'assurance par le contrat numéro : {{ $numPolice }} a subi un important bris de glace le {{ $dateSinistre }}, par suite d’une projection sur la route. Le vitrage concerné est : {{ Str::lower($vitrage) }}.</p>
+                <p>Je déclare également que mon véhicule, immatriculé {{ $immat }} qui est assuré auprès de votre compagnie d'assurance par le contrat numéro : {{ $numPolice }} a subi un important bris de glace le {{ $dateSinistre }}, par suite d’une projection sur la route. Le vitrage concerné est : {{ Str::lower($vitrage) }}.</p>
                 <p>Mon vitrage ayant été endommagé et m'empêchant d'avoir une bonne visibilité (dans le sens de l'article R316-1 et R316-3 du code de la route), Je suis dans l'obligation de le remplacer par un neuf en urgence chez mon Réparateur.</p>
                 <p>Selon le principe de libre choix du consommateur et la loi du libre choix du réparateur (article L.211.5.1 du code des assurances), j’ai décidé d’effectuer ces travaux chez mon réparateur {{ $garageName }}.</p>
                 <p>Une fois la prestation réalisée, mon réparateur vous adressera la facture de sa prestation, pour laquelle je vous prie de procéder au règlement de l’indemnité qui me revient, directement entre ses mains.</p>
                 <p>Je vous prie d’agréer Madame, Monsieur, l'expression de mes salutations distinguées.</p>
             </div>
-            <div class="signs">
-                <div>
-                    <h3>Signature de l’Assuré</h3>
-                    <div class="sigbox">
-                        <div>Signature manuscrite / électronique</div>
-                    </div>
-                    <div class="muted" style="margin-top:8px">{{ $villeJour ?: $co->city }}, le {{ $now }}</div>
-                </div>
-                <div>
-                    <h3>Visa du Garage</h3>
-                    <div class="sigbox">
-                        @if($sigSrc)
-                            <img class="sigimg" src="{{ $sigSrc }}" alt="Signature {{ $garageName }}">
-                        @else
-                            <div>Cachet & signature du garage</div>
-                        @endif
-                    </div>
-                    <div class="muted" style="margin-top:8px">{{ $garageName }}</div>
-                </div>
-            </div>
+           
         </div>
     </div>
 
@@ -233,8 +205,6 @@
                     <div>{{ $coAdr ?: '—' }}</div>
                     <div>Tél : {{ $coTel }}</div>
                     <div>Garage : {{ $coEmail }}</div>
-                    <div>Gestionnaire : relance@reseauglass.fr</div>
-                    <div>(ci-après désigné « le Garage »)</div>
                 </div>
             </div>
             <h2 style="text-align:center;font-size:20px;margin:20px 0">NOTIFICATION DE CESSION DE CREANCE</h2>
@@ -245,7 +215,6 @@
                 <div>(ci-après désignée « l’Assurance »)</div>
             </div>
             <div style="margin-bottom:20px">
-                <div><strong>Véhicule :</strong> {{ $client->marque ?: '—' }} {{ $client->modele ?: '—' }}</div>
                 <div><strong>Immatriculation :</strong> {{ $immat }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
                 <div><strong>Date du sinistre :</strong> {{ $dateSinistre }}</div>
@@ -258,26 +227,7 @@
                 <p>N’ayant plus la faculté de recevoir de paiement de votre part, je vous prie de vouloir régler la somme directement auprès de mon réparateur désigné. Je lui ai accordé tous les pouvoirs nécessaires pour le recouvrement.</p>
                 <p>Veuillez agréer, Madame, Monsieur, l’expression de mes salutations distinguées.</p>
             </div>
-            <div class="signs">
-                <div>
-                    <h3>Signature de l’Assuré</h3>
-                    <div class="sigbox">
-                        <div>« Lu et approuvé, bon pour cession de créance »<br>Signature</div>
-                    </div>
-                    <div class="muted" style="margin-top:8px">{{ $villeJour ?: $co->city }}, le {{ $now }}</div>
-                </div>
-                <div>
-                    <h3>Signature du Garage</h3>
-                    <div class="sigbox">
-                        @if($sigSrc)
-                            <img class="sigimg" src="{{ $sigSrc }}" alt="Signature {{ $garageName }}">
-                        @else
-                            <div>« Bon pour acceptation »<br>Cachet & signature</div>
-                        @endif
-                    </div>
-                    <div class="muted" style="margin-top:8px">{{ $garageName }}</div>
-                </div>
-            </div>
+            
 
             <div class="foot">
                 <span>Contact garage:</span>
@@ -296,7 +246,6 @@
             <div style="margin-bottom:20px">
                 <div><strong>RÉFÉRENCE CRÉANCE :</strong></div>
                 <div><strong>Assurance :</strong> {{ $assurance }}</div>
-                <div><strong>Véhicule :</strong> {{ $client->marque ?: '—' }} {{ $client->modele ?: '—' }}</div>
                 <div><strong>Immatriculation :</strong> {{ $immat }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
                 <div><strong>Date du sinistre :</strong> {{ $dateSinistre }}</div>
@@ -311,26 +260,7 @@
                 <p><strong>Clause de Médiation</strong><br>L’Assuré donne expressément mandat au Garage, en qualité de cessionnaire de la créance, pour entreprendre en son nom et pour son compte toutes démarches amiables, y compris la saisine de La Médiation de l’Assurance, en cas de litige avec l’assureur concernant le règlement de la présente créance. Le Garage est autorisé à transmettre au Médiateur l’ensemble des informations et pièces nécessaires et à recevoir toute correspondance relative à cette procédure. L’Assuré reconnaît être informé que la saisine du Médiateur est gratuite, qu’elle suspend la prescription pendant toute la durée de la médiation, et qu’il conserve la possibilité de mettre fin au mandat à tout moment par simple notification écrite au Garage.</p>
                 <p>Le {{ $dateDeclaration }}</p>
             </div>
-            <div class="signs">
-                <div>
-                    <h3>Signature de l’Assuré</h3>
-                    <div class="sigbox">
-                        <div>« Lu et approuvé, bon pour cession de créance »<br>Signature</div>
-                    </div>
-                    <div class="muted" style="margin-top:8px">{{ $villeJour ?: $co->city }}, le {{ $now }}</div>
-                </div>
-                <div>
-                    <h3>Signature du Garage</h3>
-                    <div class="sigbox">
-                        @if($sigSrc)
-                            <img class="sigimg" src="{{ $sigSrc }}" alt="Signature {{ $garageName }}">
-                        @else
-                            <div>« Bon pour acceptation »<br>Cachet & signature</div>
-                        @endif
-                    </div>
-                    <div class="muted" style="margin-top:8px">{{ $garageName }}</div>
-                </div>
-            </div>
+       
             <div class="water">GS AUTO — Convention de cession</div>
         </div>
     </div>
@@ -353,8 +283,8 @@
         </div>
         <div style="margin-bottom:20px">
             <h3>Véhicule</h3>
-            <div><strong>Immatriculation :</strong> {{ $immat }} <strong>Marque :</strong> {{ $client->marque ?: '—' }}</div>
-            <div><strong>Modèle :</strong> {{ $client->modele ?: '—' }} <strong>Kilométrage :</strong> {{ $kilom }}</div>
+            <div><strong>Immatriculation :</strong> {{ $immat }} </div>
+            <div><strong>Kilométrage :</strong> {{ $kilom }}</div>
         </div>
         <div class="sec">
             <table>
