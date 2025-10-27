@@ -70,6 +70,17 @@
         $lines[] = "Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.";
         $termsText = implode("\n", $lines);
     }
+
+    // Company signature
+    $sigSrc = null;
+    if (!empty($company?->signature_path)) {
+        try {
+            $abs = \Illuminate\Support\Facades\Storage::disk('public')->path($company->signature_path);
+            if (is_file($abs)) {
+                $sigSrc = 'data:image/png;base64,' . base64_encode(file_get_contents($abs));
+            }
+        } catch (\Throwable $e) {}
+    }
 @endphp
 
 <div class="header">
@@ -212,6 +223,12 @@
     @if($company?->ape) — Code APE: {{ $company->ape }} @endif
     @if($company?->rcs_number) — RCS: {{ $company->rcs_number }} {{ $company->rcs_city }} @endif
 </div>
+
+@if($sigSrc)
+<div class="signature" style="margin-top: 40px; text-align: center;">
+    <img src="{{ $sigSrc }}" alt="Signature" style="height: 60px; object-fit: contain;">
+</div>
+@endif
 
 </body>
 </html>
