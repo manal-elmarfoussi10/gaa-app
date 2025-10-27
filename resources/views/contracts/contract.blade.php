@@ -125,8 +125,8 @@
     .t-right{text-align:right}
     .water{position:absolute;inset:auto auto 16px 16px;color:var(--accent);font-size:12px;font-weight:700}
     .wrap{position:relative}
-    .legal-text{margin:8px 0;line-height:1.2;color:var(--primary);font-size:11px}
-    .legal-text p{margin:0 0 4px}
+    .legal-text{margin:8px 0;line-height:1.3;color:var(--primary);font-size:15px}
+    .legal-text p{margin:0 0 6px}
     .small-text{font-size:12px;line-height:1.4}
     @media print{
         body{background:var(--white)}
