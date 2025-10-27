@@ -40,9 +40,9 @@
     $coTVA = $co->tva ?: '—';
     $coRCS = ($co->rcs_number && $co->rcs_city) ? ($co->rcs_number.' '.$co->rcs_city) : ($co->rcs_number ?? '—');
 
-    // Company logo -> build a data URI for PDF using GA GESTION LOGO.png
+    // Company logo -> build a data URI for PDF using GS.png
     $logoSrc = null;
-    $logoPath = public_path('images/GA GESTION LOGO.png');
+    $logoPath = public_path('images/GS.png');
     if (file_exists($logoPath)) {
         $mime = mime_content_type($logoPath);
         $data = base64_encode(file_get_contents($logoPath));
@@ -127,6 +127,7 @@
     .wrap{position:relative}
     .legal-text{margin:8px 0;line-height:1.3;color:var(--primary)}
     .legal-text p{margin:0 0 6px}
+    .small-text{font-size:12px;line-height:1.4}
     @media print{
         body{background:var(--white)}
         .sheet{box-shadow:none;border:0;margin:0;max-width:100%}
@@ -143,11 +144,11 @@
     <div class="pad">
         <div class="hdr">
             <div class="co">
-                
+
                 <div class="p-3 border-b border-gray-200 flex justify-left">
-                    <img src="{{ asset('images/GS.png') }}" alt="GG AUTO Logo" class="h-20" />
+                    <img src="{{ $logoSrc ?: asset('images/GS.png') }}" alt="GG AUTO Logo" class="h-20" />
                 </div>
-            
+
             </div>
             <div style="text-align:right">
                 <span class="tag">Dossier bris de glace</span>
@@ -239,7 +240,7 @@
     {{-- 3) CONVENTION DE CESSION DE CREANCE --}}
     <div class="pb"></div>
     <div class="bar"></div>
-    <div class="pad">
+    <div class="pad small-text" style="padding: 15px;">
         <div class="wrap">
             <h2 style="text-align:center;font-size:20px;margin:20px 0">CONVENTION DE CESSION DE CREANCE DE RÉPARATION</h2>
             <div style="margin-bottom:20px">
@@ -267,7 +268,7 @@
     {{-- 4) ORDRE DE RÉPARATION --}}
     <div class="pb"></div>
     <div class="bar"></div>
-    <div class="pad">
+    <div class="pad small-text">
         <div style="text-align:center;margin-bottom:20px">
             <div style="font-weight:700;font-size:16px">{{ $garageName }}</div>
             <div>{{ $coAdr ?: '—' }}</div>
