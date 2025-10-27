@@ -1,4 +1,4 @@
-{{-- resources/views/contracts/bris-de-glace.blade.php --}}
+{{-- resources/views/contracts/contract.blade.php --}}
 @php
     use Illuminate\Support\Str;
     use Carbon\Carbon;
@@ -40,8 +40,32 @@
     $coTVA = $co->tva ?: '—';
     $coRCS = ($co->rcs_number && $co->rcs_city) ? ($co->rcs_number.' '.$co->rcs_city) : ($co->rcs_number ?? '—');
 
+    // Company logo -> build a data URI for PDF
+    $logoSrc = null;
+    if (!empty($coLogo)) {
+        try {
+            $abs = \Illuminate\Support\Facades\Storage::disk('public')->path($coLogo);
+            if (is_file($abs)) {
+                $mime = function_exists('mime_content_type') ? mime_content_type($abs) : 'image/png';
+                $data = base64_encode(file_get_contents($abs));
+                $logoSrc = "data:{$mime};base64,{$data}";
+            }
+        } catch (\Throwable $e) {}
+    }
+
     // Signatures
     $garageSignature = $co->signature_path ?? null;
+    $sigSrc = null;
+    if (!empty($garageSignature)) {
+        try {
+            $abs = \Illuminate\Support\Facades\Storage::disk('public')->path($garageSignature);
+            if (is_file($abs)) {
+                $mime = function_exists('mime_content_type') ? mime_content_type($abs) : 'image/png';
+                $data = base64_encode(file_get_contents($abs));
+                $sigSrc = "data:{$mime};base64,{$data}";
+            }
+        } catch (\Throwable $e) {}
+    }
 
     // Ordre de réparation (si vous avez une source réelle, remplacez cette liste)
     $items = [
@@ -119,8 +143,8 @@
     <div class="pad">
         <div class="hdr">
             <div class="co">
-                @if($coLogo)
-                    <img src="{{ asset($coLogo) }}" alt="Logo {{ $garageName }}">
+                @if($logoSrc)
+                    <img src="{{ $logoSrc }}" alt="Logo {{ $garageName }}">
                 @else
                     <div style="height:48px;width:48px;border-radius:8px;border:1px solid var(--border);display:grid;place-items:center;font-weight:800;color:var(--brand)">GS</div>
                 @endif
@@ -202,8 +226,8 @@
                 <div>
                     <h3>Visa du Garage</h3>
                     <div class="sigbox">
-                        @if($garageSignature)
-                            <img class="sigimg" src="{{ asset($garageSignature) }}" alt="Signature {{ $garageName }}">
+                        @if($sigSrc)
+                            <img class="sigimg" src="{{ $sigSrc }}" alt="Signature {{ $garageName }}">
                         @else
                             <div>Cachet & signature du garage</div>
                         @endif
@@ -258,8 +282,8 @@
                 <div>
                     <h3>Signature du Garage</h3>
                     <div class="sigbox">
-                        @if($garageSignature)
-                            <img class="sigimg" src="{{ asset($garageSignature) }}" alt="Signature {{ $garageName }}">
+                        @if($sigSrc)
+                            <img class="sigimg" src="{{ $sigSrc }}" alt="Signature {{ $garageName }}">
                         @else
                             <div>« Bon pour acceptation »<br>Cachet & signature</div>
                         @endif
@@ -331,8 +355,8 @@
                 <div>
                     <h3>Visa du Garage</h3>
                     <div class="sigbox">
-                        @if($garageSignature)
-                            <img class="sigimg" src="{{ asset($garageSignature) }}" alt="Signature {{ $garageName }}">
+                        @if($sigSrc)
+                            <img class="sigimg" src="{{ $sigSrc }}" alt="Signature {{ $garageName }}">
                         @else
                             Cachet & signature du garage
                         @endif
