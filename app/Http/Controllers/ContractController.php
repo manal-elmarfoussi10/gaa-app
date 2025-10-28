@@ -122,15 +122,44 @@ class ContractController extends Controller
                 ],
                 'signature_level'               => 'electronic_signature',
                 'signature_authentication_mode' => $authMode,
-                'fields' => [[
-                    'document_id' => $doc['id'],
-                    'type'        => 'signature',
-                    'page'        => 2,
-                    'x'           => 120,
-                    'y'           => 480,
-                    'width'       => 180,
-                    'height'      => 45,
-                ]],
+                'fields' => [
+                    [
+                        'document_id' => $doc['id'],
+                        'type'        => 'signature',
+                        'page'        => 1,
+                        'x'           => 100,
+                        'y'           => 680,
+                        'width'       => 180,
+                        'height'      => 45,
+                    ],
+                    [
+                        'document_id' => $doc['id'],
+                        'type'        => 'signature',
+                        'page'        => 2,
+                        'x'           => 100,
+                        'y'           => 670,
+                        'width'       => 180,
+                        'height'      => 45,
+                    ],
+                    [
+                        'document_id' => $doc['id'],
+                        'type'        => 'signature',
+                        'page'        => 3,
+                        'x'           => 100,
+                        'y'           => 550,
+                        'width'       => 180,
+                        'height'      => 45,
+                    ],
+                    [
+                        'document_id' => $doc['id'],
+                        'type'        => 'signature',
+                        'page'        => 4,
+                        'x'           => 100,
+                        'y'           => 620,
+                        'width'       => 180,
+                        'height'      => 45,
+                    ],
+                ],
             ];
 
             $ys->addSigner($sr['id'], $payload);

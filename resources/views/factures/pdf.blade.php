@@ -101,9 +101,22 @@
         $termsText = implode("\n", $lines);
     }
 
+<<<<<<< HEAD
     $logoUrl = isset($company->logo) && $company->logo
         ? (Str::startsWith($company->logo, ['http://','https://']) ? $company->logo : (asset('storage/'.$company->logo)))
         : null;
+=======
+    // Company signature
+    $sigSrc = null;
+    if (!empty($company?->signature_path)) {
+        try {
+            $abs = \Illuminate\Support\Facades\Storage::disk('public')->path($company->signature_path);
+            if (is_file($abs)) {
+                $sigSrc = 'data:image/png;base64,' . base64_encode(file_get_contents($abs));
+            }
+        } catch (\Throwable $e) {}
+    }
+>>>>>>> dev
 @endphp
 
 <div class="wrap">
@@ -226,6 +239,7 @@
             </tbody>
         </table>
 
+<<<<<<< HEAD
         <table class="totals no-break" style="margin-top:8px;">
             <tr>
                 <td>Total HT</td>
@@ -241,6 +255,19 @@
             </tr>
         </table>
     </div>
+=======
+{{-- Signature de l'entreprise --}}
+@if($sigSrc)
+<div class="section-title">Cachet et signature</div>
+<div style="text-align: left; margin-top: 20px; margin-bottom: 30px;">
+    <img src="{{ $sigSrc }}" alt="Signature de l'entreprise" style="height: 200px; object-fit: contain;">
+</div>
+@endif
+
+{{-- Modalités & conditions de règlement --}}
+<div class="section-title">Modalités & conditions de règlement</div>
+<div class="terms-box">{!! nl2br(e($termsText)) !!}</div>
+>>>>>>> dev
 
     {{-- ============ MODALITÉS (compact) ============ --}}
     <div class="section no-break">
@@ -259,5 +286,11 @@
         @if($company?->rcs_number || $company?->rcs_city) — RCS : {{ $company->rcs_number }} {{ $company->rcs_city }} @endif
     </div>
 </div>
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> dev
 </body>
 </html>
