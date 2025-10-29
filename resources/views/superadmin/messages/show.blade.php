@@ -43,6 +43,18 @@
             <a class="text-cyan-700 hover:text-cyan-900" href="mailto:{{ $message->email }}">{{ $message->email }}</a>
           </p>
         </div>
+        <div>
+          <p class="text-xs text-gray-500">Type</p>
+          <p class="font-medium">
+            <span class="px-2 py-1 text-xs font-medium rounded-full
+              @if($message->type === 'general') bg-blue-100 text-blue-800
+              @elseif($message->type === 'demo') bg-green-100 text-green-800
+              @elseif($message->type === 'partner') bg-purple-100 text-purple-800
+              @else bg-gray-100 text-gray-800 @endif">
+              {{ ucfirst($message->type ?? 'general') }}
+            </span>
+          </p>
+        </div>
         @if(isset($message->company_id))
           <div class="md:col-span-2">
             <p class="text-xs text-gray-500">Société</p>

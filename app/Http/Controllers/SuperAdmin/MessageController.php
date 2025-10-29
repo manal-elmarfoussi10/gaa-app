@@ -28,6 +28,11 @@ class MessageController extends Controller
             });
         }
 
+        // Filter by type
+        if ($type = $request->get('type')) {
+            $query->where('type', $type);
+        }
+
         // Optional filter by company if the column exists
         if ($hasCompanyId && $request->filled('company_id')) {
             $query->where('company_id', $request->get('company_id'));
@@ -49,6 +54,7 @@ class MessageController extends Controller
             'hasCompanyId' => $hasCompanyId,
             'filters'      => [
                 'q'          => $s ?? '',
+                'type'       => $request->get('type'),
                 'company_id' => $request->get('company_id'),
             ],
         ]);

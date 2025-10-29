@@ -11,15 +11,23 @@ use Illuminate\Support\Facades\Auth;
 class ContactController extends Controller
 {
     /**
-     * Show the contact form (tenant side).
+     * Show the public contact form.
      */
     public function index()
+    {
+        return view('contact.public');
+    }
+
+    /**
+     * Show the contact form (tenant side).
+     */
+    public function tenant()
     {
         return view('contact.contact'); // was contact.index
     }
 
     /**
-     * Handle submission and persist the contact message.
+     * Handle public submission and persist the contact message.
      */
     public function send(Request $request)
     {
@@ -28,6 +36,7 @@ class ContactController extends Controller
             'name'    => ['required', 'string', 'max:255'],
             'email'   => ['required', 'email', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
+            'type'    => ['required', 'in:general,demo,partner'],
         ]);
 
         // Attach company_id when the sender is authenticated (tenant user)

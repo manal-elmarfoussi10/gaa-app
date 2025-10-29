@@ -314,8 +314,12 @@ Route::middleware(['auth', CompanyAccess::class])
     Route::view('/fonctionnalites', 'fonctionnalites.fonctionnalites');
     Route::view('/commercial',  'commercial.dashboard')->name('commercial.dashboard');
     Route::view('/comptable',   'comptable.dashboard')->name('comptable.dashboard');
+    // Public contact routes (no auth required)
     Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
     Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
+
+    // Tenant contact route (auth required)
+    Route::get('/contact-tenant', [ContactController::class, 'tenant'])->name('contact.tenant');
 
     // Global search
     Route::get('/search',          [SearchController::class, 'index'])->name('search');
