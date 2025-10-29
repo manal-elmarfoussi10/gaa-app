@@ -35,6 +35,7 @@
 
             <form method="POST" action="{{ route('contact.send') }}" class="space-y-6">
                 @csrf
+                <input type="hidden" name="type" value="general">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom :</label>
                     <input type="text" name="name" required

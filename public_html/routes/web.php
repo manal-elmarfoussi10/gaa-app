@@ -174,9 +174,10 @@ Route::middleware(['auth', CompanyAccess::class])->group(function () {
     Route::view('/commercial', 'commercial.dashboard')->name('commercial.dashboard');
     Route::view('/comptable', 'comptable.dashboard')->name('comptable.dashboard');
 
-    // Contact
-    Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
-    Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 });
+
+// Public routes (no auth required)
+Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
+Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 
 require __DIR__.'/auth.php';
