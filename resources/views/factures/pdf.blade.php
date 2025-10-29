@@ -97,14 +97,34 @@
         if ($dueDate) { $lines[] = "La présente facture sera payable au plus tard le : {$dueDate}"; }
         $lines[] = "Passé ce délai, sans obligation d’envoi d’une relance, une pénalité sera appliquée conformément au Code de commerce."
                  . ($penalty !== null && $penalty !== '' ? " Taux des pénalités de retard : {$penalty}%." : "");
+    // Company signature
+    $sigSrc = null;
+    if (!empty($company?->signature_path)) {
+        try {
+            $abs = \Illuminate\Support\Facades\Storage::disk('public')->path($company->signature_path);
+            if (is_file($abs)) {
+                $sigSrc = 'data:image/png;base64,' . base64_encode(file_get_contents($abs));
+            }
+        } catch (\Throwable $e) {}
+    }
+>>>>>>> dev
+@endphp
+=======
         $lines[] = "Une indemnité forfaitaire pour frais de recouvrement de 40€ est également exigible.";
         $termsText = implode("\n", $lines);
     }
 
-<<<<<<< HEAD
-    $logoUrl = isset($company->logo) && $company->logo
-        ? (Str::startsWith($company->logo, ['http://','https://']) ? $company->logo : (asset('storage/'.$company->logo)))
-        : null;
+    // Company signature
+    $sigSrc = null;
+    if (!empty($company?->signature_path)) {
+        try {
+            $abs = \Illuminate\Support\Facades\Storage::disk('public')->path($company->signature_path);
+            if (is_file($abs)) {
+                $sigSrc = 'data:image/png;base64,' . base64_encode(file_get_contents($abs));
+            }
+        } catch (\Throwable $e) {}
+    }
+@endphp
 =======
     // Company signature
     $sigSrc = null;
@@ -235,26 +255,89 @@
                     <td class="right">{{ rtrim(rtrim(number_format((float)$item->quantite, 2, ',', ' '), '0'), ',') }}</td>
                     <td class="right">{{ number_format((float)$item->total_ht, 2, ',', ' ') }} €</td>
                 </tr>
+{{-- Signature de l'entreprise --}}
+@if($sigSrc)
+<div class="section-title">Cachet et signature</div>
+<div style="text-align: left; margin-top: 20px; margin-bottom: 30px;">
+    <img src="{{ $sigSrc }}" alt="Signature de l'entreprise" style="height: 200px; object-fit: contain;">
+</div>
+@endif
+
+
+
+
+>>>>>>> dev
+</body>
+</html>
+=======
+        {{-- Modalités & conditions de règlement --}}
+        <div class="section-title">Modalités & conditions de règlement</div>
+        <div class="terms-box">{!! nl2br(e($termsText)) !!}</div>
+
+    {{-- ============ MODALITÉS (compact) ============ --}}
+    <div class="section no-break">
+        <div class="section-title">Modalités & conditions de règlement</div>
+        <div class="terms small">{!! nl2br(e($termsText)) !!}</div>
+    </div>
+
+    {{-- ============ FOOTER (one line) ============ --}}
+    <div class="footer no-break">
+        {{ $companyName }}
+        @if($company?->legal_form) — Forme : {{ $company->legal_form }} @endif
+        @if(!is_null($company?->capital)) — Capital : {{ number_format((float)$company->capital, 0, ',', ' ') }} € @endif
+        @if($company?->siret) — SIRET : {{ $company->siret }} @endif
+        @if($company?->tva) — TVA : {{ $company->tva }} @endif
+        @if($company?->ape || $company?->naf_code) — NAF/APE : {{ $company->ape ?? $company->naf_code }} @endif
+        @if($company?->rcs_number || $company?->rcs_city) — RCS : {{ $company->rcs_number }} {{ $company->rcs_city }} @endif
+    </div>
+</div>
+
+</body>
+</html>
+=======
+
+
+
+>>>>>>> dev
+</body>
+</html>
+=======
             @endforeach
             </tbody>
         </table>
 
-<<<<<<< HEAD
-        <table class="totals no-break" style="margin-top:8px;">
-            <tr>
-                <td>Total HT</td>
-                <td class="right">{{ number_format((float)$facture->total_ht, 2, ',', ' ') }} €</td>
-            </tr>
-            <tr>
-                <td>TVA</td>
-                <td class="right">{{ number_format((float)$facture->total_tva, 2, ',', ' ') }} €</td>
-            </tr>
-            <tr>
-                <td><strong>Total TTC</strong></td>
-                <td class="right"><strong>{{ number_format((float)$facture->total_ttc, 2, ',', ' ') }} €</strong></td>
-            </tr>
-        </table>
+        {{-- Signature de l'entreprise --}}
+        @if($sigSrc)
+        <div class="section-title">Cachet et signature</div>
+        <div style="text-align: left; margin-top: 20px; margin-bottom: 30px;">
+            <img src="{{ $sigSrc }}" alt="Signature de l'entreprise" style="height: 200px; object-fit: contain;">
+        </div>
+        @endif
+
+        {{-- Modalités & conditions de règlement --}}
+        <div class="section-title">Modalités & conditions de règlement</div>
+        <div class="terms-box">{!! nl2br(e($termsText)) !!}</div>
+
+    {{-- ============ MODALITÉS (compact) ============ --}}
+    <div class="section no-break">
+        <div class="section-title">Modalités & conditions de règlement</div>
+        <div class="terms small">{!! nl2br(e($termsText)) !!}</div>
     </div>
+
+    {{-- ============ FOOTER (one line) ============ --}}
+    <div class="footer no-break">
+        {{ $companyName }}
+        @if($company?->legal_form) — Forme : {{ $company->legal_form }} @endif
+        @if(!is_null($company?->capital)) — Capital : {{ number_format((float)$company->capital, 0, ',', ' ') }} € @endif
+        @if($company?->siret) — SIRET : {{ $company->siret }} @endif
+        @if($company?->tva) — TVA : {{ $company->tva }} @endif
+        @if($company?->ape || $company?->naf_code) — NAF/APE : {{ $company->ape ?? $company->naf_code }} @endif
+        @if($company?->rcs_number || $company?->rcs_city) — RCS : {{ $company->rcs_number }} {{ $company->rcs_city }} @endif
+    </div>
+</div>
+
+</body>
+</html>
 =======
 {{-- Signature de l'entreprise --}}
 @if($sigSrc)
