@@ -38,6 +38,8 @@ class ClientsController extends Controller
             'statut_interne',
             'encaisse','type_cadeau','reference_interne','reference_client',
             'photo_vitrage','photo_carte_verte','photo_carte_grise',
+            'contract_pdf_path','signed_pdf_path','yousign_signature_request_id','yousign_document_id',
+            'statut_gsauto','signed_at',
             'created_at',
         ];
         $existingCols = Schema::getColumnListing('clients');
@@ -52,6 +54,7 @@ class ClientsController extends Controller
         $client = $query
             ->when($selectCols, fn ($q) => $q->select($selectCols))
             ->with([
+                'company',
                 'factures' => fn($q) => $q
                     ->select('id','client_id','numero','total_ht','total_ttc','created_at')
                     ->latest()->limit(100),
