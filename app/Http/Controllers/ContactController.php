@@ -33,10 +33,12 @@ class ContactController extends Controller
     {
         // Basic validation
         $data = $request->validate([
-            'name'    => ['required', 'string', 'max:255'],
-            'email'   => ['required', 'email', 'max:255'],
-            'message' => ['required', 'string', 'max:5000'],
-            'type'    => ['required', 'in:general,demo,partner'],
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'name'         => ['required', 'string', 'max:255'],
+            'email'        => ['required', 'email', 'max:255'],
+            'subject'      => ['required', 'string', 'max:255'],
+            'message'      => ['required', 'string', 'max:5000'],
+            'type'         => ['required', 'in:general,demo,partner'],
         ]);
 
         // Attach company_id when the sender is authenticated (tenant user)
