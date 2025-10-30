@@ -1,13 +1,6 @@
 @extends('layouts.guest')
 @section('title', 'Créer un compte — GS Auto')
 
-{{-- Optional actions in the header ribbon --}}
-@section('headerActions')
-  <a href="{{ route('login') }}"
-     class="inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-gray-50">
-    Se connecter
-  </a>
-@endsection
 
 @section('content')
 <div class="grid gap-8 md:grid-cols-[1.1fr_.9fr]">
