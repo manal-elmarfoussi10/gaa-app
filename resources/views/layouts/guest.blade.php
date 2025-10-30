@@ -96,8 +96,8 @@
     <div class="mx-auto max-w-6xl px-4 py-6 text-xs text-gray-500 flex flex-wrap items-center justify-between gap-2">
       <div>© {{ date('Y') }} GS Auto — Tous droits réservés.</div>
       <nav class="flex items-center gap-4">
-        <a class="hover:text-gray-700" href="/mentions-legales">Mentions légales</a>
-        <a class="hover:text-gray-700" href="/politique-confidentialite">Confidentialité</a>
+        <a class="hover:text-gray-700" href="https://gservicesauto.com/mentions-legales/">Mentions légales</a>
+        <a class="hover:text-gray-700" href="https://gservicesauto.com/politique-confidentialite/">Confidentialité</a>
       </nav>
     </div>
   </footer>
