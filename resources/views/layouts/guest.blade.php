@@ -59,25 +59,8 @@
 </head>
 <body class="min-h-dvh bg-hero text-gray-900 antialiased">
 
-  {{-- Top navigation ribbon (simple) --}}
-  <header class="sticky top-0 z-40 backdrop-blur bg-white/70 border-b border-white/60">
-    <div class="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
-      <a href="{{ url('/') }}" class="group flex items-center gap-3">
-        <img src="/images/GS.png" alt="GS Auto" class="h-8 w-auto transition-transform group-hover:scale-105">
-        <span class="hidden sm:block font-extrabold tracking-tight">GS Auto</span>
-      </a>
-      <div class="flex items-center gap-2">
-        @hasSection('headerActions')
-          @yield('headerActions')
-        @else
-          <a href="{{ route('login') }}"
-             class="hidden sm:inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-gray-50">
-            Se connecter
-          </a>
-        @endif
-      </div>
-    </div>
-  </header>
+ 
+ 
 
   {{-- Animated background “glows” (very soft) --}}
   <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
