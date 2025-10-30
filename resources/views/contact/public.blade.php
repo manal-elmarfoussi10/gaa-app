@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contactez-nous - GS Auto</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -230,6 +231,8 @@
                         <textarea id="message" name="message" rows="4" required placeholder="Décrivez votre demande en détail...">{{ old('message') }}</textarea>
                         @error('message') <span class="error">{{ $message }}</span> @enderror
                     </div>
+
+                    <div class="g-recaptcha" data-sitekey="6LeYtPsrAAAAADlJgiFwZWpdL4DfWOf0OH94yggu"></div>
 
                     <button type="submit">Envoyer le message</button>
                 </form>

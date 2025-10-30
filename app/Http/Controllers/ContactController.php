@@ -39,6 +39,7 @@ class ContactController extends Controller
             'subject'      => ['required', 'string', 'max:255'],
             'message'      => ['required', 'string', 'max:5000'],
             'type'         => ['required', 'in:general,demo,partner'],
+            'g-recaptcha-response' => ['required', 'recaptcha'],
         ]);
 
         // Attach company_id when the sender is authenticated (tenant user)
