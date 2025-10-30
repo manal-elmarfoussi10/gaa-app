@@ -23,11 +23,21 @@ class EmailVerificationController extends Controller
     public function verify(Request $request): RedirectResponse
     {
         $request->validate([
-            'code' => ['required', 'string', 'size:6'],
+            'id' => ['required', 'integer'],
+            'hash' => ['required', 'string'],
         ]);
 
-        // For now, accept any 6-digit code (you'll need to implement actual verification logic)
-        // In a real implementation, you'd check against a stored verification code
+        $user = \App\Models\User::findOrFail($request->id);
+
+        if (! hash_equals((string) $request->hash, sha1($user->getEmailForVerification()))) {
+            abort(403, 'Invalid verification link.');
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('verification.success');
+        }
+
+        $user->markEmailAsVerified();
 
         return redirect()->route('verification.success');
     }

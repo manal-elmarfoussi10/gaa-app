@@ -74,10 +74,18 @@ class RegisteredUserController extends Controller
         // Don't log in the user automatically
         // Auth::login($user);
 
-        // Send verification email and redirect to verification page
+        // Send verification email
+        $user->notify(new \App\Notifications\EmailVerificationNotification(
+            url: route('verification.verify', [
+                'id' => $user->getKey(),
+                'hash' => sha1($user->getEmailForVerification()),
+            ])
+        ));
+
+        // Redirect to verification page
         return redirect()->route('verification.notice')->with([
             'email' => $request->email,
-            'success' => 'Un code de vérification a été envoyé à votre adresse email.'
+            'success' => 'Un email de vérification a été envoyé à votre adresse email.'
         ]);
     }
 }
