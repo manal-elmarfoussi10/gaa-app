@@ -35,6 +35,20 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+Route::middleware('guest')->group(function () {
+    Route::get('verify-email', [EmailVerificationController::class, 'notice'])
+        ->name('verification.notice');
+
+    Route::post('verify-email', [EmailVerificationController::class, 'verify'])
+        ->name('verification.verify');
+
+    Route::post('verify-email/resend', [EmailVerificationController::class, 'resend'])
+        ->name('verification.resend');
+
+    Route::get('verification-success', [EmailVerificationController::class, 'success'])
+        ->name('verification.success');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');

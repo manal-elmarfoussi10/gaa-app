@@ -43,7 +43,6 @@ class RegisteredUserController extends Controller
             'known_by' => ['nullable', 'string', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'terms' => ['required', 'accepted'],
-            'g-recaptcha-response' => ['required', 'recaptcha'],
         ]);
 
         // Create company first
@@ -75,6 +74,10 @@ class RegisteredUserController extends Controller
         // Don't log in the user automatically
         // Auth::login($user);
 
-        return redirect()->back()->with('success', 'Votre compte a été créé avec succès. Nous vous contacterons bientôt pour activer votre accès.');
+        // Send verification email and redirect to verification page
+        return redirect()->route('verification.notice')->with([
+            'email' => $request->email,
+            'success' => 'Un code de vérification a été envoyé à votre adresse email.'
+        ]);
     }
 }
