@@ -108,8 +108,8 @@
         </div>
 
         {{-- Known By --}}
-        <div class="relative">
-            <label for="known_by" class="absolute left-3 top-3 text-sm font-medium text-gray-500 transition-all duration-200 transform -translate-y-1 scale-75 origin-top-left peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-1 peer-focus:scale-75 peer-focus:text-orange-600">Comment avez-vous connu GS Auto ?</label>
+        <div>
+            <label for="known_by" class="block text-base font-semibold text-gray-800 mb-3">Comment avez-vous connu GS Auto ?</label>
             <select id="known_by" name="known_by" class="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 focus:border-orange-400 transition-all duration-200 appearance-none">
                 <option value="">Sélectionnez une option</option>
                 <option value="site_web" {{ old('known_by') == 'site_web' ? 'selected' : '' }}>Site web</option>
@@ -139,6 +139,13 @@
             @error('password_confirmation') <span class="text-sm text-red-600 mt-1 block">{{ $message }}</span> @enderror
         </div>
 
+        {{-- Email Verification Code --}}
+        <div class="relative">
+            <label for="verification_code" class="absolute left-3 top-3 text-sm font-medium text-gray-500 transition-all duration-200 transform -translate-y-1 scale-75 origin-top-left peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-1 peer-focus:scale-75 peer-focus:text-orange-600">Code de vérification *</label>
+            <input id="verification_code" type="text" name="verification_code" required placeholder=" " class="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 focus:border-orange-400 transition-all duration-200 peer">
+            @error('verification_code') <span class="text-sm text-red-600 mt-1 block">{{ $message }}</span> @enderror
+        </div>
+
         {{-- Terms --}}
         <div class="flex items-start">
             <input type="checkbox" name="terms" value="1" required class="mt-1 mr-3 w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500">
@@ -147,13 +154,6 @@
             </label>
         </div>
         @error('terms') <span class="text-sm text-red-600 mt-1 block">{{ $message }}</span> @enderror
-
-        {{-- reCAPTCHA --}}
-        <div>
-            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-            <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
-            @error('g-recaptcha-response') <span class="text-sm text-red-600 mt-1 block">{{ $message }}</span> @enderror
-        </div>
 
         {{-- Submit --}}
         <button type="submit" class="w-full rounded-xl bg-black py-3 text-lg font-bold text-white transition-all duration-200 hover:bg-gray-900 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]">
