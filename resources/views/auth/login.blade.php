@@ -108,6 +108,12 @@
             Se connecter
         </button>
     </form>
+
+    {{-- Register link --}}
+    <div class="text-center mt-4">
+        <span class="text-sm text-gray-600">Pas de compte ?</span>
+        <a href="{{ route('register') }}" class="text-sm font-semibold text-blue-600 hover:underline ml-1">S'inscrire</a>
+    </div>
 </div>
 
 {{-- Password toggle + Caps Lock hint --}}
