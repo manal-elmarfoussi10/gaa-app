@@ -28,6 +28,9 @@ class DemoRequestsController extends Controller
         if (!$user->is_active) {
             $user->update(['is_active' => true]);
 
+            // Send notification
+            $user->notify(new \App\Notifications\AccountActivatedNotification());
+
             return back()->with('success', 'Le compte de ' . $user->name . ' a été activé avec succès.');
         }
 

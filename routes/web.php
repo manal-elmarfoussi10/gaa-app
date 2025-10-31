@@ -397,6 +397,7 @@ Route::patch('packages/{unit_package}/activate', [UnitPackageController::class,'
 
     // Demo Requests
     Route::resource('demo-requests', DemoRequestsController::class)->only(['index','show']);
+    Route::post('demo-requests/{id}/activate', [DemoRequestsController::class, 'activate'])->name('demo-requests.activate');
 
     // Emails (superadmin)
     Route::prefix('emails')->name('emails.')->controller(SAEmailController::class)->group(function () {
