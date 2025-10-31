@@ -1,203 +1,122 @@
 @extends('layouts.guest')
 
-@section('title', 'Contact')
+@section('title', 'Contactez-nous — GS Auto')
 
 @section('content')
-<div class="w-full fade-in">
-  {{-- Hero band (brand gradient) --}}
-  <div class="mx-auto mb-8 max-w-4xl rounded-2xl bg-gradient-to-r from-[#FF4B00] to-[#FF7A1C] px-8 py-8 text-white shadow-2xl animate-pulse">
-    <div class="flex items-center gap-4">
-      <img src="{{ asset('images/GS.png') }}" alt="GS Auto" class="h-16 w-auto drop-shadow-lg transition-transform hover:scale-105" />
-      <div>
-        <h1 class="text-2xl font-extrabold leading-tight">Contactez GS Auto</h1>
-        <p class="text-white/90 text-base">Expliquez-nous votre besoin bris de glace — réponse rapide et personnalisée.</p>
-      </div>
+<div class="fade-in">
+    {{-- Logo --}}
+    <div class="flex justify-center mb-10">
+        <img src="{{ asset('images/GS.png') }}" alt="GS Auto" class="h-28 w-auto drop-shadow-lg transition-transform hover:scale-105">
     </div>
-  </div>
 
-  {{-- Card --}}
-  <div class="mx-auto w-full max-w-6xl rounded-2xl bg-white px-8 py-10 shadow-2xl border border-gray-100">
-    {{-- Success flash --}}
-    @if (session('success'))
-      <div id="flash-success" class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800 animate-pulse">
+    <h2 class="text-3xl font-bold text-center text-gray-900 mb-2">Contactez-nous</h2>
+    <p class="text-gray-600 text-center mb-10">Nous sommes là pour vous aider. Envoyez-nous un message et nous vous répondrons rapidement.</p>
+
+<div class="grid gap-8 md:grid-cols-[1.1fr_.9fr]">
+  {{-- Left: The form card --}}
+  <section class="rounded-3xl bg-white/90 p-6 shadow-card ring-1 ring-black/5 md:p-8">
+
+    {{-- Alerts --}}
+    @if(session('success'))
+      <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
         {{ session('success') }}
       </div>
     @endif
-
-    {{-- Global errors --}}
-    @if ($errors->any())
-      <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 animate-pulse">
+    @if($errors->any())
+      <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         <ul class="list-disc pl-5">
-          @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-          @endforeach
+          @foreach ($errors->all() as $e) <li>{{ $e }}</li> @endforeach
         </ul>
       </div>
     @endif
 
-    <div class="grid gap-10 lg:grid-cols-2">
-      {{-- LEFT: Form --}}
-      <section class="animate-fade-in">
-        <h2 class="mb-2 text-2xl font-bold text-gray-900">Envoyez-nous un message</h2>
-        <p class="mb-6 text-base text-gray-600">Nous vous répondrons très rapidement.</p>
+    <form method="POST" action="{{ route('contact.send') }}" class="space-y-6" novalidate>
+      @csrf
+      <input type="hidden" name="type" value="general">
 
-        <form method="POST" action="{{ route('contact.send') }}" novalidate class="space-y-5">
-          @csrf
+      <div>
+        <label for="company_name" class="mb-1 block text-sm font-medium">Nom de l'entreprise (optionnel)</label>
+        <input id="company_name" name="company_name" value="{{ old('company_name') }}"
+               class="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 outline-none focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-orange-200" placeholder="Nom de votre entreprise" />
+        @error('company_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+      </div>
 
-          {{-- Objet (tiles) --}}
-          <div>
-            <span class="mb-3 block text-base font-semibold text-gray-800">Objet de votre demande *</span>
-            <div class="grid gap-3 sm:grid-cols-3">
-              <label class="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-gray-200 bg-white px-4 py-4 hover:border-orange-400 hover:shadow-md transition-all duration-200">
-                <input type="radio" name="type" value="general" class="mt-1 w-4 h-4 text-orange-600 focus:ring-orange-500"
-                       {{ old('type','general') === 'general' ? 'checked' : '' }} required />
-                <div>
-                  <strong class="block text-gray-900">Contact général</strong>
-                  <span class="text-sm text-gray-600">Questions, support, informations</span>
-                </div>
-              </label>
-              <label class="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-gray-200 bg-white px-4 py-4 hover:border-orange-400 hover:shadow-md transition-all duration-200">
-                <input type="radio" name="type" value="demo" class="mt-1 w-4 h-4 text-orange-600 focus:ring-orange-500"
-                       {{ old('type') === 'demo' ? 'checked' : '' }} />
-                <div>
-                  <strong class="block text-gray-900">Demande de démo</strong>
-                  <span class="text-sm text-gray-600">Présentation en direct</span>
-                </div>
-              </label>
-              <label class="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-gray-200 bg-white px-4 py-4 hover:border-orange-400 hover:shadow-md transition-all duration-200">
-                <input type="radio" name="type" value="partner" class="mt-1 w-4 h-4 text-orange-600 focus:ring-orange-500"
-                       {{ old('type') === 'partner' ? 'checked' : '' }} />
-                <div>
-                  <strong class="block text-gray-900">Devenir partenaire</strong>
-                  <span class="text-sm text-gray-600">Intégrations & distribution</span>
-                </div>
-              </label>
-            </div>
-            @error('type') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-          </div>
+      <div>
+        <label for="name" class="mb-1 block text-sm font-medium">Nom complet *</label>
+        <input id="name" name="name" value="{{ old('name') }}" required
+               class="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 outline-none focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-orange-200" placeholder="Votre nom complet" />
+        @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+      </div>
 
-          {{-- Nom --}}
-          <div class="relative">
-            <label for="name" class="absolute left-3 top-3 text-sm font-medium text-gray-500 transition-all duration-200 transform -translate-y-1 scale-75 origin-top-left peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-1 peer-focus:scale-75 peer-focus:text-orange-600">Nom complet *</label>
-            <input id="name" name="name" type="text" value="{{ old('name') }}" required placeholder=" "
-                   class="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 focus:border-orange-400 transition-all duration-200 peer" />
-            @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-          </div>
+      <div>
+        <label for="email" class="mb-1 block text-sm font-medium">Adresse e-mail *</label>
+        <input id="email" type="email" name="email" value="{{ old('email') }}" required
+               class="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 outline-none focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-orange-200" placeholder="exemple@domaine.com" />
+        @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+      </div>
 
-          {{-- Email --}}
-          <div class="relative">
-            <label for="email" class="absolute left-3 top-3 text-sm font-medium text-gray-500 transition-all duration-200 transform -translate-y-1 scale-75 origin-top-left peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-1 peer-focus:scale-75 peer-focus:text-orange-600">Adresse e-mail *</label>
-            <input id="email" name="email" type="email" value="{{ old('email') }}" required placeholder=" "
-                   class="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 focus:border-orange-400 transition-all duration-200 peer" />
-            @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-          </div>
+      <div>
+        <label for="subject" class="mb-1 block text-sm font-medium">Objet *</label>
+        <input id="subject" name="subject" value="{{ old('subject') }}" required
+               class="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 outline-none focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-orange-200" placeholder="Objet de votre message" />
+        @error('subject') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+      </div>
 
-          {{-- Message --}}
-          <div class="relative">
-            <label for="message" class="absolute left-3 top-3 text-sm font-medium text-gray-500 transition-all duration-200 transform -translate-y-1 scale-75 origin-top-left peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-1 peer-focus:scale-75 peer-focus:text-orange-600">Message *</label>
-            <textarea id="message" name="message" rows="5" required placeholder=" "
-                      class="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 focus:border-orange-400 transition-all duration-200 peer resize-none">{{ old('message') }}</textarea>
-            @error('message') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-          </div>
+      <div>
+        <label for="message" class="mb-1 block text-sm font-medium">Message *</label>
+        <textarea id="message" name="message" rows="4" required
+                  class="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 outline-none focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-orange-200" placeholder="Décrivez votre demande en détail...">{{ old('message') }}</textarea>
+        @error('message') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+      </div>
 
-          {{-- reCAPTCHA --}}
-          <div>
-            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-            <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
-            @error('g-recaptcha-response') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-          </div>
+      {{-- Submit --}}
+      <button type="submit"
+              class="w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 py-3.5 text-lg font-bold text-white shadow-card transition hover:brightness-105 active:scale-[0.99]">
+        Envoyer le message
+      </button>
+    </form>
+  </section>
 
-          {{-- Actions --}}
-          <div class="pt-4">
-            <button type="submit"
-                    class="w-full rounded-xl bg-black py-3 text-lg font-bold text-white transition-all duration-200 hover:bg-gray-900 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]">
-              Envoyer le message
-            </button>
-            <div class="mt-4 flex flex-wrap items-center justify-center gap-4 text-base">
-              <a href="tel:+33184806832" class="font-semibold text-orange-600 hover:text-orange-700 transition-colors">Appeler</a>
-              <span class="text-gray-400">•</span>
-              <a href="mailto:contact@gagestion.fr" class="font-semibold text-orange-600 hover:text-orange-700 transition-colors">Écrire un email</a>
-            </div>
-          </div>
-        </form>
-      </section>
-
-      {{-- RIGHT: Contact info (matching card) --}}
-      <aside class="space-y-6 animate-fade-in">
-        <div class="rounded-2xl border-2 border-gray-100 bg-white p-6 shadow-xl">
-          <div class="mb-4 flex items-center gap-3">
-            <div class="h-10 w-10 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white grid place-items-center font-bold shadow-lg">i</div>
-            <div>
-              <div class="text-xl font-extrabold text-gray-900">Informations de contact</div>
-              <div class="text-sm text-gray-600">Une équipe à votre écoute</div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-3 gap-3">
-            <div class="rounded-xl border-2 border-gray-100 bg-gradient-to-br from-white to-gray-50 p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-              <div class="text-xl font-bold text-orange-600">24h</div>
-              <div class="text-sm text-gray-600">Réponse moyenne</div>
-            </div>
-            <div class="rounded-xl border-2 border-gray-100 bg-gradient-to-br from-white to-gray-50 p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-              <div class="text-xl font-bold text-orange-600">98%</div>
-              <div class="text-sm text-gray-600">Satisfaction</div>
-            </div>
-            <div class="rounded-xl border-2 border-gray-100 bg-gradient-to-br from-white to-gray-50 p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-              <div class="text-xl font-bold text-orange-600">EU</div>
-              <div class="text-sm text-gray-600">Données hébergées</div>
-            </div>
-          </div>
-
-          <div class="mt-6 space-y-4">
-            <div class="flex items-center gap-4 rounded-xl border-2 border-gray-100 bg-gradient-to-r from-white to-gray-50 p-4 hover:shadow-md transition-all duration-200">
-              <div class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 font-bold text-white shadow-lg">☎</div>
-              <div>
-                <div class="font-semibold text-gray-900">Téléphone</div>
-                <a href="tel:+33184806832" class="text-base font-semibold text-orange-600 hover:text-orange-700 transition-colors">01 84 80 68 32</a>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-4 rounded-xl border-2 border-gray-100 bg-gradient-to-r from-white to-gray-50 p-4 hover:shadow-md transition-all duration-200">
-              <div class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 font-bold text-white shadow-lg">✉</div>
-              <div>
-                <div class="font-semibold text-gray-900">Email</div>
-                <a href="mailto:contact@gagestion.fr" class="text-base font-semibold text-orange-600 hover:text-orange-700 transition-colors">contact@gagestion.fr</a>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-4 rounded-xl border-2 border-gray-100 bg-gradient-to-r from-white to-gray-50 p-4 hover:shadow-md transition-all duration-200">
-              <div class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 font-bold text-white shadow-lg">⏱</div>
-              <div>
-                <div class="font-semibold text-gray-900">Horaires</div>
-                <div class="text-base text-gray-600">Lundi – Samedi • 9h – 18h</div>
-              </div>
-            </div>
-
-            <div class="mt-4 flex flex-wrap gap-3">
-              <span class="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-orange-200 bg-orange-50 px-4 py-2 text-sm text-orange-700 font-medium">Sécurité renforcée</span>
-              <span class="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-orange-200 bg-orange-50 px-4 py-2 text-sm text-orange-700 font-medium">E-signature</span>
-              <span class="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-orange-200 bg-orange-50 px-4 py-2 text-sm text-orange-700 font-medium">API & Webhooks</span>
-            </div>
-          </div>
+  {{-- Right: Brand panel / contact info --}}
+  <aside class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 to-orange-400 p-1 shadow-card">
+    <div class="relative h-full w-full rounded-[22px] bg-white/10 p-6 md:p-8">
+      <div class="mb-6 flex items-center gap-3 text-white/90">
+        <div class="grid h-10 w-10 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-      </aside>
-    </div>
-  </div>
-</div>
+        <div>
+          <div class="text-sm opacity-90">Contact GS Auto</div>
+          <div class="text-xl font-extrabold tracking-tight">Informations</div>
+        </div>
+      </div>
 
-{{-- Success toast (auto-hide) --}}
-@if (session('success'))
-  <div id="toast"
-       class="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900 shadow-xl opacity-0 translate-y-3 transition-all">
-    <span class="rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-xs font-semibold text-emerald-700">✔</span>
-    <span class="text-sm font-semibold">Message envoyé.</span>
-    <span class="text-sm text-emerald-700">Nous revenons vers vous très vite.</span>
-  </div>
-  <script>
-    const t = document.getElementById('toast');
-    const f = document.getElementById('flash-success');
-    setTimeout(()=> t?.classList.remove('opacity-0','translate-y-3'), 120);
-    setTimeout(()=> { t?.classList.add('opacity-0','translate-y-3'); f?.remove(); }, 4200);
-  </script>
-@endif
+      <ul class="space-y-4 text-white/95">
+        <li class="rounded-2xl bg-white/10 p-4 ring-1 ring-white/15">
+          <div class="font-semibold">Téléphone</div>
+          <div class="text-sm opacity-90">01 84 80 68 32</div>
+        </li>
+        <li class="rounded-2xl bg-white/10 p-4 ring-1 ring-white/15">
+          <div class="font-semibold">Email</div>
+          <div class="text-sm opacity-90">contact@gagestion.fr</div>
+        </li>
+        <li class="rounded-2xl bg-white/10 p-4 ring-1 ring-white/15">
+          <div class="font-semibold">Horaires</div>
+          <div class="text-sm opacity-90">Lundi - Samedi, 9h - 18h</div>
+        </li>
+      </ul>
+
+      <div class="mt-8 rounded-2xl bg-white/15 p-4 text-white/95 ring-1 ring-white/20">
+        <div class="text-sm opacity-90">Support technique</div>
+        <div class="text-lg font-bold">support@gagestion.fr</div>
+        <div class="text-sm">Réponse sous 24h</div>
+      </div>
+
+      {{-- floating gloss --}}
+      <div class="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/20 blur-2xl"></div>
+      <div class="pointer-events-none absolute -left-10 -bottom-10 h-48 w-48 rounded-full bg-white/10 blur-2xl"></div>
+    </div>
+  </aside>
+</div>
 @endsection
