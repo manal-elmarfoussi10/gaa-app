@@ -4,10 +4,16 @@
 
 @section('content')
 <div class="grid gap-8 md:grid-cols-[1.1fr_.9fr]">
+
+       {{-- Logo --}}
+       <div class="flex justify-center mb-10">
+        <img src="{{ asset('images/GS.png') }}" alt="GS Auto" class="h-28 w-auto drop-shadow-lg transition-transform hover:scale-105">
+    </div>
+    
   {{-- Left: The form card --}}
   <section class="rounded-3xl bg-white/90 p-6 shadow-card ring-1 ring-black/5 md:p-8">
     <header class="mb-6">
-      <img src="/images/GS.png" alt="GS Auto" class="h-8 w-auto mb-2">
+     
       <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Inscription réussie !</h1>
       <p class="mt-1 text-sm text-gray-600">Votre compte a été créé avec succès.</p>
     </header>
