@@ -7,6 +7,8 @@
     $saUnreadEmailsCount   = $saUnreadEmailsCount   ?? 0;
     $saPendingVirements    = $saPendingVirements    ?? 0;  // pending virements
     $saInactivePackagesCnt = $saInactivePackagesCnt ?? 0;  // optional: inactive packages
+    $saUnreadMessagesCount = $saUnreadMessagesCount ?? 0;  // unread messages
+    $saPendingDemoRequests = $saPendingDemoRequests ?? 0;  // pending demo requests
 @endphp
 
 <nav class="flex-1 overflow-y-auto text-sm text-gray-700">
@@ -43,8 +45,32 @@
         {{-- Messages --}}
         <li>
             <a href="{{ route('superadmin.messages.index') }}"
-               class="flex items-center gap-3 px-3 py-2 rounded {{ request()->routeIs('superadmin.messages.*') ? 'bg-[#FF4B00] text-white font-semibold' : 'hover:bg-orange-100 text-gray-700' }}">
-                <i data-lucide="inbox" class="w-4 h-4"></i> Messages
+               class="flex items-center justify-between px-3 py-2 rounded {{ request()->routeIs('superadmin.messages.*') ? 'bg-[#FF4B00] text-white font-semibold' : 'hover:bg-orange-100 text-gray-700' }}">
+                <span class="flex items-center gap-3">
+                    <i data-lucide="inbox" class="w-4 h-4"></i> Messages
+                </span>
+                @if($saUnreadMessagesCount > 0)
+                    <span class="ml-3 inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full text-xs
+                                 {{ request()->routeIs('superadmin.messages.*') ? 'bg-white text-[#FF4B00]' : 'bg-[#FF4B00] text-white' }}">
+                        {{ $saUnreadMessagesCount }}
+                    </span>
+                @endif
+            </a>
+        </li>
+
+        {{-- Demandes de démo --}}
+        <li>
+            <a href="{{ route('superadmin.demo-requests.index') }}"
+               class="flex items-center justify-between px-3 py-2 rounded {{ request()->routeIs('superadmin.demo-requests.*') ? 'bg-[#FF4B00] text-white font-semibold' : 'hover:bg-orange-100 text-gray-700' }}">
+                <span class="flex items-center gap-3">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i> Demandes de démo
+                </span>
+                @if($saPendingDemoRequests > 0)
+                    <span class="ml-3 inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full text-xs
+                                 {{ request()->routeIs('superadmin.demo-requests.*') ? 'bg-white text-[#FF4B00]' : 'bg-[#FF4B00] text-white' }}">
+                        {{ $saPendingDemoRequests }}
+                    </span>
+                @endif
             </a>
         </li>
 

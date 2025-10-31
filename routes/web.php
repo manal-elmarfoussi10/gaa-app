@@ -30,6 +30,7 @@ use App\Http\Controllers\SuperAdmin\{
     CompanyController as SuperAdminCompanyController,
     GlobalUserController,
     UserController as SuperAdminUserController,
+    DemoRequestsController,
 };
 
 // ===============================
@@ -73,11 +74,9 @@ Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('guest')->name('password.email');
 Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->middleware('guest')->name('password.reset');
 Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('guest')->name('password.store');
-
-
-
-
-
+Route::get('/contact-tenant', [ContactController::class, 'tenant'])->name('contact.tenant');
+Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
+Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 
 Route::get('/attachment/{path}', function (Request $request, $path) {
     // Normalize
@@ -314,8 +313,8 @@ Route::put('/factures/{facture}',        [FactureController::class, 'update'])->
     Route::view('/fonctionnalites', 'fonctionnalites.fonctionnalites');
     Route::view('/commercial',  'commercial.dashboard')->name('commercial.dashboard');
     Route::view('/comptable',   'comptable.dashboard')->name('comptable.dashboard');
-    Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
-    Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
+
+    // Tenant contact route (auth required)
 
     // Global search
     Route::get('/search',          [SearchController::class, 'index'])->name('search');
@@ -395,6 +394,10 @@ Route::patch('packages/{unit_package}/activate', [UnitPackageController::class,'
     // Products, Messages
     Route::resource('products', SAProductController::class)->except(['show'])->names('products');
     Route::resource('messages', SAMessageController::class)->only(['index','show','destroy'])->names('messages');
+
+    // Demo Requests
+    Route::resource('demo-requests', DemoRequestsController::class)->only(['index','show']);
+    Route::patch('demo-requests/{id}/activate', [DemoRequestsController::class, 'activate'])->name('demo-requests.activate');
 
     // Emails (superadmin)
     Route::prefix('emails')->name('emails.')->controller(SAEmailController::class)->group(function () {

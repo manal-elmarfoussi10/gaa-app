@@ -22,6 +22,7 @@ class Email extends Model
         'important',      // keep only if you truly have this column
         'is_deleted',
         'is_read',        // if present
+        'in_trash',       // added for soft delete functionality
         'folder',
         'client_id',
         'company_id',

@@ -41,11 +41,19 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
+        // Check if account is active
+        if (!$user->is_active) {
+            Auth::logout();
+            return back()
+                ->withInput($request->only('email'))
+                ->with('error', 'Votre compte n\'est pas encore activé. Veuillez contacter l\'administrateur.');
+        }
+
         // Redirection selon le rôle
         switch ($user->role) {
             case 'superadmin':
                 return redirect()->route('superadmin.dashboard');
-        
+
             case 'admin':
                 return redirect()->route('dashboard');
 

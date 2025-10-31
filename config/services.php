@@ -28,13 +28,18 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-'yousign' => [
-    'api_key'         => env('YOUSIGN_API_KEY'),
-    'base_url'        => env('YOUSIGN_BASE_URL', 'https://api-sandbox.yousign.app/v3'),
-    'webhook_secret'  => env('YOUSIGN_WEBHOOK_SECRET'), // <- raw secret (no sha256=)
-    'locale'          => env('YOUSIGN_LOCALE', 'fr'),
-    'auth_mode' => env('YOUSIGN_AUTH_MODE', 'no_otp'),
-],
+    'yousign' => [
+        'api_key'         => env('YOUSIGN_API_KEY'),
+        'base_url'        => env('YOUSIGN_BASE_URL', 'https://api-sandbox.yousign.app/v3'),
+        'webhook_secret'  => env('YOUSIGN_WEBHOOK_SECRET'), // <- raw secret (no sha256=)
+        'locale'          => env('YOUSIGN_LOCALE', 'fr'),
+        'auth_mode' => env('YOUSIGN_AUTH_MODE', 'no_otp'),
+    ],
+
+    'recaptcha' => [
+        'site_key'   => env('RECAPTCHA_SITE_KEY'),
+        'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+    ],
 
     'slack' => [
         'notifications' => [

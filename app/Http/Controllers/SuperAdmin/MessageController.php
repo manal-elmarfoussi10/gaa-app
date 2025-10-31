@@ -28,6 +28,11 @@ class MessageController extends Controller
             });
         }
 
+        // Filter by type
+        if ($type = $request->get('type')) {
+            $query->where('type', $type);
+        }
+
         // Optional filter by company if the column exists
         if ($hasCompanyId && $request->filled('company_id')) {
             $query->where('company_id', $request->get('company_id'));
@@ -49,6 +54,7 @@ class MessageController extends Controller
             'hasCompanyId' => $hasCompanyId,
             'filters'      => [
                 'q'          => $s ?? '',
+                'type'       => $request->get('type'),
                 'company_id' => $request->get('company_id'),
             ],
         ]);
@@ -57,6 +63,11 @@ class MessageController extends Controller
     public function show(Contact $message)
     {
         abort_unless(auth()->user()?->role === 'superadmin', 403);
+
+        // Mark message as read (if not already)
+        if (!$message->read) {
+            $message->update(['read' => true]);
+        }
 
         // Optional company preload if column exists
         if (Schema::hasColumn('contacts', 'company_id')) {

@@ -25,10 +25,20 @@
 
     {{-- Filters --}}
     <form method="GET" class="bg-white rounded-2xl shadow-sm border p-5 grid grid-cols-1 md:grid-cols-6 gap-3">
-      <div class="md:col-span-3">
+      <div class="md:col-span-2">
         <label class="text-xs text-gray-500">Recherche</label>
         <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Nom, email, contenu…"
                class="border rounded-lg p-2 w-full">
+      </div>
+
+      <div class="md:col-span-1">
+        <label class="text-xs text-gray-500">Type</label>
+        <select name="type" class="border rounded-lg p-2 w-full">
+          <option value="">— Tous —</option>
+          <option value="general" @selected(($filters['type'] ?? '') === 'general')>Général</option>
+          <option value="demo" @selected(($filters['type'] ?? '') === 'demo')>Demo</option>
+          <option value="partner" @selected(($filters['type'] ?? '') === 'partner')>Partenaire</option>
+        </select>
       </div>
 
       @if($hasCompanyId)
@@ -59,6 +69,7 @@
               <th class="p-4 text-left font-semibold uppercase text-xs tracking-wider">Date</th>
               <th class="p-4 text-left font-semibold uppercase text-xs tracking-wider">Expéditeur</th>
               <th class="p-4 text-left font-semibold uppercase text-xs tracking-wider">Email</th>
+              <th class="p-4 text-left font-semibold uppercase text-xs tracking-wider">Type</th>
               @if($hasCompanyId)
                 <th class="p-4 text-left font-semibold uppercase text-xs tracking-wider">Société</th>
               @endif
@@ -77,6 +88,15 @@
                 </td>
                 <td class="p-4 whitespace-nowrap text-cyan-700">
                   <a href="mailto:{{ $m->email }}">{{ $m->email }}</a>
+                </td>
+                <td class="p-4 whitespace-nowrap">
+                  <span class="px-2 py-1 text-xs font-medium rounded-full
+                    @if($m->type === 'general') bg-blue-100 text-blue-800
+                    @elseif($m->type === 'demo') bg-green-100 text-green-800
+                    @elseif($m->type === 'partner') bg-purple-100 text-purple-800
+                    @else bg-gray-100 text-gray-800 @endif">
+                    {{ ucfirst($m->type ?? 'general') }}
+                  </span>
                 </td>
                 @if($hasCompanyId)
                   <td class="p-4 whitespace-nowrap">
@@ -108,7 +128,7 @@
               </tr>
             @empty
               <tr>
-                <td class="p-8 text-center text-gray-500" colspan="{{ $hasCompanyId ? 6 : 5 }}">
+                <td class="p-8 text-center text-gray-500" colspan="{{ $hasCompanyId ? 7 : 6 }}">
                   Aucun message.
                 </td>
               </tr>
