@@ -30,6 +30,7 @@ use App\Http\Controllers\SuperAdmin\{
     CompanyController as SuperAdminCompanyController,
     GlobalUserController,
     UserController as SuperAdminUserController,
+    DemoRequestsController,
 };
 
 // ===============================
@@ -393,6 +394,9 @@ Route::patch('packages/{unit_package}/activate', [UnitPackageController::class,'
     // Products, Messages
     Route::resource('products', SAProductController::class)->except(['show'])->names('products');
     Route::resource('messages', SAMessageController::class)->only(['index','show','destroy'])->names('messages');
+
+    // Demo Requests
+    Route::resource('demo-requests', DemoRequestsController::class)->only(['index','show']);
 
     // Emails (superadmin)
     Route::prefix('emails')->name('emails.')->controller(SAEmailController::class)->group(function () {
