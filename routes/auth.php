@@ -17,6 +17,10 @@ Route::middleware('guest')->group(function () {
 
     Route::post('register', [RegisteredUserController::class, 'store']);
 
+    Route::get('registration-success', function () {
+        return view('auth.registration-success');
+    })->name('registration.success');
+
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
@@ -39,7 +43,8 @@ Route::middleware('guest')->group(function () {
     Route::get('verify-email', [EmailVerificationController::class, 'notice'])
         ->name('verification.notice');
 
-    Route::post('verify-email', [EmailVerificationController::class, 'verify'])
+    Route::get('verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
 
     Route::post('verify-email/resend', [EmailVerificationController::class, 'resend'])

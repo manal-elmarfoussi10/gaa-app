@@ -33,11 +33,9 @@ class EmailVerificationController extends Controller
             abort(403, 'Invalid verification link.');
         }
 
-        if ($user->hasVerifiedEmail()) {
-            return redirect()->route('verification.success');
+        if (!$user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
         }
-
-        $user->markEmailAsVerified();
 
         return redirect()->route('verification.success');
     }

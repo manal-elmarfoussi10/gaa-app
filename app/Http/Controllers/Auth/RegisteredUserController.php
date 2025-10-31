@@ -82,10 +82,7 @@ class RegisteredUserController extends Controller
             ])
         ));
 
-        // Redirect to verification page
-        return redirect()->route('verification.notice')->with([
-            'email' => $request->email,
-            'success' => 'Un email de vérification a été envoyé à votre adresse email. Vérifiez votre boîte de réception (ou le dossier spam) et cliquez sur le lien pour vérifier votre compte.'
-        ]);
+        // Redirect to registration success page
+        return redirect()->route('registration.success');
     }
 }
