@@ -19,7 +19,7 @@ class EmailVerificationNotification extends Notification
         return (new MailMessage)
             ->subject('Vérification de votre email — GS Auto')
             ->greeting('Bonjour,')
-            ->line('Merci de vous être inscrit sur GS Auto.')
+            ->line('Nous avons reçu une demande d\'inscription pour le compte administrateur de ' . $notifiable->company->name . '.')
             ->line('Pour finaliser votre inscription, veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous.')
             ->action('Vérifier mon email', $this->url)
             ->line("Ce lien expirera dans 60 minutes.")

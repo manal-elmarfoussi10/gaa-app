@@ -15,10 +15,7 @@
 <div class="grid gap-8 md:grid-cols-[1.1fr_.9fr]">
   {{-- Left: The form card --}}
   <section class="rounded-3xl bg-white/90 p-6 shadow-card ring-1 ring-black/5 md:p-8">
-    <header class="mb-6">
-      <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Création de votre compte</h1>
-      <p class="mt-1 text-sm text-gray-600">Rejoignez GS Auto et accédez à la gestion de vos dossiers bris de glace.</p>
-    </header>
+ 
 
     {{-- Alerts --}}
     @if(session('success'))

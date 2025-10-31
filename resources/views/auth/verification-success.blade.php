@@ -20,7 +20,7 @@
 
     <h2 class="text-3xl font-bold text-gray-900 mb-4">Inscription réussie !</h2>
     <p class="text-gray-600 text-lg mb-8 max-w-md mx-auto">
-        Votre compte a été créé avec succès. Notre équipe va examiner votre demande et vous contactera dans les plus brefs délais.
+        Votre email a été vérifié avec succès. Les administrateurs examineront votre demande d'inscription et activeront votre compte dans les plus brefs délais.
     </p>
 
     {{-- Info Cards --}}

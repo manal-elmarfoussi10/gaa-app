@@ -65,7 +65,7 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'company_id' => $company->id,
-            'role' => User::ROLE_COMMERCIAL, // Default role for new registrations
+            'role' => User::ROLE_ADMIN, // Admin role for new registrations
             'is_active' => false, // Inactive until approved by superadmin
         ]);
 
