@@ -64,6 +64,11 @@ class MessageController extends Controller
     {
         abort_unless(auth()->user()?->role === 'superadmin', 403);
 
+        // Mark message as read (if not already)
+        if (!$message->read) {
+            $message->update(['read' => true]);
+        }
+
         // Optional company preload if column exists
         if (Schema::hasColumn('contacts', 'company_id')) {
             $message->load('company:id,name');
