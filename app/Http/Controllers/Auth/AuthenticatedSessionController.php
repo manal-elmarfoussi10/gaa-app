@@ -41,14 +41,6 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
-        // Check if email is verified
-        if (!$user->hasVerifiedEmail()) {
-            Auth::logout();
-            return back()
-                ->withInput($request->only('email'))
-                ->with('error', 'Veuillez vérifier votre adresse e-mail avant de vous connecter.');
-        }
-
         // Check if account is active
         if (!$user->is_active) {
             Auth::logout();
