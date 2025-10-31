@@ -3,13 +3,12 @@
 @section('title', 'Inscription réussie — GS Auto')
 
 @section('content')
-<div class="grid gap-8 md:grid-cols-[1.1fr_.9fr]">
+{{-- Logo --}}
+<div class="flex justify-center mb-10">
+    <img src="{{ asset('images/GS.png') }}" alt="GS Auto" class="h-28 w-auto drop-shadow-lg transition-transform hover:scale-105">
+</div>
 
-       {{-- Logo --}}
-       <div class="flex justify-center mb-10">
-        <img src="{{ asset('images/GS.png') }}" alt="GS Auto" class="h-28 w-auto drop-shadow-lg transition-transform hover:scale-105">
-    </div>
-    
+<div class="grid gap-8 md:grid-cols-[1.1fr_.9fr]">
   {{-- Left: The form card --}}
   <section class="rounded-3xl bg-white/90 p-6 shadow-card ring-1 ring-black/5 md:p-8">
     <header class="mb-6">
