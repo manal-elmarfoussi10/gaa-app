@@ -145,7 +145,7 @@
             <div class="company-logo">
                 <i class="fas fa-car"></i>
             </div>
-          
+
         </div>
         <div class="header-meta">
             <div class="meta-date">{{ now()->format('d/m/Y H:i') }}</div>

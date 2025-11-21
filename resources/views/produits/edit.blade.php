@@ -163,32 +163,32 @@
     .bg-gradient-to-r {
         background-image: linear-gradient(to right, var(--tw-gradient-stops));
     }
-    
+
     .hover\:-translate-y-0\.5:hover {
         transform: translateY(-0.125rem);
     }
-    
+
     .transition {
         transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
     .duration-150 {
         transition-duration: 150ms;
     }
-    
+
     .duration-200 {
         transition-duration: 200ms;
     }
-    
+
     .focus\:ring-orange-500:focus {
         box-shadow: 0 0 0 3px rgba(255, 123, 0, 0.5);
     }
-    
+
     .focus\:border-orange-500:focus {
         border-color: #ff7b00;
     }
-    
+
     .shadow-sm {
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
