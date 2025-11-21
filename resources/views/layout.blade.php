@@ -99,7 +99,7 @@
     </a>
   @endif
 
-  @if ($role !== 'poseur')
+  @if ($role === 'superadmin')
     <button class="ml-1 rounded-full p-1 focus:outline-none focus:ring-1 focus:ring-[#FF4B00] relative" onclick="window.location.href='{{ route('emails.notifications') }}'">
       <i data-lucide="bell" class="w-4 h-4 text-[#FF4B00]"></i>
       @php

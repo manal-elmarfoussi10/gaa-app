@@ -144,7 +144,7 @@ class AvoirController extends Controller
 
     public function exportPDF()
     {
-        $avoirs = Avoir::with('facture.client')->get();
+        $avoirs = Avoir::with('facture.client.rdvs')->get();
         $pdf = Pdf::loadView('avoirs.pdf', compact('avoirs'));
         return $pdf->download('avoirs.pdf');
     }
