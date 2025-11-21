@@ -235,8 +235,13 @@
 
                             @if($company->logo)
                                 <div class="mt-3">
-                                    <img src="{{ asset('storage/'.$company->logo) }}" alt="Logo actuel" class="h-20 object-contain rounded border border-gray-200">
-                                    <p class="text-xs text-green-600 mt-1">Logo existant — laissez vide pour conserver.</p>
+                                    <a href="{{ route('attachment', ['path' => $company->logo]) }}" target="_blank" class="flex items-center p-2 bg-green-50 rounded-lg text-green-700 hover:bg-green-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Voir le logo existant
+                                    </a>
+                                    <p class="text-xs text-green-600 mt-1">Fichier existant — laissez vide pour conserver.</p>
                                 </div>
                             @endif
                         </div>
@@ -344,23 +349,11 @@
                                     </div>
 
                                     @if($company->$field)
-                                        @php
-                                            $path = $company->$field;
-                                            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-                                            $isImage = in_array($ext, ['png', 'jpg', 'jpeg']);
-                                        @endphp
-
-                                        @if($isImage)
-                                            <div class="ml-3">
-                                                <img src="{{ asset('storage/'.$path) }}" alt="{{ $label }}" class="h-16 w-16 object-cover rounded border border-gray-200">
-                                            </div>
-                                        @else
-                                            <a href="{{ asset('storage/'.$path) }}" target="_blank" class="ml-3 p-2 bg-green-50 rounded-lg text-green-700 hover:bg-green-100" title="Voir le fichier">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                </svg>
-                                            </a>
-                                        @endif
+                                        <a href="{{ route('attachment', ['path' => $company->$field]) }}" target="_blank" class="ml-3 p-2 bg-green-50 rounded-lg text-green-700 hover:bg-green-100" title="Voir le fichier">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        </a>
                                     @endif
                                 </div>
 
