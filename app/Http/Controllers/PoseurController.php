@@ -12,7 +12,15 @@ class PoseurController extends Controller
 {
     public function index()
     {
-        $poseurs = Poseur::latest()->paginate(10);
+        $query = Poseur::query();
+
+        if ($search = request('search')) {
+            $query->where('nom', 'like', '%' . $search . '%')
+                  ->orWhere('email', 'like', '%' . $search . '%')
+                  ->orWhere('telephone', 'like', '%' . $search . '%');
+        }
+
+        $poseurs = $query->latest()->paginate(10);
         $totalPoseurs = Poseur::count();
         $activePoseurs = Poseur::where('actif', true)->count();
 
