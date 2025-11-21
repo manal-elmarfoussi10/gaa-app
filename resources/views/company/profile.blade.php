@@ -154,24 +154,18 @@
                                         $path = $company->$field ?? null;
                                         $has = !empty($path);
                                         $docUrl = $has ? route('attachment', ['path' => $path]) : null;
-                                        $ext = $has ? strtolower(pathinfo($path, PATHINFO_EXTENSION)) : null;
-                                        $isImage = $has && in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp']);
                                     @endphp
 
                                     @if($has)
                                         <a href="{{ $docUrl }}" target="_blank" class="flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                                            @if($isImage)
-                                                <img src="{{ asset('storage/'.$path) }}" alt="{{ $label }}" class="h-10 w-10 object-cover rounded-lg mr-3">
-                                            @else
-                                                <div class="bg-orange-100 text-orange-600 p-2 rounded-lg mr-3">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                </div>
-                                            @endif
+                                            <div class="bg-orange-100 text-orange-600 p-2 rounded-lg mr-3">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            </div>
                                             <div class="flex-1">
                                                 <div class="text-sm font-medium text-gray-800">{{ $label }}</div>
-                                                <div class="text-xs text-gray-500 mt-1">{{ $isImage ? 'Voir l\'image' : 'Voir le document' }}</div>
+                                                <div class="text-xs text-gray-500 mt-1">Voir le document</div>
                                             </div>
                                         </a>
                                     @else
