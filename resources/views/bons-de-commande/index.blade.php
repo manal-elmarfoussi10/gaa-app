@@ -59,8 +59,8 @@
                     <p class="text-gray-500 text-sm">En attente</p>
                     <p class="text-2xl font-bold mt-1">
                         @php
-                            // Assuming you have a status field in your model
-                            $pendingCount = $bons->where('status', 'pending')->count();
+                            // Since no status field exists, all bons are considered "En attente"
+                            $pendingCount = $bons->count();
                             echo $pendingCount;
                         @endphp
                     </p>

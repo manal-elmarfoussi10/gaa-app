@@ -154,7 +154,6 @@
                                         $path = $company->$field ?? null;
                                         $has = !empty($path);
                                         $docUrl = $has ? route('attachment', ['path' => $path]) : null;
-                                        $ext = $has ? strtolower(pathinfo($path, PATHINFO_EXTENSION)) : null;
                                     @endphp
 
                                     @if($has)

@@ -14,11 +14,10 @@ class AvoirsExport implements FromCollection, WithHeadings
             return [
                 'ID' => $avoir->id,
                 'Date' => $avoir->created_at->format('d/m/Y'),
-                'Client' => optional($avoir->facture->client)->nom_assure,
+                'Client' => optional($avoir->facture->client)->nom_assure ?? '-',
                 'Montant' => $avoir->montant,
                 'Facture ID' => $avoir->facture_id,
                 'Année fiscale' => optional($avoir->created_at)->format('Y'),
-                'Date RDV' => optional(optional($avoir->facture->client)->rdvs->first())->start_time ?? '-',
             ];
         });
     }

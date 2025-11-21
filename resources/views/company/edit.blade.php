@@ -235,15 +235,20 @@
 
                             @if($company->logo)
                                 <div class="mt-3">
-                                    <img src="{{ asset('storage/'.$company->logo) }}" alt="Logo actuel" class="h-20 object-contain rounded border border-gray-200">
-                                    <p class="text-xs text-green-600 mt-1">Logo existant — laissez vide pour conserver.</p>
+                                    <a href="{{ route('attachment', ['path' => $company->logo]) }}" target="_blank" class="flex items-center p-2 bg-green-50 rounded-lg text-green-700 hover:bg-green-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Voir le logo existant
+                                    </a>
+                                    <p class="text-xs text-green-600 mt-1">Fichier existant — laissez vide pour conserver.</p>
                                 </div>
                             @endif
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Signature / Cachet</label>
-                          
+
                             {{-- IMPORTANT: name must be signature_path to match controller/DB --}}
                             <input
                                 type="file"
@@ -253,23 +258,25 @@
                                 class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4
                                        file:rounded-md file:border-0 file:text-sm file:font-semibold
                                        file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                          
+
                             <p class="text-xs text-gray-500 mt-1">PNG transparent conseillé, ~1 Mo max.</p>
-                          
-                            <div class="mt-3">
-                              @if($company->signature_path)
-                                <img
-                                  src="{{ asset('storage/'.$company->signature_path) }}"
-                                  alt="Signature actuelle"
-                                  class="h-20 object-contain rounded border border-gray-200"
-                                  id="signatureCurrent">
-                              @endif
-                          
-                              <img id="signaturePreview"
-                                   class="h-20 object-contain rounded border border-gray-200 hidden"
-                                   alt="Prévisualisation signature">
-                            </div>
-                          
+
+                            @if($company->signature_path)
+                                <div class="mt-3">
+                                    <a href="{{ route('attachment', ['path' => $company->signature_path]) }}" target="_blank" class="flex items-center p-2 bg-green-50 rounded-lg text-green-700 hover:bg-green-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Voir la signature existante
+                                    </a>
+                                    <p class="text-xs text-green-600 mt-1">Fichier existant — laissez vide pour conserver.</p>
+                                </div>
+                            @endif
+
+                            <img id="signaturePreview"
+                                 class="h-20 object-contain rounded border border-gray-200 hidden"
+                                 alt="Prévisualisation signature">
+
                             @error('signature_path')
                               <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                             @enderror
@@ -344,7 +351,7 @@
                                     </div>
 
                                     @if($company->$field)
-                                        <a href="{{ asset('storage/'.$company->$field) }}" target="_blank" class="ml-3 p-2 bg-green-50 rounded-lg text-green-700 hover:bg-green-100" title="Voir le fichier">
+                                        <a href="{{ route('attachment', ['path' => $company->$field]) }}" target="_blank" class="ml-3 p-2 bg-green-50 rounded-lg text-green-700 hover:bg-green-100" title="Voir le fichier">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>

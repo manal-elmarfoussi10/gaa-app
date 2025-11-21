@@ -2,16 +2,21 @@
 
 @section('content')
 <div class="p-4 sm:p-6">
-    <!-- Header -->
+    <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 p-6 bg-white rounded-xl shadow-sm border border-gray-100">
         <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Mes Avoirs</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Gestion des Avoirs</h1>
             <p class="text-gray-600 mt-1">Liste des avoirs enregistrés dans le système</p>
         </div>
-        <a href="{{ route('avoirs.create') }}" class="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/></svg>
-            Ajouter un Avoir
-        </a>
+        <div class="flex items-center gap-4">
+            <div class="text-sm text-gray-500">
+                Total: <span class="font-semibold text-gray-800">{{ $avoirs->count() }}</span> avoirs
+            </div>
+            <a href="{{ route('avoirs.create') }}" class="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/></svg>
+                Ajouter un Avoir
+            </a>
+        </div>
     </div>
 
     <!-- Control panel -->
@@ -35,7 +40,6 @@
                             'col-ttc'      => 'TTC',
                             'col-facture'  => 'Facture associée',
                             'col-annee'    => 'Année fiscale',
-                            'col-rdv'      => 'Date de RDV',
                         ] as $column => $label)
                         <li>
                             <label class="flex items-center gap-2 text-sm cursor-pointer text-gray-700">
@@ -62,7 +66,7 @@
         </div>
     </div>
 
-    <!-- Table -->
+    <!-- Avoir Table -->
     <div class="bg-white shadow rounded-xl overflow-hidden border border-gray-100">
         <div class="overflow-x-auto">
             <table class="w-full table-auto min-w-[1100px]">
@@ -76,7 +80,6 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider col-ttc">TTC</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider col-facture">Facture associée</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider col-annee">Année fiscale</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider col-rdv">Date de RDV</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -87,9 +90,7 @@
                             $displayName = $facture?->client?->nom_assure
                                 ?? ($facture?->prospect_name ?: '-');
 
-                            // Very defensive RDV extraction (will be '-' if any layer is missing)
-                            $firstRdv = $facture?->client?->rdvs?->first();
-                            $rdvText  = $firstRdv?->start_time ?? '-';
+
                         @endphp
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 col-date">
@@ -157,9 +158,6 @@
                                 {{ $avoir->created_at?->year ?? '-' }}
                             </td>
 
-                            <td class="px-6 py-4 whitespace-nowrap text-sm col-rdv">
-                                {{ $rdvText }}
-                            </td>
                         </tr>
                     @empty
                         <tr>
