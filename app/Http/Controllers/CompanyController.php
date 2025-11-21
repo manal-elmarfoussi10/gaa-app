@@ -77,7 +77,7 @@ class CompanyController extends Controller
             'tva_exemption_doc', 'invoice_terms_doc', 'signature_path',
         ] as $field) {
             if ($request->hasFile($field)) {
-                $data[$field] = $request->file($field)->store('company_files', 'public');
+                $data[$field] = $request->file($field)->store('company_files/' . auth()->id(), 'public');
             }
         }
 
