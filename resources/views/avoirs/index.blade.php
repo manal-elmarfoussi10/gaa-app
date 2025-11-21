@@ -80,7 +80,6 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider col-ttc">TTC</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider col-facture">Facture associée</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider col-annee">Année fiscale</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider col-rdv">Date de RDV</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -159,9 +158,6 @@
                                 {{ $avoir->created_at?->year ?? '-' }}
                             </td>
 
-                            <td class="px-6 py-4 whitespace-nowrap text-sm col-rdv">
-                                {{ $rdvText }}
-                            </td>
                         </tr>
                     @empty
                         <tr>
