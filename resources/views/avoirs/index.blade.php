@@ -2,10 +2,10 @@
 
 @section('content')
 <div class="p-4 sm:p-6">
-    <!-- Header -->
+    <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 p-6 bg-white rounded-xl shadow-sm border border-gray-100">
         <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Mes Avoirs</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Gestion des Avoirs</h1>
             <p class="text-gray-600 mt-1">Liste des avoirs enregistrés dans le système</p>
         </div>
         <a href="{{ route('avoirs.create') }}" class="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg">
@@ -62,7 +62,7 @@
         </div>
     </div>
 
-    <!-- Table -->
+    <!-- Avoir Table -->
     <div class="bg-white shadow rounded-xl overflow-hidden border border-gray-100">
         <div class="overflow-x-auto">
             <table class="w-full table-auto min-w-[1100px]">
