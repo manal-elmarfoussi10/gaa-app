@@ -99,8 +99,18 @@
     </a>
   @endif
 
-  <button class="ml-1 rounded-full p-1 focus:outline-none focus:ring-1 focus:ring-[#FF4B00]">
+  <button class="ml-1 rounded-full p-1 focus:outline-none focus:ring-1 focus:ring-[#FF4B00] relative" onclick="window.location.href='{{ route('emails.notifications') }}'">
     <i data-lucide="bell" class="w-4 h-4 text-[#FF4B00]"></i>
+    @php
+      $unreadEmails = \App\Models\Email::where('is_read', false)->where(function($q) {
+        $q->whereIn('receiver_id', \App\Models\User::supportUsers()->pluck('id'))
+          ->orWhereIn('sender_id', \App\Models\User::supportUsers()->pluck('id'))
+          ->orWhereNull('receiver_id');
+      })->count();
+    @endphp
+    @if($unreadEmails > 0)
+      <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{{ $unreadEmails > 99 ? '99+' : $unreadEmails }}</span>
+    @endif
   </button>
 
   <a href="{{ route('mon-compte') }}" class="flex items-center gap-1 ml-2 hover:opacity-80 transition max-w-[140px]">

@@ -9,7 +9,16 @@ class CompanyController extends Controller
 {
     public function show()
     {
-        $company = Company::first();
+        $user = auth()->user();
+
+        if (!$user->company_id) {
+            return redirect()
+                ->route('company.create')
+                ->with('warning', 'Vous devez d\'abord créer votre entreprise.');
+        }
+
+        $company = $user->company;
+
         return view('company.profile', compact('company'));
     }
 
@@ -59,7 +68,6 @@ class CompanyController extends Controller
             'id_photo_verso'     => 'nullable|file|mimes:png,jpg,jpeg,pdf|max:4096',
             'tva_exemption_doc'  => 'nullable|file|mimes:png,jpg,jpeg,pdf|max:4096',
             'invoice_terms_doc'  => 'nullable|file|mimes:png,jpg,jpeg,pdf|max:4096',
-            // Signature image (prefer png with transparent bg)
             'signature_path'     => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
         ]);
 
@@ -73,7 +81,13 @@ class CompanyController extends Controller
             }
         }
 
+        // 1) Create the company
         $company = Company::create($data);
+
+        // 2) Attach it to the logged-in user
+        $user = auth()->user();
+        $user->company_id = $company->id;
+        $user->save();
 
         return redirect()->route('company.profile')
             ->with('success', 'Informations enregistrées.');
@@ -81,13 +95,30 @@ class CompanyController extends Controller
 
     public function edit()
     {
-        $company = Company::first();
+        $user = auth()->user();
+
+        if (!$user->company_id) {
+            return redirect()
+                ->route('company.create')
+                ->with('warning', 'Vous devez d\'abord créer votre entreprise.');
+        }
+
+        $company = $user->company;
+
         return view('company.edit', compact('company'));
     }
 
     public function update(Request $request)
     {
-        $company = Company::firstOrFail();
+        $user = auth()->user();
+
+        if (!$user->company_id) {
+            return redirect()
+                ->route('company.create')
+                ->with('warning', 'Vous devez d\'abord créer votre entreprise.');
+        }
+
+        $company = $user->company;
 
         $data = $request->validate([
             'name'                => 'required|string|max:255',
