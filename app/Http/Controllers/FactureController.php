@@ -390,7 +390,7 @@ class FactureController extends Controller
 
     public function exportExcel()
     {
-        return Excel::download(new FacturesExport, 'factures.xlsx');
+        return Excel::download(new FacturesExport(auth()->user()), 'factures.xlsx');
     }
 
     public function exportFacturesPDF()
