@@ -161,7 +161,6 @@
                 <th>Montant</th>
                 <th>Facture ID</th>
                 <th>Année fiscale</th>
-                <th>Date de RDV</th>
             </tr>
         </thead>
         <tbody>
@@ -172,7 +171,6 @@
                     <td>{{ number_format($avoir->montant, 2) }} €</td>
                     <td>{{ $avoir->facture_id }}</td>
                     <td>{{ $avoir->created_at->format('Y') }}</td>
-                    <td>{{ optional($avoir->facture->client->rdvs->first())->start_time ?? '-' }}</td>
                 </tr>
             @endforeach
         </tbody>

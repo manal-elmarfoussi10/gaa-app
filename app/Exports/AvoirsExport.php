@@ -10,7 +10,7 @@ class AvoirsExport implements FromCollection, WithHeadings
 {
     public function collection()
     {
-        return Avoir::with('facture.client.rdvs')->get()->map(function ($avoir) {
+        return Avoir::with('facture.client')->get()->map(function ($avoir) {
             return [
                 'ID' => $avoir->id,
                 'Date' => $avoir->created_at->format('d/m/Y'),
@@ -18,7 +18,6 @@ class AvoirsExport implements FromCollection, WithHeadings
                 'Montant' => $avoir->montant,
                 'Facture ID' => $avoir->facture_id,
                 'Année fiscale' => optional($avoir->created_at)->format('Y'),
-                'Date RDV' => optional($avoir->facture->client?->rdvs?->first())->start_time ?? '-',
             ];
         });
     }
