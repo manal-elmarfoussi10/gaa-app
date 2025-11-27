@@ -6,10 +6,10 @@
     <style>
         body {
             font-family:'Segoe UI',sans-serif;
-            font-size:12px;
+            font-size:11px;
             color:#1f2937;
             margin:0;
-            padding:24px 36px;
+            padding:18px 28px;
         }
 
         /* HEADER */
@@ -19,35 +19,35 @@
             align-items:flex-start;
             width:100%;
         }
-        .company-info { font-size:12px; line-height:1.5; }
-        .devis-info { text-align:right; font-size:13px; }
-        .devis-info h2 { margin:0; font-size:22px; color:#0ea5e9; }
+        .company-info { font-size:11px; line-height:1.4; }
+        .devis-info { text-align:right; font-size:12px; }
+        .devis-info h2 { margin:0; font-size:20px; color:#0ea5e9; }
 
         /* CLIENT */
-        .client-info { margin:14px 0 18px; font-size:12px; line-height:1.45; }
+        .client-info { margin:10px 0 14px; font-size:11px; line-height:1.4; }
 
         /* TITLES */
         .section-title {
             font-weight:700;
-            margin:14px 0 6px;
+            margin:10px 0 4px;
             color:#0f172a;
             text-transform:uppercase;
-            font-size:13px;
+            font-size:12px;
         }
 
         /* VEHICLE BLOCK — compact version */
-        .vs-line { margin:2px 0; font-size:12px; }
+        .vs-line { margin:1px 0; font-size:11px; }
 
         /* ITEMS TABLE */
         table.items {
             width:100%;
             border-collapse:collapse;
-            font-size:12px;
-            margin-top:10px;
+            font-size:11px;
+            margin-top:8px;
         }
         table.items th, table.items td {
             border-bottom:1px solid #e5e7eb;
-            padding:6px;
+            padding:4px;
             text-align:left;
         }
         table.items th {
@@ -60,36 +60,36 @@
         .totals {
             width:45%;
             margin-left:auto;
-            margin-top:12px;
+            margin-top:8px;
             border-collapse:collapse;
         }
-        .totals td { padding:6px 4px; }
+        .totals td { padding:4px 2px; }
 
         /* FOOTER BLOCKS */
         .bottom-line {
             display:flex;
             justify-content:space-between;
             width:100%;
-            margin-top:20px;
+            margin-top:16px;
         }
         .modalites, .signature {
             width:48%;
-            font-size:11.5px;
-            line-height:1.45;
+            font-size:10.5px;
+            line-height:1.4;
         }
         .signature .box {
-            margin-top:20px;
+            margin-top:16px;
             text-align:center;
             border-top:1px dashed #94a3b8;
-            padding-top:10px;
+            padding-top:8px;
         }
 
         .footer {
-            font-size:11px;
-            margin-top:18px;
+            font-size:10px;
+            margin-top:14px;
             text-align:center;
             border-top:1px solid #e2e8f0;
-            padding-top:8px;
+            padding-top:6px;
             color:#64748b;
         }
     </style>
@@ -122,9 +122,7 @@
     </div>
 
     <div class="devis-info">
-        <h2>DEVIS</h2>
-        <p>#{{ $devis->numero ?? $devis->id }}</p>
-        <p>Le {{ \Carbon\Carbon::parse($devis->date_devis)->format('d/m/Y') }}</p>
+        <p><strong>DEVIS</strong> #{{ $devis->numero ?? $devis->id }} - Le {{ \Carbon\Carbon::parse($devis->date_devis)->format('d/m/Y') }}</p>
     </div>
 </div>
 
