@@ -10,6 +10,7 @@
             color:#1f2937;
             margin:0;
             padding:18px 28px;
+            background:#fff;
         }
 
         /* HEADER */
@@ -34,9 +35,11 @@
             font-size:12px;
         }
         .devis-title {
+            margin:0;
             font-size:20px;
             color:#0ea5e9;
             font-weight:bold;
+            letter-spacing:.5px;
         }
 
         /* CLIENT */
@@ -47,7 +50,7 @@
             text-align:right;
         }
 
-        /* TITLES */
+        /* TITRES SECTIONS */
         .section-title {
             font-weight:700;
             margin:10px 0 4px;
@@ -56,13 +59,13 @@
             font-size:12px;
         }
 
-        /* VEHICLE BLOCK — compact version */
+        /* VEHICULE compact */
         .vs-line {
             margin:1px 0;
             font-size:11px;
         }
 
-        /* ITEMS TABLE */
+        /* TABLEAU LIGNES DEVIS */
         table.items {
             width:100%;
             border-collapse:collapse;
@@ -80,6 +83,9 @@
             font-weight:700;
             color:#0c4a6e;
         }
+        .muted {
+            color:#6b7280;
+        }
 
         /* TOTALS */
         .totals {
@@ -93,7 +99,7 @@
             padding:4px 2px;
         }
 
-        /* BOTTOM (MODALITES + SIGNATURE) */
+        /* BAS DE PAGE : MODALITES + SIGNATURE */
         table.bottom-table {
             width:100%;
             margin-top:12px;
@@ -121,6 +127,10 @@
             padding-top:8px;
             font-size:11px;
         }
+        .sig-img {
+            max-height:80px;
+            margin-bottom:8px;
+        }
 
         /* FOOTER */
         .footer {
@@ -146,9 +156,11 @@
     // Helpers
     $fmtDate = fn($v) => $v ? \Carbon\Carbon::parse($v)->format('d/m/Y') : null;
     $fmtKm   = fn($v) => filled($v) ? number_format((int)$v, 0, ',', ' ').' km' : null;
-@endphp
-@php
-    // Signature image (same as facture)
+
+    // Nom société
+    $companyName = $company->commercial_name ?? $company->name ?? 'Votre société';
+
+    // Signature image (comme dans la facture)
     $sigSrc = null;
     if (!empty($company?->signature_path)) {
         try {
@@ -165,7 +177,7 @@
     <div class="top-left">
         <div class="company-info">
             @if($company)
-                <strong>{{ $company->commercial_name ?? $company->name }}</strong><br>
+                <strong>{{ $companyName }}</strong><br>
                 {{ $company->address }}<br>
                 {{ $company->postal_code }} {{ $company->city }}<br>
                 {{ $company->email }}<br>
@@ -268,7 +280,7 @@
             <td>
                 {{ $item->produit }}
                 @if($item->description)
-                    <br><span style="color:#6b7280;">{{ $item->description }}</span>
+                    <br><span class="muted">{{ $item->description }}</span>
                 @endif
             </td>
             <td>{{ number_format($item->prix_unitaire, 2, ',', ' ') }} €</td>
@@ -308,7 +320,7 @@
     <tr>
         <td class="bottom-left">
             <div class="section-title">Modalités & conditions de règlement</div>
-            <p>Règlement : Virement bancaire ou chèque à l'ordre de {{ $company->commercial_name ?? $company->name }}.</p>
+            <p>Règlement : Virement bancaire ou chèque à l'ordre de {{ $companyName }}.</p>
 
             @if($company?->bic)
                 <p>Code B.I.C : {{ $company->bic }}</p>
@@ -330,7 +342,7 @@
                     <img class="sig-img" src="{{ $sigSrc }}" alt="Signature de l'entreprise">
                 @endif
                 Bon pour accord<br>
-                {{ $company->commercial_name ?? $company->name }}
+                {{ $companyName }}
             </div>
         </td>
     </tr>
@@ -338,7 +350,7 @@
 
 {{-- FOOTER --}}
 <div class="footer">
-    {{ $company->commercial_name ?? $company->name }}
+    {{ $companyName }}
     @if($company?->siret) — SIRET : {{ $company->siret }} @endif
     @if($company?->tva)   — TVA : {{ $company->tva }} @endif
     @if($company?->ape)   — APE : {{ $company->ape }} @endif
