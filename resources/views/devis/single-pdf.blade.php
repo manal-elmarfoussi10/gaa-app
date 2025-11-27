@@ -287,7 +287,7 @@
         </td>
     </tr>
 </table>
-
+<br><br>
 {{-- MODALITÉS + SIGNATURE SUR LA MÊME LIGNE --}}
 <table class="bottom-table">
     <tr>
