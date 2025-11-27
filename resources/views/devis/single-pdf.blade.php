@@ -147,6 +147,18 @@
     $fmtDate = fn($v) => $v ? \Carbon\Carbon::parse($v)->format('d/m/Y') : null;
     $fmtKm   = fn($v) => filled($v) ? number_format((int)$v, 0, ',', ' ').' km' : null;
 @endphp
+@php
+    // Signature image (same as facture)
+    $sigSrc = null;
+    if (!empty($company?->signature_path)) {
+        try {
+            $abs = \Illuminate\Support\Facades\Storage::disk('public')->path($company->signature_path);
+            if (is_file($abs)) {
+                $sigSrc = 'data:image/png;base64,' . base64_encode(file_get_contents($abs));
+            }
+        } catch (\Throwable $e) {}
+    }
+@endphp
 
 {{-- HEADER --}}
 <div class="top-line">
@@ -314,6 +326,9 @@
         <td class="bottom-right">
             <div class="section-title">Signature</div>
             <div class="sig-box">
+                @if($sigSrc)
+                    <img class="sig-img" src="{{ $sigSrc }}" alt="Signature de l'entreprise">
+                @endif
                 Bon pour accord<br>
                 {{ $company->commercial_name ?? $company->name }}
             </div>
