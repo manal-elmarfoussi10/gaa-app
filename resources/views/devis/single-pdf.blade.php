@@ -204,16 +204,11 @@
                 @if(($client->code_postal ?? '') || ($client->ville ?? ''))
                     {{ $client->code_postal }} {{ $client->ville }}<br>
                 @endif
-                @if($client->email)
-                    Email : {{ $client->email }}<br>
-                @endif
                 @if($client->telephone)
                     Tél. : {{ $client->telephone }}<br>
                 @endif
             @else
-                @if($devis->prospect_email)
-                    Email : {{ $devis->prospect_email }}<br>
-                @endif
+            
                 @if($devis->prospect_phone)
                     Tél. : {{ $devis->prospect_phone }}<br>
                 @endif
@@ -341,8 +336,11 @@
                 @if($sigSrc)
                     <img class="sig-img" src="{{ $sigSrc }}" alt="Signature de l'entreprise">
                 @endif
+               
                 Bon pour accord<br>
                 {{ $companyName }}
+
+                
             </div>
         </td>
     </tr>

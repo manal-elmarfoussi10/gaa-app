@@ -219,16 +219,11 @@
                 @if($addr2)
                     {{ $addr2 }}<br>
                 @endif
-                @if($client->email)
-                    Email : {{ $client->email }}<br>
-                @endif
                 @if($client->telephone)
                     Tél. : {{ $client->telephone }}<br>
                 @endif
             @else
-                @if($prospectEmail)
-                    Email : {{ $prospectEmail }}<br>
-                @endif
+        
                 @if($prospectPhone)
                     Tél. : {{ $prospectPhone }}<br>
                 @endif
@@ -370,7 +365,7 @@
                 @if($sigSrc)
                     <img class="sig-img" src="{{ $sigSrc }}" alt="Signature de l'entreprise">
                 @endif
-                Bon pour accord<br>
+             <br>
                 {{ $companyName }}
             </div>
         </td>
