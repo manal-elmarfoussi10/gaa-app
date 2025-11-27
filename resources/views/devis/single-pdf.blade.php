@@ -3,163 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <title>Devis #{{ $devis->numero ?? $devis->id }}</title>
+
     <style>
-        body {
-            font-family:'Segoe UI',sans-serif;
+        body { font-family:'Segoe UI',sans-serif; font-size:12px; color:#1f2937; margin:0; padding:24px 36px; background:#fff; }
+
+        .header { display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:20px; }
+        .company-info { font-size:12px; line-height:1.5; }
+        .devis-info { text-align:right; }
+        .devis-info h2 { margin:0; font-size:22px; color:#0ea5e9; letter-spacing:.5px; }
+
+        .client-info { margin:16px 0 16px; font-size:12px; line-height:1.55; }
+
+        .section-title { font-weight:700; margin:18px 0 8px; color:#0f172a; text-transform:uppercase; font-size:13px; }
+
+        /* TABLE DESIGN */
+        table.items { width:100%; border-collapse:collapse; font-size:12px; margin-top:14px; }
+        table.items th, table.items td { border-bottom:1px solid #e5e7eb; padding:8px; text-align:left; }
+        table.items th { background:#e0f2fe; font-weight:700; color:#0c4a6e; }
+
+        .totals { width:50%; margin-left:auto; margin-top:16px; border-collapse:collapse; }
+        .totals td { padding:6px 8px; }
+
+        /* NEW COMPACT STYLE */
+        .compact-block {
             font-size:12px;
-            color:#1f2937;
-            margin:0;
-            padding:24px 36px;
-            background:#fff;
+            line-height:1.45;
+            margin-bottom:14px;
         }
-        .header {
-            display:flex;
-            justify-content:space-between;
-            border-bottom:1px solid #e2e8f0;
-            padding-bottom:12px;
-            margin-bottom:20px;
-        }
-        .company-info {
-            font-size:12px;
-            line-height:1.5;
-        }
-        .devis-info {
-            text-align:right;
-        }
-        .devis-info h2 {
-            margin:0;
-            font-size:20px;
-            color:#0ea5e9;
-            letter-spacing:.5px;
-        }
-        .client-info {
-            margin:16px 0 20px;
-            font-size:12px;
-            line-height:1.55;
-        }
-        .section-title {
-            font-weight:700;
-            margin:18px 0 8px;
-            color:#0f172a;
-            text-transform:uppercase;
-            font-size:13px;
+        .compact-block p { margin:3px 0; }
+
+        .line-list span {
+            margin-right:10px;
         }
 
-        /* plus d’ancien tableau général */
-        .kv { display:none; }
-
-        table.items {
-            width:100%;
-            border-collapse:collapse;
-            font-size:12px;
-            margin-top:14px;
-        }
-        table.items th,
-        table.items td {
-            border-bottom:1px solid #e5e7eb;
-            padding:8px;
-            text-align:left;
-        }
-        table.items th {
-            background:#e0f2fe;
-            font-weight:700;
-            color:#0c4a6e;
-        }
-
-        .totals {
-            width:50%;
-            margin-left:auto;
+        /* PAYMENT BLOCK */
+        .payment-block { 
+            font-size:12px; 
+            line-height:1.45; 
             margin-top:16px;
-            border-collapse:collapse;
-        }
-        .totals td {
-            padding:6px 8px;
         }
 
-        .footer {
-            font-size:11px;
-            margin-top:28px;
-            text-align:center;
-            border-top:1px solid #e2e8f0;
-            padding-top:10px;
-            color:#64748b;
-        }
-        .signature {
-            margin-top:40px;
-            display:flex;
-            justify-content:space-between;
-        }
-        .signature div {
-            width:45%;
-            text-align:center;
-            border-top:1px dashed #94a3b8;
-            padding-top:10px;
-            font-size:12px;
-        }
+        .signature { margin-top:40px; display:flex; justify-content:space-between; }
+        .signature div { width:45%; text-align:center; border-top:1px dashed #94a3b8; padding-top:10px; font-size:12px; }
+
+        .footer { font-size:11px; margin-top:28px; text-align:center; border-top:1px solid #e2e8f0; padding-top:10px; color:#64748b; }
         .muted { color:#6b7280; }
-
-        /* Bloc compact véhicule / sinistre */
-        .vs-block {
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 8px 10px;
-            background: #f9fafb;
-            font-size: 12px;
-            line-height: 1.5;
-            margin-bottom: 14px;
-        }
-        .vs-block p { margin: 3px 0; }
-
-        /* Bloc compact modalités de paiement */
-        .pay-block {
-            border:1px solid #e5e7eb;
-            border-radius:6px;
-            padding:8px 10px;
-            background:#f9fafb;
-            font-size:11px;
-            line-height:1.5;
-            margin-top:6px;
-        }
-        .pay-block p { margin:3px 0; }
     </style>
 </head>
+
 <body>
+
 @php
     $client = $devis->client;
 
-    // Nom affiché
     $displayName = $client
         ? trim(($client->prenom ? $client->prenom.' ' : '').($client->nom_assure ?? ''))
         : ($devis->prospect_name ?? '—');
 
-    // Adresse client
     $addr1 = $client?->adresse;
     $addr2 = trim(($client->code_postal ?? '').' '.($client->ville ?? ''));
 
     $fmtDate = fn($v) => $v ? \Carbon\Carbon::parse($v)->format('d/m/Y') : null;
-    $fmtKm   = fn($v) => filled($v) ? number_format((int)$v, 0, ',', ' ').' km' : '—';
-
-    $societe = $company ?? null;
+    $fmtKm = fn($v) => filled($v) ? number_format((int)$v, 0, ',', ' ').' km' : '—';
 @endphp
 
+<!-- HEADER -->
 <div class="header">
     <div class="company-info">
-        @if($societe)
-            <strong>{{ $societe->commercial_name ?? $societe->name }}</strong><br>
-            {{ $societe->address }}<br>
-            {{ $societe->postal_code }} {{ $societe->city }}<br>
-            {{ $societe->email }}<br>
-            {{ $societe->phone }}
-        @endif
+        <strong>{{ $company->commercial_name ?? $company->name }}</strong><br>
+        {{ $company->address }}<br>
+        {{ $company->postal_code }} {{ $company->city }}<br>
+        {{ $company->email }}<br>
+        {{ $company->phone }}
     </div>
     <div class="devis-info">
         <h2>DEVIS</h2>
         <p>#{{ $devis->numero ?? $devis->id }}</p>
-        <p>{{ $societe->city ?? '' }}, le {{ \Carbon\Carbon::parse($devis->date_devis)->format('d/m/Y') }}</p>
+        <p>{{ $company->city ?? '' }}, le {{ \Carbon\Carbon::parse($devis->date_devis)->format('d/m/Y') }}</p>
     </div>
 </div>
 
-{{-- CLIENT --}}
+<!-- CLIENT INFO -->
 <div class="client-info">
     <strong>{{ $displayName }}</strong><br>
     @if($client)
@@ -173,42 +97,43 @@
     @endif
 </div>
 
-{{-- VÉHICULE / SINISTRE / ASSURANCE  (format compact avec "/") --}}
-@if($client)
-    <div class="section-title">Véhicule / sinistre / assurance</div>
 
-    <div class="vs-block">
-        <p>
-            <strong>Plaque :</strong> {{ $client->plaque ?: '—' }}
-            / <strong>Kilométrage :</strong> {{ $fmtKm($client->kilometrage) }}
-            / <strong>Ancien modèle :</strong> {{ $client->ancien_modele_plaque ? 'Oui' : 'Non' }}
-            / <strong>Professionnel :</strong> {{ $client->professionnel ?: '—' }}
-        </p>
-        <p>
-            <strong>Vitrage :</strong> {{ $client->type_vitrage ?: '—' }}
-            / <strong>Réparation :</strong>
-            @if(!is_null($client->reparation))
-                {{ (string)$client->reparation === '1' ? 'Oui' : 'Non' }}
-            @else
-                —
-            @endif
-            / <strong>Police :</strong> {{ $client->numero_police ?: '—' }}
-            / <strong>N° sinistre :</strong> {{ $client->numero_sinistre ?: '—' }}
-        </p>
-        <p>
-            <strong>Assurance :</strong> {{ $client->nom_assurance ?: '—' }}
-            / <strong>Autre assurance :</strong> {{ $client->autre_assurance ?: '—' }}
-            / <strong>Date sinistre :</strong> {{ $fmtDate($client->date_sinistre) ?: '—' }}
-            / <strong>Déclaration :</strong> {{ $fmtDate($client->date_declaration) ?: '—' }}
-        </p>
-        <p>
-            <strong>Adresse de pose :</strong> {{ $client->adresse_pose ?: '—' }}
-        </p>
-    </div>
+<!-- VEHICULE COMPACT -->
+@if($client)
+<div class="section-title">VÉHICULE / SINISTRE / ASSURANCE</div>
+
+<div class="compact-block">
+
+    <p class="line-list">
+        <span><strong>Plaque :</strong> {{ $client->plaque ?: '—' }}</span> /
+        <span><strong>Kilométrage :</strong> {{ $fmtKm($client->kilometrage) }}</span> /
+        <span><strong>Ancien modèle :</strong> {{ $client->ancien_modele_plaque ? 'Oui' : 'Non' }}</span> /
+        <span><strong>Professionnel :</strong> {{ $client->professionnel ?: '—' }}</span>
+    </p>
+
+    <p class="line-list">
+        <span><strong>Vitrage :</strong> {{ $client->type_vitrage ?: '—' }}</span> /
+        <span><strong>Réparation :</strong> {{ $client->reparation ? 'Oui' : 'Non' }}</span> /
+        <span><strong>Police :</strong> {{ $client->numero_police ?: '—' }}</span> /
+        <span><strong>N° sinistre :</strong> {{ $client->numero_sinistre ?: '—' }}</span>
+    </p>
+
+    <p class="line-list">
+        <span><strong>Assurance :</strong> {{ $client->nom_assurance ?: '—' }}</span> /
+        <span><strong>Autre :</strong> {{ $client->autre_assurance ?: '—' }}</span> /
+        <span><strong>Date sinistre :</strong> {{ $fmtDate($client->date_sinistre) ?: '—' }}</span> /
+        <span><strong>Déclaration :</strong> {{ $fmtDate($client->date_declaration) ?: '—' }}</span>
+    </p>
+
+    <p><strong>Adresse de pose :</strong> {{ $client->adresse_pose ?: '—' }}</p>
+
+</div>
 @endif
 
-{{-- DÉTAILS DES PRESTATIONS --}}
+
+<!-- PRESTATIONS -->
 <div class="section-title">Détails des prestations</div>
+
 <table class="items">
     <thead>
     <tr>
@@ -218,6 +143,7 @@
         <th>Montant HT</th>
     </tr>
     </thead>
+
     <tbody>
     @foreach($devis->items as $item)
         <tr>
@@ -235,63 +161,49 @@
     </tbody>
 </table>
 
-{{-- TOTALS --}}
+
+<!-- TOTALS -->
 <table class="totals">
-    <tr>
-        <td>Total HT</td>
-        <td style="text-align:right;">{{ number_format($devis->total_ht, 2, ',', ' ') }} €</td>
-    </tr>
-    <tr>
-        <td>TVA (20%)</td>
-        <td style="text-align:right;">{{ number_format($devis->total_tva, 2, ',', ' ') }} €</td>
-    </tr>
-    <tr>
-        <td><strong>Total TTC</strong></td>
-        <td style="text-align:right;"><strong>{{ number_format($devis->total_ttc, 2, ',', ' ') }} €</strong></td>
-    </tr>
+    <tr><td>Total HT</td><td style="text-align:right;">{{ number_format($devis->total_ht, 2, ',', ' ') }} €</td></tr>
+    <tr><td>TVA (20%)</td><td style="text-align:right;">{{ number_format($devis->total_tva, 2, ',', ' ') }} €</td></tr>
+    <tr><td><strong>Total TTC</strong></td><td style="text-align:right;"><strong>{{ number_format($devis->total_ttc, 2, ',', ' ') }} €</strong></td></tr>
 </table>
 
-{{-- MODALITÉS & CONDITIONS DE RÈGLEMENT (version compacte) --}}
+
+<!-- MODALITÉS DE PAIEMENT (COMPACTE) -->
 <div class="section-title">Modalités & conditions de règlement</div>
-<div class="pay-block">
-    <p>
-        Par virement bancaire ou chèque à l'ordre de
-        <strong>{{ $societe->commercial_name ?? $societe->name }}</strong>.
+
+<div class="payment-block">
+    <p><strong>Règlement :</strong> Virement bancaire ou chèque à l'ordre de {{ $company->commercial_name ?? $company->name }}.</p>
+
+    <p><strong>BIC :</strong> {{ $company->bic ?? '—' }}</p>
+    <p><strong>IBAN :</strong> {{ $company->iban ?? '—' }}</p>
+
+    <p style="margin-top:6px;">
+        La présente facture sera payable au plus tard le : <strong>{{ $fmtDate($devis->date_validite) }}</strong>.
     </p>
-    @if(!empty($societe?->bic))
-        <p>Code B.I.C : {{ $societe->bic }}</p>
-    @endif
-    @if(!empty($societe?->iban))
-        <p>Code I.B.A.N : {{ $societe->iban }}</p>
-    @endif>
-    <p>
-        La présente facture sera payable au plus tard le :
-        <strong>{{ $fmtDate($devis->date_validite) ?? '—' }}</strong>.
-    </p>
-    <p>
-        Passé ce délai, sans obligation d’envoi d’une relance, une pénalité pourra être appliquée
-        conformément au Code de commerce. Une indemnité forfaitaire pour frais de recouvrement de 40 €
-        est également exigible.
+
+    <p class="muted" style="margin-top:4px;">
+        Passé ce délai, une pénalité pourra être appliquée selon le Code du commerce.  
+        Une indemnité forfaitaire de 40 € peut être exigible.
     </p>
 </div>
 
-{{-- VALIDITÉ / SIGNATURE --}}
-<div class="section-title">Validité & signature</div>
-<p style="font-size:12px;">
-    Ce devis est valable jusqu’au <strong>{{ $fmtDate($devis->date_validite) ?? '—' }}</strong>.
-</p>
 
+<!-- SIGNATURE -->
 <div class="signature">
     <div>Bon pour accord</div>
-    <div>{{ $societe->commercial_name ?? $societe->name }}</div>
+    <div>{{ $company->commercial_name ?? $company->name }}</div>
 </div>
 
+
+<!-- FOOTER -->
 <div class="footer">
-    {{ $societe->commercial_name ?? $societe->name }}
-    @if($societe?->siret) — SIRET: {{ $societe->siret }} @endif
-    @if($societe?->tva)   — TVA: {{ $societe->tva }} @endif
-    @if($societe?->ape)   — Code APE: {{ $societe->ape }} @endif
-    @if($societe?->rcs_number) — RCS: {{ $societe->rcs_number }} {{ $societe->rcs_city }} @endif
+    {{ $company->commercial_name ?? $company->name }}
+    @if($company?->siret) — SIRET: {{ $company->siret }} @endif
+    @if($company?->tva) — TVA: {{ $company->tva }} @endif
+    @if($company?->ape) — Code APE: {{ $company->ape }} @endif
+    @if($company?->rcs_number) — RCS: {{ $company->rcs_number }} {{ $company->rcs_city }} @endif
 </div>
 
 </body>
