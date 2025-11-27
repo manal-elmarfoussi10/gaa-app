@@ -44,9 +44,10 @@
 
         /* CLIENT */
         .client-info {
-            margin: 12px 0 14px;
+            margin: 12px 0 0;
             font-size: 11px;
             line-height: 1.4;
+            text-align: right;
         }
 
         /* TITRES SECTIONS */
@@ -206,34 +207,34 @@
             <div>N° {{ $facture->numero }}</div>
             <div>Le {{ \Carbon\Carbon::parse($facture->date_facture)->format('d/m/Y') }}</div>
         </div>
+
+        {{-- CLIENT À DROITE --}}
+        <div class="client-info">
+            <strong>{{ $displayName }}</strong><br>
+
+            @if($client)
+                @if($addr1)
+                    {{ $addr1 }}<br>
+                @endif
+                @if($addr2)
+                    {{ $addr2 }}<br>
+                @endif
+                @if($client->email)
+                    Email : {{ $client->email }}<br>
+                @endif
+                @if($client->telephone)
+                    Tél. : {{ $client->telephone }}<br>
+                @endif
+            @else
+                @if($prospectEmail)
+                    Email : {{ $prospectEmail }}<br>
+                @endif
+                @if($prospectPhone)
+                    Tél. : {{ $prospectPhone }}<br>
+                @endif
+            @endif
+        </div>
     </div>
-</div>
-
-{{-- CLIENT --}}
-<div class="client-info">
-    <strong>{{ $displayName }}</strong><br>
-
-    @if($client)
-        @if($addr1)
-            {{ $addr1 }}<br>
-        @endif
-        @if($addr2)
-            {{ $addr2 }}<br>
-        @endif
-        @if($client->email)
-            Email : {{ $client->email }}<br>
-        @endif
-        @if($client->telephone)
-            Tél. : {{ $client->telephone }}<br>
-        @endif
-    @else
-        @if($prospectEmail)
-            Email : {{ $prospectEmail }}<br>
-        @endif
-        @if($prospectPhone)
-            Tél. : {{ $prospectPhone }}<br>
-        @endif
-    @endif
 </div>
 
 {{-- VÉHICULE / SINISTRE / ASSURANCE (compact, seulement si info existe) --}}
@@ -326,7 +327,9 @@
         </td>
     </tr>
 </table>
+
 <br><br>
+
 {{-- MODALITÉS + SIGNATURE SUR LA MÊME LIGNE --}}
 <table class="bottom-table">
     <tr>

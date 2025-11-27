@@ -41,9 +41,10 @@
 
         /* CLIENT */
         .client-info {
-            margin:12px 0 14px;
+            margin:12px 0 0;
             font-size:11px;
             line-height:1.4;
+            text-align:right;
         }
 
         /* TITLES */
@@ -167,34 +168,34 @@
             <div>#{{ $devis->numero ?? $devis->id }}</div>
             <div>Le {{ \Carbon\Carbon::parse($devis->date_devis)->format('d/m/Y') }}</div>
         </div>
+
+        {{-- CLIENT À DROITE --}}
+        <div class="client-info">
+            <strong>{{ $displayName }}</strong><br>
+
+            @if($client)
+                @if($client->adresse)
+                    {{ $client->adresse }}<br>
+                @endif
+                @if(($client->code_postal ?? '') || ($client->ville ?? ''))
+                    {{ $client->code_postal }} {{ $client->ville }}<br>
+                @endif
+                @if($client->email)
+                    Email : {{ $client->email }}<br>
+                @endif
+                @if($client->telephone)
+                    Tél. : {{ $client->telephone }}<br>
+                @endif
+            @else
+                @if($devis->prospect_email)
+                    Email : {{ $devis->prospect_email }}<br>
+                @endif
+                @if($devis->prospect_phone)
+                    Tél. : {{ $devis->prospect_phone }}<br>
+                @endif
+            @endif
+        </div>
     </div>
-</div>
-
-{{-- CLIENT --}}
-<div class="client-info">
-    <strong>{{ $displayName }}</strong><br>
-
-    @if($client)
-        @if($client->adresse)
-            {{ $client->adresse }}<br>
-        @endif
-        @if(($client->code_postal ?? '') || ($client->ville ?? ''))
-            {{ $client->code_postal }} {{ $client->ville }}<br>
-        @endif
-        @if($client->email)
-            Email : {{ $client->email }}<br>
-        @endif
-        @if($client->telephone)
-            Tél. : {{ $client->telephone }}<br>
-        @endif
-    @else
-        @if($devis->prospect_email)
-            {{ $devis->prospect_email }}<br>
-        @endif
-        @if($devis->prospect_phone)
-            {{ $devis->prospect_phone }}<br>
-        @endif
-    @endif
 </div>
 
 {{-- VÉHICULE / SINISTRE / ASSURANCE --}}
@@ -203,23 +204,23 @@
 
     @php
         $l1 = [];
-        if($client->plaque)           $l1[] = "Plaque : ".$client->plaque;
-        if($client->kilometrage)      $l1[] = "Kilométrage : ".$fmtKm($client->kilometrage);
-        if($client->ancien_modele_plaque) $l1[] = "Ancien modèle : Oui";
-        if($client->professionnel)    $l1[] = "Professionnel : ".$client->professionnel;
+        if($client->plaque)                 $l1[] = "Plaque : ".$client->plaque;
+        if($client->kilometrage)            $l1[] = "Kilométrage : ".$fmtKm($client->kilometrage);
+        if($client->ancien_modele_plaque)   $l1[] = "Ancien modèle : Oui";
+        if($client->professionnel)          $l1[] = "Professionnel : ".$client->professionnel;
 
         $l2 = [];
-        if($client->type_vitrage)     $l2[] = "Vitrage : ".$client->type_vitrage;
+        if($client->type_vitrage)           $l2[] = "Vitrage : ".$client->type_vitrage;
         if(!is_null($client->reparation))
             $l2[] = "Réparation : ".($client->reparation ? 'Oui' : 'Non');
-        if($client->numero_police)    $l2[] = "Police : ".$client->numero_police;
-        if($client->numero_sinistre)  $l2[] = "N° sinistre : ".$client->numero_sinistre;
+        if($client->numero_police)          $l2[] = "Police : ".$client->numero_police;
+        if($client->numero_sinistre)        $l2[] = "N° sinistre : ".$client->numero_sinistre;
 
         $l3 = [];
-        if($client->nom_assurance)    $l3[] = "Assurance : ".$client->nom_assurance;
-        if($client->autre_assurance)  $l3[] = "Autre : ".$client->autre_assurance;
-        if($client->date_sinistre)    $l3[] = "Date sinistre : ".$fmtDate($client->date_sinistre);
-        if($client->date_declaration) $l3[] = "Déclaration : ".$fmtDate($client->date_declaration);
+        if($client->nom_assurance)          $l3[] = "Assurance : ".$client->nom_assurance;
+        if($client->autre_assurance)        $l3[] = "Autre : ".$client->autre_assurance;
+        if($client->date_sinistre)          $l3[] = "Date sinistre : ".$fmtDate($client->date_sinistre);
+        if($client->date_declaration)       $l3[] = "Déclaration : ".$fmtDate($client->date_declaration);
     @endphp
 
     @if(count($l1))
@@ -287,7 +288,9 @@
         </td>
     </tr>
 </table>
+
 <br><br>
+
 {{-- MODALITÉS + SIGNATURE SUR LA MÊME LIGNE --}}
 <table class="bottom-table">
     <tr>
@@ -295,10 +298,10 @@
             <div class="section-title">Modalités & conditions de règlement</div>
             <p>Règlement : Virement bancaire ou chèque à l'ordre de {{ $company->commercial_name ?? $company->name }}.</p>
 
-            @if($company->bic)
+            @if($company?->bic)
                 <p>Code B.I.C : {{ $company->bic }}</p>
             @endif
-            @if($company->iban)
+            @if($company?->iban)
                 <p>Code I.B.A.N : {{ $company->iban }}</p>
             @endif
 
