@@ -72,6 +72,7 @@
         @endphp
         @if($kmAff) Kilométrage : {{ $kmAff }} km @endif
     @else
+        @if(!empty($facture->prospect_address)) {{ $facture->prospect_address }}<br>@endif
         @if(!empty($facture->prospect_email)) Email : {{ $facture->prospect_email }}<br>@endif
         @if(!empty($facture->prospect_phone)) Tél. : {{ $facture->prospect_phone }}@endif
     @endif

@@ -95,7 +95,7 @@
       </div>
 
       <!-- Prospect -->
-      <div id="section-prospect" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4 hidden">
+      <div id="section-prospect" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 hidden">
         <div>
           <label class="block mb-2 font-medium text-gray-700">Nom du prospect *</label>
           <input type="text" name="prospect_name" value="{{ old('prospect_name') }}"
@@ -111,6 +111,11 @@
           <label class="block mb-2 font-medium text-gray-700">Téléphone</label>
           <input type="text" name="prospect_phone" value="{{ old('prospect_phone') }}"
                  class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50">
+        </div>
+        <div>
+          <label class="block mb-2 font-medium text-gray-700">Adresse</label>
+          <textarea name="prospect_address" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                    placeholder="Adresse complète du prospect">{{ old('prospect_address') }}</textarea>
         </div>
       </div>
     </div>

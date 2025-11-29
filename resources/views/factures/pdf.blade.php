@@ -149,6 +149,7 @@
     $prospectName  = $facture->prospect_name  ?? optional($facture->devis)->prospect_name;
     $prospectEmail = $facture->prospect_email ?? optional($facture->devis)->prospect_email;
     $prospectPhone = $facture->prospect_phone ?? optional($facture->devis)->prospect_phone;
+    $prospectAddress = $facture->prospect_address ?? optional($facture->devis)->prospect_address;
 
     // Nom affiché
     $displayName = $client
@@ -223,7 +224,9 @@
                     Tél. : {{ $client->telephone }}<br>
                 @endif
             @else
-        
+                @if($prospectAddress)
+                    {{ $prospectAddress }}<br>
+                @endif
                 @if($prospectPhone)
                     Tél. : {{ $prospectPhone }}<br>
                 @endif

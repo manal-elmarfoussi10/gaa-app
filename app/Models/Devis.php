@@ -17,6 +17,7 @@ class Devis extends Model
         'prospect_name',
         'prospect_email',
         'prospect_phone',
+        'prospect_address',
         'titre',
         'date_devis',
         'date_validite',

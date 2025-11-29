@@ -77,6 +77,7 @@ class DevisController extends Controller
             'prospect_name'   => 'nullable|string|max:255|required_without:client_id',
             'prospect_email'  => 'nullable|email|max:255',
             'prospect_phone'  => 'nullable|string|max:255',
+            'prospect_address' => 'nullable|string|max:1000',
 
             'titre'           => 'nullable|string|max:255',
             'date_devis'      => 'required|date',
@@ -167,6 +168,7 @@ class DevisController extends Controller
             'prospect_name'   => 'nullable|string|max:255',
             'prospect_email'  => 'nullable|email|max:255',
             'prospect_phone'  => 'nullable|string|max:255',
+            'prospect_address' => 'nullable|string|max:1000',
 
             'titre'           => 'nullable|string|max:255',
             'date_devis'      => 'required|date',
@@ -185,10 +187,11 @@ class DevisController extends Controller
         $oldCompany = (int) $devis->company_id;
 
         // Keep client OR prospect
-        $devis->client_id      = $validated['client_id']      ?? null;
-        $devis->prospect_name  = $validated['prospect_name']  ?? null;
-        $devis->prospect_email = $validated['prospect_email'] ?? null;
-        $devis->prospect_phone = $validated['prospect_phone'] ?? null;
+        $devis->client_id       = $validated['client_id']       ?? null;
+        $devis->prospect_name   = $validated['prospect_name']   ?? null;
+        $devis->prospect_email  = $validated['prospect_email']  ?? null;
+        $devis->prospect_phone  = $validated['prospect_phone']  ?? null;
+        $devis->prospect_address = $validated['prospect_address'] ?? null;
         $devis->titre          = $validated['titre']          ?? null;
         $devis->date_devis     = $validated['date_devis'];
         $devis->date_validite  = $validated['date_validite'];
@@ -278,13 +281,17 @@ class DevisController extends Controller
         // Your FactureController already allocates its own numero;
         // just pass company_id so numbering works there too.
         $facture = \App\Models\Facture::create([
-            'client_id'    => $devis->client_id,
-            'devis_id'     => $devis->id,
-            'company_id'   => $devis->company_id,
-            'date_facture' => $devis->date_devis,
-            'total_ht'     => $devis->total_ht,
-            'total_ttc'    => $devis->total_ttc,
-            'total_tva'    => $devis->total_tva,
+            'client_id'       => $devis->client_id,
+            'devis_id'        => $devis->id,
+            'company_id'      => $devis->company_id,
+            'date_facture'    => $devis->date_devis,
+            'total_ht'        => $devis->total_ht,
+            'total_ttc'       => $devis->total_ttc,
+            'total_tva'       => $devis->total_tva,
+            'prospect_name'   => $devis->prospect_name,
+            'prospect_email'  => $devis->prospect_email,
+            'prospect_phone'  => $devis->prospect_phone,
+            'prospect_address' => $devis->prospect_address,
         ]);
 
         foreach ($devis->items as $item) {

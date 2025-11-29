@@ -69,7 +69,7 @@
             </div>
 
             {{-- Champs prospect (si facture sans client) --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                 <div>
                     <label class="block mb-2 font-medium text-gray-700">Nom du prospect</label>
                     <input type="text" name="prospect_name"
@@ -87,6 +87,10 @@
                     <input type="text" name="prospect_phone"
                            value="{{ old('prospect_phone', $facture->prospect_phone) }}"
                            class="w-full border border-gray-300 rounded-lg px-4 py-3">
+                </div>
+                <div>
+                    <label class="block mb-2 font-medium text-gray-700">Adresse</label>
+                    <textarea name="prospect_address" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-3" placeholder="Adresse complète du prospect">{{ old('prospect_address', $facture->prospect_address) }}</textarea>
                 </div>
             </div>
         </div>

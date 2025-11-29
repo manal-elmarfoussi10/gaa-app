@@ -46,7 +46,7 @@ class EmailController extends Controller
 
     public function bin()
     {
-        $emails = Email::where('is_deleted', true)->paginate(15);
+        $emails = Email::where('in_trash', true)->paginate(15);
         return view('emails.bin', compact('emails'));
     }
 
@@ -145,7 +145,7 @@ class EmailController extends Controller
     public function restore($id)
     {
         $email = Email::findOrFail($id);
-        $email->is_deleted = false;
+        $email->in_trash = false;
         $email->tag = null;
         $email->label_color = null;
         $email->save();
@@ -199,7 +199,7 @@ class EmailController extends Controller
     public function moveToTrash($id)
     {
         $email = Email::findOrFail($id);
-        $email->is_deleted = true;
+        $email->in_trash = true;
         $email->tag = 'bin';
         $email->label_color = '#ef4444';
         $email->save();

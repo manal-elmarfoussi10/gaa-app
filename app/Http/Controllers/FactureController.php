@@ -129,6 +129,7 @@ class FactureController extends Controller
             'prospect_name'  => 'nullable|string|max:255|required_without:client_id',
             'prospect_email' => 'nullable|email|max:255',
             'prospect_phone' => 'nullable|string|max:255',
+            'prospect_address' => 'nullable|string|max:1000',
 
             'devis_id'       => 'nullable|exists:devis,id',
             'titre'          => 'nullable|string|max:255',
@@ -313,10 +314,14 @@ class FactureController extends Controller
         $oldDate    = $facture->date_facture;
         $oldCompany = (int) $facture->company_id;
 
-        $facture->client_id    = $request->client_id;
-        $facture->devis_id     = $request->devis_id;
-        $facture->titre        = $request->titre;
-        $facture->date_facture = $request->date_facture;
+        $facture->client_id       = $request->client_id;
+        $facture->prospect_name   = $request->prospect_name;
+        $facture->prospect_email  = $request->prospect_email;
+        $facture->prospect_phone  = $request->prospect_phone;
+        $facture->prospect_address= $request->prospect_address;
+        $facture->devis_id        = $request->devis_id;
+        $facture->titre           = $request->titre;
+        $facture->date_facture    = $request->date_facture;
 
         if (empty($facture->company_id)) {
             $facture->company_id = auth()->user()->company_id

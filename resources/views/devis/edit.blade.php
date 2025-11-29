@@ -35,8 +35,26 @@
         <!-- Client Information Section -->
         <div class="mb-8">
             <h2 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">Informations client</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Mode selector -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                <label class="border rounded-lg p-3 flex items-start gap-3 cursor-pointer has-[:checked]:border-orange-400">
+                    <input type="radio" name="client_mode" value="existing" class="mt-1"
+                           {{ $devis->client_id ? 'checked' : '' }}>
+                    <div><div class="font-medium">Client existant</div>
+                         <div class="text-sm text-gray-600">Rechercher dans vos clients</div></div>
+                </label>
+
+                <label class="border rounded-lg p-3 flex items-start gap-3 cursor-pointer has-[:checked]:border-orange-400">
+                    <input type="radio" name="client_mode" value="prospect" class="mt-1"
+                           {{ !$devis->client_id ? 'checked' : '' }}>
+                    <div><div class="font-medium">Prospect</div>
+                         <div class="text-sm text-gray-600">Sans créer de fiche client</div></div>
+                </label>
+            </div>
+
+            <!-- Client existant -->
+            <div id="section-existing" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 {{ $devis->client_id ? '' : 'hidden' }}">
                 <div>
                     <label class="block mb-2 font-medium text-gray-700">Client <span class="text-red-500">*</span></label>
                     <div class="relative">
@@ -59,6 +77,26 @@
                 <div>
                     <label class="block mb-2 font-medium text-gray-700">Titre du devis</label>
                     <input type="text" name="titre" value="{{ $devis->titre }}" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50" placeholder="Ex: Devis pour travaux de rénovation">
+                </div>
+            </div>
+
+            <!-- Prospect -->
+            <div id="section-prospect" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 {{ !$devis->client_id ? '' : 'hidden' }}">
+                <div>
+                    <label class="block mb-2 font-medium text-gray-700">Nom du prospect *</label>
+                    <input type="text" name="prospect_name" value="{{ $devis->prospect_name }}" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50" placeholder="Ex: Entreprise Martin">
+                </div>
+                <div>
+                    <label class="block mb-2 font-medium text-gray-700">Email</label>
+                    <input type="email" name="prospect_email" value="{{ $devis->prospect_email }}" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50">
+                </div>
+                <div>
+                    <label class="block mb-2 font-medium text-gray-700">Téléphone</label>
+                    <input type="text" name="prospect_phone" value="{{ $devis->prospect_phone }}" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50">
+                </div>
+                <div>
+                    <label class="block mb-2 font-medium text-gray-700">Adresse</label>
+                    <textarea name="prospect_address" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50" placeholder="Adresse complète du prospect">{{ $devis->prospect_address }}</textarea>
                 </div>
             </div>
         </div>

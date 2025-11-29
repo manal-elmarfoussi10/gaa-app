@@ -41,6 +41,10 @@ class FacturesExport implements FromCollection, WithHeadings
                 'total_ttc' => $facture->total_ttc,
                 'statut' => $facture->is_paid ? 'Payée' : 'Non payée',
                 'client' => $facture->client ? ($facture->client->nom ?? $facture->client->prenom ?? 'N/A') : ($facture->prospect_name ?? 'N/A'),
+                'prospect_name' => $facture->prospect_name,
+                'prospect_email' => $facture->prospect_email,
+                'prospect_phone' => $facture->prospect_phone,
+                'prospect_address' => $facture->prospect_address,
             ];
         });
     }
@@ -54,7 +58,11 @@ class FacturesExport implements FromCollection, WithHeadings
             'TVA',
             'Total TTC',
             'Statut',
-            'Client'
+            'Client',
+            'Prospect Nom',
+            'Prospect Email',
+            'Prospect Téléphone',
+            'Prospect Adresse'
         ];
     }
 }
