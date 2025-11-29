@@ -191,6 +191,7 @@ class FactureController extends Controller
         $facture->prospect_name  = $request->prospect_name;
         $facture->prospect_email = $request->prospect_email;
         $facture->prospect_phone = $request->prospect_phone;
+        $facture->prospect_address = $request->prospect_address;
 
         // Save payment terms (use form value if provided, else defaults)
         $facture->payment_method     = $request->input('payment_method',     $defaults['payment_method']);

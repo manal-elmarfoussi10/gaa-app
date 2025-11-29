@@ -24,6 +24,10 @@ class Facture extends Model
         'penalty_rate',
         'payment_terms_text',
         'due_date',
+        'prospect_name',
+        'prospect_email',
+        'prospect_phone',
+        'prospect_address'
     ];
 
     public function client()
