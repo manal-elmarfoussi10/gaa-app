@@ -98,16 +98,16 @@ class DevisController extends Controller
             ?? (int) $request->input('company_id');
 
         // Create shell devis (we need id for items)
-        $devis = new Devis();
-        $devis->client_id      = $validated['client_id']      ?? null;  // can be null (prospect)
-        $devis->prospect_name  = $validated['prospect_name']  ?? null;
-        $devis->prospect_email = $validated['prospect_email'] ?? null;
-        $devis->prospect_phone = $validated['prospect_phone'] ?? null;
-        $devis->prospect_phone = $validated['prospect_adresse'] ?? null;
-        $devis->titre          = $validated['titre']          ?? null;
-        $devis->date_devis     = $validated['date_devis'];
-        $devis->date_validite  = $validated['date_validite'];
-        $devis->company_id     = $companyId;
+$devis = new Devis();
+$devis->client_id        = $validated['client_id']        ?? null;  // can be null (prospect)
+$devis->prospect_name    = $validated['prospect_name']    ?? null;
+$devis->prospect_email   = $validated['prospect_email']   ?? null;
+$devis->prospect_phone   = $validated['prospect_phone']   ?? null;
+$devis->prospect_address = $validated['prospect_address'] ?? null;  // ✅ ICI
+$devis->titre            = $validated['titre']            ?? null;
+$devis->date_devis       = $validated['date_devis'];
+$devis->date_validite    = $validated['date_validite'];
+$devis->company_id       = $companyId;
 
         // Numero: SSMMYYYY unique per company+month
         $devis->numero = $this->allocateCompanyMonthNumero($companyId, $devis->date_devis);
