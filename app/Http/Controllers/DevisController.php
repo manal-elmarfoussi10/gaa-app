@@ -103,6 +103,7 @@ class DevisController extends Controller
         $devis->prospect_name  = $validated['prospect_name']  ?? null;
         $devis->prospect_email = $validated['prospect_email'] ?? null;
         $devis->prospect_phone = $validated['prospect_phone'] ?? null;
+        $devis->prospect_phone = $validated['prospect_adresse'] ?? null;
         $devis->titre          = $validated['titre']          ?? null;
         $devis->date_devis     = $validated['date_devis'];
         $devis->date_validite  = $validated['date_validite'];

@@ -208,7 +208,9 @@
                     Tél. : {{ $client->telephone }}<br>
                 @endif
             @else
-            
+                @if($devis->prospect_address)
+                    {{ $devis->prospect_address }}<br>
+                @endif
                 @if($devis->prospect_phone)
                     Tél. : {{ $devis->prospect_phone }}<br>
                 @endif
