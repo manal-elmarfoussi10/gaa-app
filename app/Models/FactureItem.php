@@ -9,9 +9,11 @@ class FactureItem extends Model
     protected $fillable = [
         'facture_id',
         'produit',
+        'description',
         'quantite',
         'prix_unitaire',
         'remise',
+        'taux_tva',
         'total_ht',
         'company_id'
     ];

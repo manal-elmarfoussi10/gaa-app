@@ -362,16 +362,6 @@
             @endif
         </td>
 
-        <td class="bottom-right">
-            <div class="section-title">Signature</div>
-            <div class="sig-box">
-                @if($sigSrc)
-                    <img class="sig-img" src="{{ $sigSrc }}" alt="Signature de l'entreprise">
-                @endif
-             <br>
-                {{ $companyName }}
-            </div>
-        </td>
     </tr>
 </table>
 
