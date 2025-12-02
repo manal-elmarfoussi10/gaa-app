@@ -1,4 +1,4 @@
-@extends('layout')
+e@extends('layout')
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
@@ -247,6 +247,8 @@
       </div>
       <div class="space-y-3">
         <div><p class="text-sm text-gray-500">Immatriculation</p><p class="font-medium">{{ $client->plaque }}</p></div>
+        <div><p class="text-sm text-gray-500">Marque</p><p class="font-medium">{{ $client->marque ?? '-' }}</p></div>
+        <div><p class="text-sm text-gray-500">Modèle</p><p class="font-medium">{{ $client->modele ?? '-' }}</p></div>
         <div><p class="text-sm text-gray-500">Kilométrage</p><p class="font-medium">{{ $client->kilometrage ?? '-' }} km</p></div>
         <div><p class="text-sm text-gray-500">Type de vitrage</p><p class="font-medium">{{ $client->type_vitrage ?? '-' }}</p></div>
         <div><p class="text-sm text-gray-500">Ancien modèle plaque</p><p class="font-medium">{{ $client->ancien_modele_plaque ?? '-' }}</p></div>

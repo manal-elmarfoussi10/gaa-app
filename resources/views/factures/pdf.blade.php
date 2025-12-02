@@ -6,10 +6,10 @@
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 12px;
+            font-size: 16px;
             color: #1f2937;
             margin: 0;
-            padding: 18px 28px;
+            padding: 20px 30px;
             background: #fff;
         }
 
@@ -28,15 +28,15 @@
         }
 
         .company-info {
-            font-size: 11px;
+            font-size: 14px;
             line-height: 1.4;
         }
         .facture-info {
-            font-size: 12px;
+            font-size: 15px;
         }
         .facture-title {
             margin: 0;
-            font-size: 20px;
+            font-size: 23px;
             color: #0ea5e9;
             font-weight: bold;
             letter-spacing: .5px;
@@ -45,7 +45,7 @@
         /* CLIENT */
         .client-info {
             margin: 12px 0 0;
-            font-size: 11px;
+            font-size: 14px;
             line-height: 1.4;
             text-align: right;
         }
@@ -56,20 +56,20 @@
             margin: 10px 0 4px;
             color: #0f172a;
             text-transform: uppercase;
-            font-size: 12px;
+            font-size: 15px;
         }
 
         /* VEHICULE compact : lignes de texte */
         .vs-line {
             margin: 1px 0;
-            font-size: 11px;
+            font-size: 14px;
         }
 
         /* TABLEAU LIGNES FACTURE */
         table.items {
             width: 100%;
             border-collapse: collapse;
-            font-size: 11px;
+            font-size: 14px;
             margin-top: 8px;
         }
         table.items th,
