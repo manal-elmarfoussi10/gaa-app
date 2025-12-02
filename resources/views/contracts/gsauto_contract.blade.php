@@ -35,7 +35,7 @@
 {{-- HEADER --}}
 <div class="header">
   <div>
-    <h1 class="orange">GS Auto – Contrat & Cession de créance</h1>
+    <h1 class="orange">Contrat & Cession de créance</h1>
     <div class="muted">Document contractuel à signer électroniquement (Yousign)</div>
   </div>
   <div>
@@ -94,8 +94,8 @@
     </div>
     <div class="col">
       <div class="kv">
-        <label>Immatriculation</label>
-        <div>{{ $client->plaque ?? '—' }} @if($client->ancien_modele_plaque) <span class="tag">Ancien modèle</span>@endif</div>
+        <label>Immatriculation / Marque / Modèle</label>
+        <div>{{ $client->plaque ?? '—' }} / {{ $client->marque ?? '—' }} / {{ $client->modele ?? '—' }} @if($client->ancien_modele_plaque) <span class="tag">Ancien modèle</span>@endif</div>
       </div>
       <div class="kv">
         <label>Type de vitrage</label>

@@ -6,7 +6,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 11px;
+            font-size: 12px;
             color: #1f2937;
             margin: 0;
             padding: 18px 28px;

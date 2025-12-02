@@ -20,6 +20,8 @@
 
     // Véhicule
     $immat = $client->plaque ?: '—';
+    $marque = $client->marque ?: '—';
+    $modele = $client->modele ?: '—';
     $kilom = $client->kilometrage ? number_format((int) $client->kilometrage, 0, ',', ' ') : '—';
 
     // Client identity
@@ -146,7 +148,7 @@
             <div class="co">
 
                 <div class="p-3 border-b border-gray-200 flex justify-left">
-                    <img src="{{ $logoSrc ?: asset('images/GS.png') }}" alt="GS AUTO" class="h-20" />
+                    <img src="{{ $logoSrc ?: asset('images/GS.png') }}" alt="Logo" class="h-20" />
                 </div>
 
             </div>
@@ -170,7 +172,7 @@
             </div>
             <h2 style="text-align:center;font-size:20px;margin:20px 0">DÉCLARATION DE BRIS DE GLACE</h2>
             <div style="margin-bottom:20px">
-                <div><strong>Immatriculation :</strong> {{ $immat }}</div>
+                <div><strong>Immatriculation :</strong> {{ $immat }} / {{ $marque }} / {{ $modele }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
                 <div><strong>Date de déclaration :</strong> {{ $dateDeclaration }}</div>
                 <div><strong>Sinistre du</strong> {{ $dateSinistre }}</div>
@@ -178,7 +180,7 @@
             <div class="legal-text">
                 <p>Madame, Monsieur,</p>
                 <p>Je soussigné {{ $clientNomComplet }} demeurant à : {{ $clientAdresse ?: '—' }}, déclare par la présente que conformément à l'Arrêté du 29 décembre 2014 relatif aux modalités d'information de l'assuré au moment du sinistre (et en cas de dommage garanti par mon contrat d'assurance), avoir la faculté de choisir le réparateur professionnel auquel je souhaite recourir et ce, comme indiqué dans l'article L.211-5-1 du code des assurances.</p>
-                <p>Je déclare également que mon véhicule, immatriculé {{ $immat }} qui est assuré auprès de votre compagnie d'assurance par le contrat numéro : {{ $numPolice }} a subi un important bris de glace le {{ $dateSinistre }}, par suite d’une projection sur la route. Le vitrage concerné est : {{ Str::lower($vitrage) }}.</p>
+                <p>Je déclare également que mon véhicule {{ $modele }}, immatriculé {{ $immat }} qui est assuré auprès de votre compagnie d'assurance par le contrat numéro : {{ $numPolice }} a subi un important bris de glace le {{ $dateSinistre }}, par suite d’une projection sur la route. Le vitrage concerné est : {{ Str::lower($vitrage) }}.</p>
                 <p>Mon vitrage ayant été endommagé et m'empêchant d'avoir une bonne visibilité (dans le sens de l'article R316-1 et R316-3 du code de la route), Je suis dans l'obligation de le remplacer par un neuf en urgence chez mon Réparateur.</p>
                 <p>Selon le principe de libre choix du consommateur et la loi du libre choix du réparateur (article L.211.5.1 du code des assurances), j’ai décidé d’effectuer ces travaux chez mon réparateur {{ $garageName }}.</p>
                 <p>Une fois la prestation réalisée, mon réparateur vous adressera la facture de sa prestation, pour laquelle je vous prie de procéder au règlement de l’indemnité qui me revient, directement entre ses mains.</p>
@@ -224,7 +226,7 @@
                 <div>(ci-après désignée « l’Assurance »)</div>
             </div>
             <div style="margin-bottom:20px">
-                <div><strong>Immatriculation :</strong> {{ $immat }}</div>
+                <div><strong>Immatriculation :</strong> {{ $immat }} / {{ $marque }} / {{ $modele }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
                 <div><strong>Date du sinistre :</strong> {{ $dateSinistre }}</div>
                 <div><strong>Nature du sinistre :</strong> {{ $natureSinistre }}</div>
@@ -310,7 +312,7 @@
         </div>
         <div style="margin-bottom:20px">
             <h3>Véhicule</h3>
-            <div><strong>Immatriculation :</strong> {{ $immat }} </div>
+            <div><strong>Immatriculation :</strong> {{ $immat }} / {{ $marque }} / {{ $modele }}</div>
             <div><strong>Kilométrage :</strong> {{ $kilom }}</div>
         </div>
         <div class="sec">
