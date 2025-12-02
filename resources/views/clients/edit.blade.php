@@ -103,12 +103,22 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                         <label class="block text-gray-700 mb-2 font-medium">Plaque d'immatriculation</label>
                         <input name="plaque" value="{{ old('plaque', $client->plaque) }}" placeholder="Ex: AB-123-CD" class="form-input w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
                     </div>
-                    
+
+                    <div>
+                        <label class="block text-gray-700 mb-2 font-medium">Marque du véhicule</label>
+                        <input name="marque" value="{{ old('marque', $client->marque) }}" placeholder="Ex: Peugeot" class="form-input w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 mb-2 font-medium">Modèle du véhicule</label>
+                        <input name="modele" value="{{ old('modele', $client->modele) }}" placeholder="Ex: 208" class="form-input w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                    </div>
+
                     <div>
                         <label class="block text-gray-700 mb-2 font-medium">Assurance</label>
                         <select name="nom_assurance" class="form-select w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
@@ -135,11 +145,11 @@
                             <option value="Lemonade" {{ old('nom_assurance', $client->nom_assurance) == 'Lemonade' ? 'selected' : '' }}>Lemonade</option>
                         </select>
                     </div>
-                    
-                    <div>
-                        <label class="block text-gray-700 mb-2 font-medium">Si autre assurance</label>
-                        <input name="autre_assurance" value="{{ old('autre_assurance', $client->autre_assurance) }}" placeholder="Précisez le nom" class="form-input w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
-                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2 font-medium">Si autre assurance</label>
+                    <input name="autre_assurance" value="{{ old('autre_assurance', $client->autre_assurance) }}" placeholder="Précisez le nom" class="form-input w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
                 </div>
 
                 <div class="mt-4">
