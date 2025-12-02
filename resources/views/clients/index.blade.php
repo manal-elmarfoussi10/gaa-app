@@ -201,6 +201,16 @@
                                     <div class="text-sm text-gray-500">{{ $client->numero_police }}</div>
                                 </td>
 
+                                <!-- Marque -->
+                                <td class="p-4 col-marque">
+                                    <div class="text-gray-800">{{ $client->marque ?? '-' }}</div>
+                                </td>
+
+                                <!-- Modele -->
+                                <td class="p-4 col-modele">
+                                    <div class="text-gray-800">{{ $client->modele ?? '-' }}</div>
+                                </td>
+
                                 <!-- Factures -->
                                 <td class="p-4 col-facture">
                                     <div class="font-medium text-gray-800">{{ number_format($factureTotal, 2, ',', ' ') }} €</div>

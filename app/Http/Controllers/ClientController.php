@@ -32,6 +32,8 @@ class ClientController extends Controller
             'dossier'   => 'Dossier',
             'statut'    => 'Statut GG Auto',
             'assurance' => 'Assurance N° Sinistre',
+            'marque'    => 'Marque',
+            'modele'    => 'Modèle',
             'facture'   => 'Factures (HT)',
             'avoir'     => 'Avoirs (HT)',
             'devis'     => 'Devis (HT)',
@@ -139,6 +141,8 @@ class ClientController extends Controller
             'code_postal'        => 'nullable|string|max:10',
             'ville'              => 'nullable|string|max:100',
             'plaque'             => 'nullable|string|max:20',
+            'marque'             => 'nullable|string|max:255',
+            'modele'             => 'nullable|string|max:255',
             'nom_assurance'      => 'nullable|string|max:255',
             'autre_assurance'    => 'nullable|string|max:255',
             'numero_police'      => 'nullable|string|max:100',
@@ -147,12 +151,12 @@ class ClientController extends Controller
             'raison'             => 'nullable|string|max:255',
             'type_vitrage'       => 'nullable|string|max:255',
             'professionnel'      => 'nullable|string|max:255',
-    
+
             // 15 MB (max is in KB)
             'photo_vitrage'      => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:15360',
             'photo_carte_verte'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:15360',
             'photo_carte_grise'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:15360',
-    
+
             'type_cadeau'        => 'nullable|string|max:255',
             'numero_sinistre'    => 'nullable|string|max:255',
             'kilometrage'        => 'nullable|string|max:255',

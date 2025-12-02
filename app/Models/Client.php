@@ -15,7 +15,7 @@ class Client extends Model
         'code_postal', 'ville',
 
         // Vehicle / insurance
-        'plaque', 'nom_assurance', 'autre_assurance',
+        'plaque', 'marque', 'modele', 'nom_assurance', 'autre_assurance',
         'ancien_modele_plaque', 'numero_police',
         'date_sinistre', 'date_declaration', 'raison',
         'type_vitrage', 'professionnel', 'reparation',
