@@ -114,7 +114,7 @@
     .lead{font-size:14px;line-height:1.5}
     .tag{display:inline-block;padding:4px 12px;border-radius:20px;background:#fef3c7;color:var(--accent);font-weight:600;border:1px solid #fde68a}
     .signs{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px}
-    .sigbox{border:2px dashed var(--border);border-radius:8px;padding:8px;min-height:60px;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--white)}
+    .sigbox{border:2px var(--border);border-radius:8px;padding:8px;min-height:60px;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--white)}
     .sigimg{max-height:80px;max-width:100%;object-fit:contain}
     .foot{display:flex;gap:16px;align-items:center;color:var(--secondary);font-size:10px;margin-top:8px;border-top:1px solid var(--border);padding-top:6px}
     .pb{page-break-before:always}
@@ -148,9 +148,7 @@
         <div class="hdr">
             <div class="co">
 
-                <div class="p-3 border-b border-gray-200 flex justify-left">
-                    <img src="{{ $logoSrc ?: asset('images/GS.png') }}" alt="Logo" class="h-20" />
-                </div>
+               
 
             </div>
             <div style="text-align:right">
