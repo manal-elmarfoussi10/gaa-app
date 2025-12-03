@@ -42,9 +42,10 @@
     $coTVA = $co->tva ?: '—';
     $coRCS = ($co->rcs_number && $co->rcs_city) ? ($co->rcs_number.' '.$co->rcs_city) : ($co->rcs_number ?? '—');
 
-    // Company logo -> build a data URI for PDF using GS.png
+    // Company logo -> build a data URI for PDF using company logo or GS.png
     $logoSrc = null;
-    $logoPath = public_path('images/GS.png');
+    $logoFile = $co->logo ?: 'GS.png';
+    $logoPath = public_path('images/' . $logoFile);
     if (file_exists($logoPath)) {
         $mime = mime_content_type($logoPath);
         $data = base64_encode(file_get_contents($logoPath));
@@ -113,7 +114,7 @@
     .lead{font-size:14px;line-height:1.5}
     .tag{display:inline-block;padding:4px 12px;border-radius:20px;background:#fef3c7;color:var(--accent);font-weight:600;border:1px solid #fde68a}
     .signs{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px}
-    .sigbox{border:2px dashed var(--border);border-radius:8px;padding:8px;min-height:60px;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--light-bg)}
+    .sigbox{border:2px dashed var(--border);border-radius:8px;padding:8px;min-height:60px;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--white)}
     .sigimg{max-height:80px;max-width:100%;object-fit:contain}
     .foot{display:flex;gap:16px;align-items:center;color:var(--secondary);font-size:10px;margin-top:8px;border-top:1px solid var(--border);padding-top:6px}
     .pb{page-break-before:always}
@@ -172,10 +173,12 @@
             </div>
             <h2 style="text-align:center;font-size:20px;margin:20px 0">DÉCLARATION DE BRIS DE GLACE</h2>
             <div style="margin-bottom:20px">
-                <div><strong>Immatriculation :</strong> {{ $immat }} / {{ $marque }} / {{ $modele }}</div>
+                <div><strong>Véhicule :</strong> {{ $modele }}</div>
+                <div><strong>Immatriculation :</strong> {{ $immat }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
+                <div><strong>Nom et Prénom :</strong> {{ $clientNomComplet }}</div>
+                <div><strong>Sinistre :</strong> du {{ $dateSinistre }}</div>
                 <div><strong>Date de déclaration :</strong> {{ $dateDeclaration }}</div>
-                <div><strong>Sinistre du</strong> {{ $dateSinistre }}</div>
             </div>
             <div class="legal-text">
                 <p>Madame, Monsieur,</p>
