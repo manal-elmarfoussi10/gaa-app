@@ -190,13 +190,9 @@
                 <p>Je vous prie d’agréer Madame, Monsieur, l'expression de mes salutations distinguées.</p>
             </div>
 
-            <div class="signs" style="margin-top:20px">
-                <div>
-                    <h3>Signature de l'Assuré</h3>
-                    <div class="sigbox">
-                        <div>Lu et approuvé<br>Signature</div>
-                    </div>
-                </div>
+            <div style="margin-top:20px">
+                <div>Lu et approuvé</div>
+                <div>Signature</div>
             </div>
 
         </div>
