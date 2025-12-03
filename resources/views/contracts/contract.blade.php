@@ -93,7 +93,7 @@
         --white: #FFFFFF;
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--light-bg);color:var(--primary);font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+    body{margin:0;background:var(--white);color:var(--primary);font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
     .sheet{max-width:800px;margin:24px auto;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
     .bar{background:linear-gradient(90deg,var(--accent),#fed7aa);height:4px}
     .pad{padding:20px}
