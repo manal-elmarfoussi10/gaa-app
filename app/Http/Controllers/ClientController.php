@@ -58,10 +58,10 @@ class ClientController extends Controller
                 $q->with(['avoirs'])                // full avoirs if you list them
                   ->withSum('avoirs as total_avoirs', 'montant');
             },
-    
+
             // Media
             'photos',
-    
+
             // Conversations + nested users/replies
             'conversations' => function ($q) {
                 $q->with([
@@ -74,6 +74,11 @@ class ClientController extends Controller
                         ]);
                     },
                 ])->orderBy('created_at', 'desc');
+            },
+
+            // History
+            'histories' => function ($q) {
+                $q->orderBy('created_at', 'desc');
             },
         ])->findOrFail($id);
     
@@ -101,6 +106,11 @@ class ClientController extends Controller
 
         $data = $request->all();
         $this->handleImageUpdates($request, $client, $data);
+
+        // Check for statut changes
+        if (isset($data['statut']) && $data['statut'] !== $client->statut) {
+            $client->logHistory('statut', 'Statut changé: ' . $data['statut']);
+        }
 
         $client->update($data);
 
@@ -191,7 +201,10 @@ class ClientController extends Controller
     
         // Create client (dossier)
         $client = Client::create($validated);
-    
+
+        // Log history
+        $client->logHistory('statut', 'Dossier créé');
+
         // Redirect to SHOW with a flag that auto-scrolls/opens the signature block
         return redirect()
             ->route('clients.show', $client->id)

@@ -84,8 +84,22 @@ class Client extends Model
         return $value ?? $this->attributes['yousign_signature_request_id'] ?? null;
     }
 
+    public function logHistory($statusType, $statusValue, $description = null)
+    {
+        return $this->histories()->create([
+            'status_type' => $statusType,
+            'status_value' => $statusValue,
+            'description' => $description,
+        ]);
+    }
+
     public function emails()
     {
         return $this->hasMany(\App\Models\Email::class, 'client_id');
+    }
+
+    public function histories()
+    {
+        return $this->hasMany(ClientHistory::class);
     }
 }
