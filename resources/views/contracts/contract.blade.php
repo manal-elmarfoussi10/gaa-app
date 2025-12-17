@@ -13,6 +13,7 @@
     // Assurance & sinistre
     $assurance = $client->nom_assurance ?: ($client->autre_assurance ?: '—');
     $numPolice = $client->numero_police ?: '—';
+    $numSinistre = $client->numero_sinistre ?: '—';
     $dateSinistre = $fmt($client->date_sinistre);
     $dateDeclaration = $fmt($client->date_declaration);
     $natureSinistre = $client->raison ?: 'Bris de glace';
@@ -175,6 +176,7 @@
                 <div><strong>Véhicule :</strong> {{ $modele }}</div>
                 <div><strong>Immatriculation :</strong> {{ $immat }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
+                <div><strong>Numéro sinistre :</strong> {{ $numSinistre }}</div>
                 <div><strong>Nom et Prénom :</strong> {{ $clientNomComplet }}</div>
                 <div><strong>Sinistre :</strong> du {{ $dateSinistre }}</div>
                 <div><strong>Date de déclaration :</strong> {{ $dateDeclaration }}</div>
@@ -226,6 +228,7 @@
             <div style="margin-bottom:20px">
                 <div><strong>Immatriculation :</strong> {{ $immat }} / {{ $marque }} / {{ $modele }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
+                <div><strong>Numéro sinistre :</strong> {{ $numSinistre }}</div>
                 <div><strong>Date du sinistre :</strong> {{ $dateSinistre }}</div>
                 <div><strong>Nature du sinistre :</strong> {{ $natureSinistre }}</div>
             </div>
@@ -266,6 +269,7 @@
                 <div><strong>Assurance :</strong> {{ $assurance }}</div>
                 <div><strong>Immatriculation :</strong> {{ $immat }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
+                <div><strong>Numéro sinistre :</strong> {{ $numSinistre }}</div>
                 <div><strong>Date du sinistre :</strong> {{ $dateSinistre }}</div>
                 <div><strong>Nature du sinistre :</strong> {{ $natureSinistre }}</div>
             </div>
