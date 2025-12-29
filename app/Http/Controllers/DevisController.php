@@ -147,7 +147,12 @@ class DevisController extends Controller
             'total_ttc' => round($totalHT + $totalTVA, 2),
         ]);
 
+        if ($devis->client_id) {
+            Client::find($devis->client_id)->update(['statut' => 'Devis généré']);
+        }
+
         return redirect()->route('devis.index')->with('success', 'Devis créé avec succès.');
+
     }
 
     public function edit($id)

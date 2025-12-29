@@ -23,13 +23,9 @@ class FactureController extends Controller
      * ========================= */
     private function isSuperAdmin(): bool
     {
-        $user = auth()->user();
-        // adapt this to your real role system if needed
-        if (method_exists($user, 'isSuperAdmin')) {
-            return (bool) $user->isSuperAdmin();
-        }
-        return in_array(($user->role ?? null), ['superadmin', 'SUPERADMIN', 'SuperAdmin'], true);
+        return auth()->check() && auth()->user()->isSupport();
     }
+
 
     private function authorizeFactureCompany(Facture $facture): void
     {
@@ -221,6 +217,11 @@ class FactureController extends Controller
         $facture->total_tva = round($totalTVA, 2);
         $facture->total_ttc = round($facture->total_ht + $facture->total_tva, 2);
         $facture->save();
+
+        if ($facture->client_id) {
+            Client::find($facture->client_id)->update(['statut' => 'Facture générée']);
+        }
+
 
         foreach ($request->items as $row) {
             $pu       = $this->num($row['prix_unitaire'], 0);
@@ -521,17 +522,13 @@ class FactureController extends Controller
         $totalAvoir = (float) $facture->avoirs->sum('montant');
         $reste      = round((float) $facture->total_ttc - $totalPaye - $totalAvoir, 2);
 
-        if ($reste > 0) {
-            Paiement::create([
-                'facture_id' => $facture->id,
-                'montant'    => $reste,
-                'mode'       => 'Virement',
-                'date'       => now(),
-            ]);
-        }
-
-        return redirect()->route('factures.index')->with('success', 'Facture acquittée.');
+        // Instead of auto-creating, we redirect to create payment page with pre-filled amount
+        return redirect()->route('paiements.create', [
+            'facture_id' => $facture->id,
+            'montant'    => $reste > 0 ? $reste : 0
+        ])->with('info', 'Veuillez confirmer les détails du paiement pour acquitter cette facture.');
     }
+
 
     /**
      * Build sane defaults for payment terms from the company profile.

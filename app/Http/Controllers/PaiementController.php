@@ -28,6 +28,21 @@ class PaiementController extends Controller
 
         Paiement::create($validated);
 
+        // Check if fully paid
+        $facture = Facture::with(['paiements', 'avoirs', 'client'])->find($validated['facture_id']);
+        if ($facture) {
+            $totalPaye  = $facture->paiements->sum('montant');
+            $totalAvoir = $facture->avoirs->sum('montant');
+            $totalDu    = $facture->total_ttc;
+
+            if (round($totalPaye + $totalAvoir, 2) >= round($totalDu, 2)) {
+                if ($facture->client) {
+                    $facture->client->update(['statut' => 'Payé / Acquitté']);
+                }
+            }
+        }
+
         return redirect()->route('factures.index')->with('success', 'Paiement enregistré');
+
     }
 }

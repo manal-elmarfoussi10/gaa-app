@@ -153,8 +153,9 @@
         <h2 class="text-lg font-semibold text-gray-800">Statut du dossier</h2>
         <div class="flex items-center mt-2">
           <span class="bg-orange-100 text-orange-800 text-sm font-medium px-3 py-1 rounded-full">
-            {{ $client->statut ?? 'En attente' }}
+            {{ $client->statut_gsauto }}
           </span>
+
           <span class="ml-3 text-sm text-gray-600">
             Créé le: {{ $client->created_at->format('d/m/Y') }}
           </span>
@@ -171,12 +172,13 @@
               <option value="">-- Aucun --</option>
               @foreach([
                 'En attente document','Faire devis','Fixer RDV','Faire commande',
-                'En attente de pose','Pose terminée','Annulée'
+                'En attente de pose','Pose terminée','Dossier clôturé','Annulée'
               ] as $opt)
-                <option value="{{ $opt }}" {{ $client->statut_interne === $opt ? 'selected' : '' }}>
+                <option value="{{ $opt }}" {{ ($client->statut_interne === $opt || $client->statut === $opt) ? 'selected' : '' }}>
                   {{ $opt }}
                 </option>
               @endforeach
+
             </select>
           </div>
           <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md text-sm font-medium">
@@ -200,8 +202,9 @@
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
-      <span class="text-sm">Acquitter facture</span>
+      <span class="text-sm">Liste factures</span>
     </a>
+
 
     <a href="{{ route('sidexa.index', ['client_id' => $client->id]) }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg flex flex-col items-center justify-center transition-all hover:shadow-lg">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

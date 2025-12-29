@@ -58,17 +58,20 @@
                 <div class="stat-card bg-green-50">
                     <div class="text-gray-600">Dossiers Terminés</div>
                     <div class="text-3xl font-bold text-green-600">
-                        {{ $clients->where('statut_gg', 'Termine')->count() }}
+                        {{ $clients->where('statut', 'Dossier clôturé')->count() }}
+
                     </div>
                     <div class="mt-3 w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-green-500 h-2 rounded-full" style="width: {{ count($clients) ? round($clients->where('statut_gg', 'Termine')->count() / count($clients) * 100) : 0 }}%"></div>
+                        <div class="bg-green-500 h-2 rounded-full" style="width: {{ count($clients) ? round($clients->where('statut', 'Dossier clôturé')->count() / count($clients) * 100) : 0 }}%"></div>
+
                     </div>
                 </div>
                 
                 <div class="stat-card bg-orange-50">
                     <div class="text-gray-600">En Attente</div>
                     <div class="text-3xl font-bold text-orange-600">
-                        {{ $clients->where('statut_gg', '!=', 'Termine')->count() }}
+                        {{ $clients->where('statut', '!=', 'Dossier clôturé')->count() }}
+
                     </div>
                     <div class="mt-2 flex items-center text-sm text-orange-600">
                         <div class="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
@@ -164,37 +167,31 @@
                                     </a>
                                 </td>
                                 
-                                <td class="p-4 col-statut">
-                                    @if($client->statut_gg === 'Termine')
-                                        <span class="status-badge bg-green-100 text-green-800">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                            </svg>
-                                            Terminé
-                                        </span>
-                                    @elseif($client->statut_gg === 'Signature')
-                                        <span class="status-badge bg-purple-100 text-purple-800">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                            </svg>
-                                            Signature
-                                        </span>
-                                    @elseif($client->statut_gg === 'Envoi Courrier')
-                                        <span class="status-badge bg-orange-100 text-orange-800">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                            </svg>
-                                            Envoi Courrier
-                                        </span>
-                                    @else
-                                        <span class="status-badge bg-gray-100 text-gray-800">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            En attente
-                                        </span>
-                                    @endif
+                                    @php
+                                        $status = $client->statut_gsauto;
+                                        $badgeClass = 'bg-gray-100 text-gray-800';
+                                        $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+
+                                        if ($status === 'Dossier clôturé' || $status === 'Payé / Acquitté') {
+                                            $badgeClass = 'bg-green-100 text-green-800';
+                                            $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>';
+                                        } elseif ($status === 'Contrat signé' || $status === 'Devis généré' || $status === 'Facture générée' || $status === 'Avoir généré') {
+                                            $badgeClass = 'bg-blue-100 text-blue-800';
+                                            $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                                        } elseif ($status === 'Dossier envoyé pour signature') {
+                                            $badgeClass = 'bg-purple-100 text-purple-800';
+                                            $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>';
+                                        } elseif ($status === 'Contrat généré') {
+                                            $badgeClass = 'bg-orange-100 text-orange-800';
+                                            $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>';
+                                        }
+                                    @endphp
+                                    <span class="status-badge {{ $badgeClass }}">
+                                        {!! $icon !!}
+                                        {{ $status }}
+                                    </span>
                                 </td>
+
 
                                 <td class="p-4 col-assurance">
                                     <div class="font-medium">{{ $client->nom_assurance }}</div>

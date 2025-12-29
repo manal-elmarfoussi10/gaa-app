@@ -83,7 +83,12 @@ class AvoirController extends Controller
             'notes'      => $request->notes,
         ]);
 
+        if ($facture->client_id) {
+            $facture->client->update(['statut' => 'Avoir généré']);
+        }
+
         return redirect()->route('factures.index')->with('success', 'Avoir enregistré.');
+
     }
 
     public function show(Avoir $avoir)

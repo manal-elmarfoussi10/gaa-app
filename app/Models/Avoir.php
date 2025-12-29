@@ -8,7 +8,8 @@ use App\Models\Concerns\CompanyScoped;
 class Avoir extends Model
 {
     use CompanyScoped;
-    protected $fillable = ['facture_id', 'montant'];
+    protected $fillable = ['facture_id', 'montant', 'company_id'];
+
 
     public function facture()
     {

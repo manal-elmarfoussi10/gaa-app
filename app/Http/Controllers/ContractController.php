@@ -35,11 +35,12 @@ class ContractController extends Controller
         // Sauvegarder le PDF
         Storage::disk('public')->put($path, $pdf->output());
 
-        // Mettre à jour le client
         $client->update([
             'contract_pdf_path' => $path,
+            'statut'            => 'Contrat généré',
             'statut_gsauto'     => $client->statut_gsauto ?: 'draft',
         ]);
+
 
         return back()->with('success', 'Contrat généré.')->with('open_signature', true);
     }
@@ -171,9 +172,11 @@ class ContractController extends Controller
             $client->update([
                 'yousign_signature_request_id' => $sr['id'],
                 'yousign_document_id'          => $doc['id'] ?? null,
+                'statut'                       => 'Dossier envoyé pour signature',
                 'statut_gsauto'                => 'sent',
                 'statut_signature'             => 0,
             ]);
+
 
             return back()
                 ->with('success', 'Document envoyé au client pour signature.')

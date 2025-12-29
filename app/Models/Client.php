@@ -27,7 +27,8 @@ class Client extends Model
         // Misc
         'type_cadeau', 'numero_sinistre', 'connu_par', 'adresse_pose',
         'reference_interne', 'reference_client', 'precision',
-        'statut', 'company_id',
+        'statut', 'statut_interne', 'company_id',
+
 
         // Contract files
         'contract_pdf_path',           // unsigned contract
@@ -87,5 +88,41 @@ class Client extends Model
     public function emails()
     {
         return $this->hasMany(\App\Models\Email::class, 'client_id');
+    }
+
+    public function getStatutGsautoAttribute($value): string
+    {
+        // 1. Check if manually closed/finished
+        if ($this->statut_termine || $this->statut === 'Dossier clôturé') {
+            return 'Dossier clôturé';
+        }
+
+        // 2. Check payment status (simplified - real check would need summing payments vs ttc)
+        // For now, if current status is "Payé / Acquitté", keep it.
+        if ($this->statut === 'Payé / Acquitté') {
+            return 'Payé / Acquitté';
+        }
+
+        // 3. Signature status
+        if ($this->statut_signature || $this->attributes['statut_gsauto'] === 'signed') {
+            return 'Contrat signé';
+        }
+        if ($this->attributes['statut_gsauto'] === 'sent') {
+            return 'Dossier envoyé pour signature';
+        }
+        if ($this->contract_pdf_path) {
+            return 'Contrat généré';
+        }
+
+        // 4. Commercial documents
+        if ($this->factures()->exists()) {
+            return 'Facture générée';
+        }
+        if ($this->devis()->exists()) {
+            return 'Devis généré';
+        }
+
+        // 5. Fallback to manual 'statut' or initial creation
+        return $this->statut ?? 'Dossier créé';
     }
 }

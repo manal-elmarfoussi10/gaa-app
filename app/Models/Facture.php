@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\CompanyScoped;
 
 class Facture extends Model
 {
+    use CompanyScoped;
+
     protected $fillable = [
         'client_id',
         'devis_id',
@@ -24,7 +27,9 @@ class Facture extends Model
         'penalty_rate',
         'payment_terms_text',
         'due_date',
+        'company_id',
     ];
+
 
     public function client()
     {
