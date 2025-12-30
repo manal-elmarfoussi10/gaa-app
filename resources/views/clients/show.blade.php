@@ -48,7 +48,7 @@
       <h2 class="text-xl font-semibold text-gray-800 flex items-center">
         Signature électronique (GS Auto)
         <span class="ml-3 text-xs font-medium px-3 py-1 rounded-full {{ $isSigned ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }}">
-          {{ $isSigned ? 'SIGNÉ' : 'EN ATTENTE' }}
+          {{ $isSigned ? 'SIGNÉ' : 'EN ATTENTE DE SIGNATURE' }}
         </span>
       </h2>
 

@@ -174,6 +174,20 @@ class ClientsController extends Controller
                   ->stream("avoir_{$avoir->id}.pdf");
     }
 
+    public function updateStatutInterne(\Illuminate\Http\Request $request, Client $client)
+    {
+        $this->authorizeSupport();
+        
+        $request->validate(['statut_interne' => 'nullable|string|max:255']);
+        
+        $client->withoutGlobalScopes()->where('id', $client->id)->update([
+            'statut_interne' => $request->statut_interne,
+            'statut'         => $request->statut_interne,
+        ]);
+
+        return back()->with('success', 'Statut interne mis à jour.');
+    }
+
     /**
      * Autorisation centralisée support (superadmin + client_service).
      */

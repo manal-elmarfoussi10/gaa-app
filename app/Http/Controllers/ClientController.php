@@ -215,7 +215,11 @@ class ClientController extends Controller
     public function updateStatutInterne(Request $request, Client $client)
     {
         $request->validate(['statut_interne' => 'nullable|string|max:255']);
-        $client->update(['statut_interne' => $request->statut_interne]);
+        
+        $client->update([
+            'statut_interne' => $request->statut_interne,
+            'statut'         => $request->statut_interne,
+        ]);
 
         return back()->with('success', 'Statut interne mis à jour.');
     }

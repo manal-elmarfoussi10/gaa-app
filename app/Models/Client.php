@@ -93,17 +93,27 @@ class Client extends Model
     public function getStatutGsautoAttribute($value): string
     {
         // 1. Check if manually closed/finished
-        if ($this->statut_termine || $this->statut === 'Dossier clôturé') {
+        if ($this->statut_termine || $this->statut === 'Dossier clôturé' || $this->statut_interne === 'Dossier clôturé') {
             return 'Dossier clôturé';
         }
 
-        // 2. Check payment status (simplified - real check would need summing payments vs ttc)
-        // For now, if current status is "Payé / Acquitté", keep it.
-        if ($this->statut === 'Payé / Acquitté') {
+        // 2. Check if cancelled
+        if ($this->statut_interne === 'Annulée' || $this->statut === 'Annulée') {
+            return 'Annulée';
+        }
+
+        // 3. Check payment status
+        if ($this->statut === 'Payé / Acquitté' || $this->statut_interne === 'Payé / Acquitté') {
             return 'Payé / Acquitté';
         }
 
-        // 3. Signature status
+        // 4. Manual internal status override (like 'Fixer RDV', 'Pose terminée', etc.)
+        // We only use this if it's not one of the final states already checked above
+        if (!empty($this->statut_interne)) {
+            return $this->statut_interne;
+        }
+
+        // 5. Signature milestones
         if ($this->statut_signature || $this->attributes['statut_gsauto'] === 'signed') {
             return 'Contrat signé';
         }
@@ -114,7 +124,7 @@ class Client extends Model
             return 'Contrat généré';
         }
 
-        // 4. Commercial documents
+        // 6. Commercial document milestones (auto-status)
         if ($this->factures()->exists()) {
             return 'Facture générée';
         }
@@ -122,7 +132,8 @@ class Client extends Model
             return 'Devis généré';
         }
 
-        // 5. Fallback to manual 'statut' or initial creation
+        // 7. Fallback to manual 'statut' or initial creation
         return $this->statut ?? 'Dossier créé';
     }
+
 }

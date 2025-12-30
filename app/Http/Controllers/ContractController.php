@@ -23,7 +23,7 @@ class ContractController extends Controller
         $pdf = Pdf::loadView('contracts.contract', [
             'client'        => $client,
             'company'       => $client->company,
-            'latestFacture' => $client->factures()->latest()->first(),
+            'latestFacture' => $client->factures()->oldest()->first(),
         ])->setPaper('a4', 'portrait', 0, 0, 0, 0);
 
         $dir      = "contracts/{$client->id}";

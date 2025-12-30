@@ -428,6 +428,7 @@ Route::middleware(['auth','support'])
     ->name('superadmin.')
     ->group(function () {
         Route::get('/clients/{client}', [SAClientsController::class, 'show'])->name('clients.show');
+        Route::post('/clients/{client}/statut-interne', [SAClientsController::class, 'updateStatutInterne'])->name('clients.statut_interne');
         Route::get('/clients/{client}/export/pdf', [SAClientsController::class, 'exportPdf'])->name('clients.export.pdf');
 
         // Conversations

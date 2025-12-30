@@ -60,9 +60,28 @@
                         Créé le: {{ $client->created_at?->format('d/m/Y') }}
                     </span>
                 </div>
-                <div class="mt-2 text-sm text-gray-600">
-                    <span class="font-semibold">Statut interne :</span>
-                    {{ $client->statut_interne ?? '-' }}
+                <div class="mt-4">
+                    <form method="POST" action="{{ route('superadmin.clients.statut_interne', $client->id) }}" class="flex flex-col md:flex-row items-start md:items-center">
+                        @csrf
+                        <div class="mr-4 mb-2 md:mb-0">
+                            <label for="statut_interne" class="block text-sm font-medium text-gray-700">Statut interne:</label>
+                            <select name="statut_interne" id="statut_interne"
+                                    class="mt-1 block w-full md:w-64 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm">
+                                <option value="">-- Aucun --</option>
+                                @foreach([
+                                    'En attente document','Faire devis','Fixer RDV','Faire commande',
+                                    'En attente de pose','Pose terminée','Dossier clôturé','Annulée'
+                                ] as $opt)
+                                    <option value="{{ $opt }}" {{ ($client->statut_interne === $opt || $client->statut === $opt) ? 'selected' : '' }}>
+                                        {{ $opt }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="submit" class="mt-6 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                            Mettre à jour
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -297,7 +316,7 @@
       <h2 class="text-xl font-semibold text-gray-800 flex items-center">
         Signature électronique (GS Auto)
         <span class="ml-3 text-xs font-medium px-3 py-1 rounded-full {{ $isSigned ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }}">
-          {{ $isSigned ? 'SIGNÉ' : 'EN ATTENTE' }}
+          {{ $isSigned ? 'SIGNÉ' : 'EN ATTENTE DE SIGNATURE' }}
         </span>
       </h2>
 

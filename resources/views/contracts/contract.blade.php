@@ -395,7 +395,7 @@
         </div>
 
         <div class="legal-text" style="margin-top: 20px; line-height: 1.6;">
-            <p>Jointe à la présente, nous vous adressons notre facture n°{{ $latestFacture->numero }}, relative à la remise en état du véhicule sus référencé dont votre règlement est à réaliser à notre adresse.</p>
+            <p>Jointe à la présente, nous vous adressons notre facture n°<strong>{{ $latestFacture->numero }}</strong>, relative à la remise en état du véhicule sus référencé dont votre règlement est à réaliser à notre adresse.</p>
             <p>A toute fin utile, nous nous permettons de vous rappeler la convention de cession de créance passée entre le client et notre société qui nous rend destinataires de l'indemnité due, selon les modalités qui ont été portées à votre connaissance par la lettre de notification qui vous a été remise conformément aux dispositions prévues à l'article 1321 et suivants du Code Civil.</p>
             <p>Avec nos remerciements anticipés, nous vous prions de croire, Madame, Monsieur, en l'assurance de nos plus sincères salutations.</p>
         </div>
@@ -405,11 +405,18 @@
         </div>
 
         <div style="margin-top: 20px;">
-            <div style="width: 280px; border: 1.5px solid #000; border-radius: 8px; padding: 15px; text-align: center;">
+            <div style="width: 300px; border: 1.5px solid #000; border-radius: 8px; padding: 15px; text-align: center; position: relative; min-height: 120px;">
                 <div style="font-weight: 700; font-size: 11px; margin-bottom: 5px;">{{ Str::upper($garageName) }}</div>
                 <div style="font-size: 10px; margin-bottom: 3px;">{{ $coAdr }}</div>
-                <div style="font-size: 10px;">{{ $coTel }}</div>
-                <div style="height: 50px;"></div> {{-- Signature space --}}
+                <div style="font-size: 10px; margin-bottom: 10px;">{{ $coTel }}</div>
+                
+                @if($sigSrc)
+                    <img src="{{ $sigSrc }}" alt="Signature" style="max-height: 70px; max-width: 200px; display: block; margin: 0 auto;">
+                @else
+                    <div style="height: 50px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666;">
+                        Cachet & Signature
+                    </div>
+                @endif
             </div>
         </div>
     </div>
