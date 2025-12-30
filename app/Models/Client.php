@@ -66,6 +66,7 @@ class Client extends Model
     public function bondecommandes()     { return $this->hasMany(BonDeCommande::class); }
     public function conversations()      { return $this->hasMany(ConversationThread::class); }
     public function interventions()      { return $this->hasMany(Intervention::class); }
+    public function histories()          { return $this->hasMany(ClientHistory::class); }
     public function company()            { return $this->belongsTo(Company::class); }
 
     // ---------- Accessors ----------

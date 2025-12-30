@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Exports\AvoirsExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\ClientHistory;
 
 class AvoirController extends Controller
 {
@@ -84,7 +85,14 @@ class AvoirController extends Controller
         ]);
 
         if ($facture->client_id) {
-            $facture->client->update(['statut' => 'Avoir généré']);
+            $client = $facture->client;
+            $client->update(['statut' => 'Avoir généré']);
+            
+            $client->histories()->create([
+                'status_type'  => 'avoir',
+                'status_value' => 'Avoir créé',
+                'description'  => "Création d'un avoir de {$montant}€ pour la facture n°{$facture->numero}.",
+            ]);
         }
 
         return redirect()->route('factures.index')->with('success', 'Avoir enregistré.');

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf as DomPDF;
 use Carbon\Carbon;
+use App\Models\ClientHistory;
 use Illuminate\Support\Facades\DB;
 
 class FactureController extends Controller
@@ -219,7 +220,14 @@ class FactureController extends Controller
         $facture->save();
 
         if ($facture->client_id) {
-            Client::find($facture->client_id)->update(['statut' => 'Facture générée']);
+            $client = Client::find($facture->client_id);
+            $client->update(['statut' => 'Facture générée']);
+            
+            $client->histories()->create([
+                'status_type'  => 'facture',
+                'status_value' => 'Facture créée',
+                'description'  => "Création de la facture n°{$facture->numero} d'un montant de {$facture->total_ttc}€ TTC.",
+            ]);
         }
 
 

@@ -859,6 +859,7 @@
     <div class="bg-white rounded-xl shadow-md p-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Historique du dossier</h2>
         <div class="relative pl-8 border-l-2 border-gray-200 space-y-6">
+            {{-- Initial creation --}}
             <div class="relative">
                 <div class="absolute -left-11 top-0 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
                     <div class="w-2 h-2 rounded-full bg-white"></div>
@@ -868,24 +869,23 @@
                     <p class="text-sm text-gray-500">{{ $client->created_at?->format('d/m/Y H:i') }}</p>
                 </div>
             </div>
-            <div class="relative">
-                <div class="absolute -left-11 top-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                    <div class="w-2 h-2 rounded-full bg-white"></div>
+
+            {{-- Dynamic history --}}
+            @php
+                $histories = \App\Models\ClientHistory::where('client_id', $client->id)->latest()->get();
+            @endphp
+            @foreach($histories as $history)
+                <div class="relative">
+                    <div class="absolute -left-11 top-0 w-6 h-6 rounded-full {{ $history->status_type === 'statut' ? 'bg-orange-500' : 'bg-green-500' }} flex items-center justify-center">
+                        <div class="w-2 h-2 rounded-full bg-white"></div>
+                    </div>
+                    <div class="pl-4">
+                        <p class="font-medium text-gray-800">{{ $history->status_value }}</p>
+                        <p class="text-sm text-gray-600">{{ $history->description }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ $history->created_at->format('d/m/Y H:i') }}</p>
+                    </div>
                 </div>
-                <div class="pl-4">
-                    <p class="font-medium text-gray-800">Dossier envoyé à l'assurance</p>
-                    <p class="text-sm text-gray-500">—</p>
-                </div>
-            </div>
-            <div class="relative">
-                <div class="absolute -left-11 top-0 w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center">
-                    <div class="w-2 h-2 rounded-full bg-white"></div>
-                </div>
-                <div class="pl-4">
-                    <p class="font-medium text-gray-800">En attente de validation</p>
-                    <p class="text-sm text-gray-500">En cours…</p>
-                </div>
-            </div>
+            @endforeach
         </div>
     </div>
 

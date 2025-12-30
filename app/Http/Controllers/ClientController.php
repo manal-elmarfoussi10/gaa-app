@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClientHistory;
 use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\User;
@@ -219,6 +220,12 @@ class ClientController extends Controller
         $client->update([
             'statut_interne' => $request->statut_interne,
             'statut'         => $request->statut_interne,
+        ]);
+
+        $client->histories()->create([
+            'status_type'  => 'statut',
+            'status_value' => $request->statut_interne ?: 'Inconnu',
+            'description'  => "Mise à jour manuelle du statut : {$request->statut_interne}.",
         ]);
 
         return back()->with('success', 'Statut interne mis à jour.');

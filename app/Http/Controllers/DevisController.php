@@ -11,6 +11,7 @@ use App\Exports\DevisExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use App\Models\ClientHistory;
 use Carbon\Carbon;
 
 class DevisController extends Controller
@@ -148,7 +149,14 @@ class DevisController extends Controller
         ]);
 
         if ($devis->client_id) {
-            Client::find($devis->client_id)->update(['statut' => 'Devis généré']);
+            $client = Client::find($devis->client_id);
+            $client->update(['statut' => 'Devis généré']);
+            
+            $client->histories()->create([
+                'status_type'  => 'devis',
+                'status_value' => 'Devis créé',
+                'description'  => "Création du devis n°{$devis->numero} d'un montant de {$devis->total_ttc}€ TTC.",
+            ]);
         }
 
         return redirect()->route('devis.index')->with('success', 'Devis créé avec succès.');
