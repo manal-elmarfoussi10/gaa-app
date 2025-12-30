@@ -404,21 +404,7 @@
             Société {{ Str::upper($garageName) }}
         </div>
 
-        <div style="margin-top: 20px;">
-            <div style="width: 300px; border: 1.5px solid #000; border-radius: 8px; padding: 15px; text-align: center; position: relative; min-height: 120px;">
-                <div style="font-weight: 700; font-size: 11px; margin-bottom: 5px;">{{ Str::upper($garageName) }}</div>
-                <div style="font-size: 10px; margin-bottom: 3px;">{{ $coAdr }}</div>
-                <div style="font-size: 10px; margin-bottom: 10px;">{{ $coTel }}</div>
-                
-                @if($sigSrc)
-                    <img src="{{ $sigSrc }}" alt="Signature" style="max-height: 70px; max-width: 200px; display: block; margin: 0 auto;">
-                @else
-                    <div style="height: 50px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666;">
-                        Cachet & Signature
-                    </div>
-                @endif
-            </div>
-        </div>
+        {{-- REMOVED signature box from here as per user request --}}
     </div>
     @endif
 </div>
