@@ -152,8 +152,23 @@
       <div class="mb-4 md:mb-0">
         <h2 class="text-lg font-semibold text-gray-800">Statut du dossier</h2>
         <div class="flex items-center mt-2">
-          <span class="bg-orange-100 text-orange-800 text-sm font-medium px-3 py-1 rounded-full">
-            {{ $client->statut_gsauto }}
+          @php
+              $status = $client->statut_gsauto;
+              $badgeClass = 'bg-gray-100 text-gray-800';
+              if ($status === 'Dossier clôturé' || $status === 'Payé / Acquitté' || $status === 'Pose terminée') {
+                  $badgeClass = 'bg-green-100 text-green-800';
+              } elseif ($status === 'Annulée') {
+                  $badgeClass = 'bg-red-100 text-red-800';
+              } elseif ($status === 'Contrat signé' || $status === 'Devis généré' || $status === 'Facture générée' || $status === 'Avoir généré') {
+                  $badgeClass = 'bg-blue-100 text-blue-800';
+              } elseif ($status === 'Dossier envoyé pour signature') {
+                  $badgeClass = 'bg-purple-100 text-purple-800';
+              } elseif ($status === 'Contrat généré' || $status === 'Faire commande') {
+                  $badgeClass = 'bg-orange-100 text-orange-800';
+              }
+          @endphp
+          <span class="{{ $badgeClass }} text-sm font-medium px-3 py-1 rounded-full">
+            {{ $status }}
           </span>
 
           <span class="ml-3 text-sm text-gray-600">
@@ -198,11 +213,14 @@
       <span class="text-sm">Modifier dossier</span>
     </a>
 
-    <a href="{{ route('factures.index') }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg flex flex-col items-center justify-center transition-all hover:shadow-lg">
+    @php
+        $lastFacture = $client->factures->last();
+    @endphp
+    <a href="{{ $lastFacture ? route('factures.acquitter', $lastFacture->id) : route('paiements.create') }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg flex flex-col items-center justify-center transition-all hover:shadow-lg">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
-      <span class="text-sm">Liste factures</span>
+      <span class="text-sm">Acquitter facture</span>
     </a>
 
 

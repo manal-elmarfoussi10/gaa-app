@@ -28,6 +28,7 @@
           <option value="Paiement en ligne">Paiement en ligne</option>
           <option value="Espèce">Espèce</option>
           <option value="Avoir">Avoir</option>
+          <option value="Autre">Autre</option>
         </select>
       </div>
 
