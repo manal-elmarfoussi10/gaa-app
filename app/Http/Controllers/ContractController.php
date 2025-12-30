@@ -21,9 +21,10 @@ class ContractController extends Controller
 
         // Générer le PDF depuis la vue Blade
         $pdf = Pdf::loadView('contracts.contract', [
-            'client'  => $client,
-            'company' => $client->company,
-        ])->setPaper('a4');
+            'client'        => $client,
+            'company'       => $client->company,
+            'latestFacture' => $client->factures()->latest()->first(),
+        ])->setPaper('a4', 'portrait', 0, 0, 0, 0);
 
         $dir      = "contracts/{$client->id}";
         $filename = 'contract.pdf';
@@ -35,12 +36,11 @@ class ContractController extends Controller
         // Sauvegarder le PDF
         Storage::disk('public')->put($path, $pdf->output());
 
+        // Mettre à jour le client
         $client->update([
             'contract_pdf_path' => $path,
-            'statut'            => 'Contrat généré',
             'statut_gsauto'     => $client->statut_gsauto ?: 'draft',
         ]);
-
 
         return back()->with('success', 'Contrat généré.')->with('open_signature', true);
     }
@@ -163,6 +163,19 @@ class ContractController extends Controller
                 ],
             ];
 
+            // 🟢 Add 5th page signature only if a facture exists (since page 5 is only rendered then)
+            if ($client->factures()->exists()) {
+                $payload['fields'][] = [
+                    'document_id' => $doc['id'],
+                    'type'        => 'signature',
+                    'page'        => 5,
+                    'x'           => 100,
+                    'y'           => 670,
+                    'width'       => 180,
+                    'height'      => 45,
+                ];
+            }
+
             $ys->addSigner($sr['id'], $payload);
 
             // 4) Activer (envoi du mail au client)
@@ -172,11 +185,9 @@ class ContractController extends Controller
             $client->update([
                 'yousign_signature_request_id' => $sr['id'],
                 'yousign_document_id'          => $doc['id'] ?? null,
-                'statut'                       => 'Dossier envoyé pour signature',
                 'statut_gsauto'                => 'sent',
                 'statut_signature'             => 0,
             ]);
-
 
             return back()
                 ->with('success', 'Document envoyé au client pour signature.')

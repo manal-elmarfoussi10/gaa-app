@@ -13,6 +13,7 @@
     // Assurance & sinistre
     $assurance = $client->nom_assurance ?: ($client->autre_assurance ?: '—');
     $numPolice = $client->numero_police ?: '—';
+    $numSinistre = $client->numero_sinistre ?: '—';
     $dateSinistre = $fmt($client->date_sinistre);
     $dateDeclaration = $fmt($client->date_declaration);
     $natureSinistre = $client->raison ?: 'Bris de glace';
@@ -20,6 +21,8 @@
 
     // Véhicule
     $immat = $client->plaque ?: '—';
+    $marque = $client->marque ?: '—';
+    $modele = $client->modele ?: '—';
     $kilom = $client->kilometrage ? number_format((int) $client->kilometrage, 0, ',', ' ') : '—';
 
     // Client identity
@@ -40,9 +43,10 @@
     $coTVA = $co->tva ?: '—';
     $coRCS = ($co->rcs_number && $co->rcs_city) ? ($co->rcs_number.' '.$co->rcs_city) : ($co->rcs_number ?? '—');
 
-    // Company logo -> build a data URI for PDF using GS.png
+    // Company logo -> build a data URI for PDF using company logo or GS.png
     $logoSrc = null;
-    $logoPath = public_path('images/GS.png');
+    $logoFile = $co->logo ?: 'GS.png';
+    $logoPath = public_path('images/' . $logoFile);
     if (file_exists($logoPath)) {
         $mime = mime_content_type($logoPath);
         $data = base64_encode(file_get_contents($logoPath));
@@ -82,19 +86,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
     :root{
-        --primary: #1F2937; /* Dark gray */
-        --secondary: #6B7280; /* Medium gray */
+        --primary: #1F2937; /* Medium gray */
         --accent: #F97316; /* Orange */
-        --light-bg: #F9FAFB; /* Light background */
-        --border: #E5E7EB; /* Border color */
+        --light-bg: #FFFFF; /* Light background */
+        --border: #FFFFFF; /* Border color */
         --white: #FFFFFF;
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--light-bg);color:var(--primary);font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+    html{background:var(--white)}
+    body{margin:0;background:var(--white);color:var(--primary);font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
     .sheet{max-width:800px;margin:24px auto;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
     .bar{background:linear-gradient(90deg,var(--accent),#fed7aa);height:4px}
     .pad{padding:20px}
-    .hdr{display:flex;gap:20px;align-items:center;justify-content:space-between;margin-bottom:8px;border-bottom:2px solid var(--light-bg);padding-bottom:8px}
+    .hdr{display:flex;gap:20px;align-items:center;justify-content:space-between;margin-bottom:8px;border-bottom:2px solid var(--white);padding-bottom:8px}
     .co{display:flex;align-items:center;gap:16px}
     .co img{height:60px;width:auto;border-radius:8px;border:2px solid var(--border);background:var(--white)}
     h1,h2,h3{margin:0 0 10px}
@@ -105,15 +109,15 @@
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .card{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--white);box-shadow:0 1px 3px rgba(0,0,0,.05)}
     .kv{display:grid;grid-template-columns:180px 1fr;gap:8px 12px;margin-top:6px}
-    .kv div{padding:4px 0;border-bottom:1px solid var(--light-bg)}
+    .kv div{padding:4px 0;border-bottom:1px solid var(--white)}
     .kv div span{display:block;font-weight:500}
     .sec{margin-top:12px}
     .lead{font-size:14px;line-height:1.5}
     .tag{display:inline-block;padding:4px 12px;border-radius:20px;background:#fef3c7;color:var(--accent);font-weight:600;border:1px solid #fde68a}
     .signs{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px}
-    .sigbox{border:2px dashed var(--border);border-radius:8px;padding:8px;min-height:60px;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--light-bg)}
+    .sigbox{border:2px var(--border);border-radius:8px;padding:8px;min-height:60px;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--white)}
     .sigimg{max-height:80px;max-width:100%;object-fit:contain}
-    .foot{display:flex;gap:16px;align-items:center;color:var(--secondary);font-size:10px;margin-top:8px;border-top:1px solid var(--border);padding-top:6px}
+    .foot{display:flex;gap:16px;align-items:center;color:var(--secondary);font-size:10px;margin-top:8px;border-top:1px solid var(--white);padding-top:6px}
     .pb{page-break-before:always}
     .actions{display:flex;justify-content:flex-end;gap:10px;padding:16px 20px;background:var(--white);border-top:1px solid var(--border)}
     .btn{background:var(--accent);color:var(--white);border:none;border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;transition:background .2s}
@@ -121,13 +125,14 @@
     .btn.out{background:var(--white);color:var(--accent);border:2px solid var(--accent)}
     table{width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
     th,td{padding:10px;border-bottom:1px solid var(--border);font-size:14px}
-    th{text-align:left;background:var(--light-bg);font-weight:600;color:var(--primary)}
+    th{text-align:left;background:var(--white);font-weight:600;color:var(--primary)}
     .t-right{text-align:right}
     .water{position:absolute;inset:auto auto 16px 16px;color:var(--accent);font-size:12px;font-weight:700}
     .wrap{position:relative}
     .legal-text{margin:8px 0;line-height:1.3;color:var(--primary);font-size:14px}
     .legal-text p{margin:0 0 6px}
     .small-text{font-size:12px;line-height:1.4}
+    @page { background: white; }
     @media print{
         body{background:var(--white)}
         .sheet{box-shadow:none;border:0;margin:0;max-width:100%}
@@ -145,9 +150,7 @@
         <div class="hdr">
             <div class="co">
 
-                <div class="p-3 border-b border-gray-200 flex justify-left">
-                    <img src="{{ $logoSrc ?: asset('images/GS.png') }}" alt="GS AUTO" class="h-20" />
-                </div>
+               
 
             </div>
             <div style="text-align:right">
@@ -170,28 +173,27 @@
             </div>
             <h2 style="text-align:center;font-size:20px;margin:20px 0">DÉCLARATION DE BRIS DE GLACE</h2>
             <div style="margin-bottom:20px">
+                <div><strong>Véhicule :</strong> {{ $modele }}</div>
                 <div><strong>Immatriculation :</strong> {{ $immat }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
+                <div><strong>Numéro sinistre :</strong> {{ $numSinistre }}</div>
+                <div><strong>Nom et Prénom :</strong> {{ $clientNomComplet }}</div>
+                <div><strong>Sinistre :</strong> du {{ $dateSinistre }}</div>
                 <div><strong>Date de déclaration :</strong> {{ $dateDeclaration }}</div>
-                <div><strong>Sinistre du</strong> {{ $dateSinistre }}</div>
             </div>
             <div class="legal-text">
                 <p>Madame, Monsieur,</p>
                 <p>Je soussigné {{ $clientNomComplet }} demeurant à : {{ $clientAdresse ?: '—' }}, déclare par la présente que conformément à l'Arrêté du 29 décembre 2014 relatif aux modalités d'information de l'assuré au moment du sinistre (et en cas de dommage garanti par mon contrat d'assurance), avoir la faculté de choisir le réparateur professionnel auquel je souhaite recourir et ce, comme indiqué dans l'article L.211-5-1 du code des assurances.</p>
-                <p>Je déclare également que mon véhicule, immatriculé {{ $immat }} qui est assuré auprès de votre compagnie d'assurance par le contrat numéro : {{ $numPolice }} a subi un important bris de glace le {{ $dateSinistre }}, par suite d’une projection sur la route. Le vitrage concerné est : {{ Str::lower($vitrage) }}.</p>
+                <p>Je déclare également que mon véhicule {{ $modele }}, immatriculé {{ $immat }} qui est assuré auprès de votre compagnie d'assurance par le contrat numéro : {{ $numPolice }} a subi un important bris de glace le {{ $dateSinistre }}, par suite d’une projection sur la route. Le vitrage concerné est : {{ Str::lower($vitrage) }}.</p>
                 <p>Mon vitrage ayant été endommagé et m'empêchant d'avoir une bonne visibilité (dans le sens de l'article R316-1 et R316-3 du code de la route), Je suis dans l'obligation de le remplacer par un neuf en urgence chez mon Réparateur.</p>
                 <p>Selon le principe de libre choix du consommateur et la loi du libre choix du réparateur (article L.211.5.1 du code des assurances), j’ai décidé d’effectuer ces travaux chez mon réparateur {{ $garageName }}.</p>
                 <p>Une fois la prestation réalisée, mon réparateur vous adressera la facture de sa prestation, pour laquelle je vous prie de procéder au règlement de l’indemnité qui me revient, directement entre ses mains.</p>
                 <p>Je vous prie d’agréer Madame, Monsieur, l'expression de mes salutations distinguées.</p>
             </div>
 
-            <div class="signs" style="margin-top:20px">
-                <div>
-                    <h3>Signature de l'Assuré</h3>
-                    <div class="sigbox">
-                        <div>Lu et approuvé<br>Signature</div>
-                    </div>
-                </div>
+            <div style="margin-top:20px">
+                <div>Lu et approuvé</div>
+                <div>Signature</div>
             </div>
 
         </div>
@@ -224,8 +226,9 @@
                 <div>(ci-après désignée « l’Assurance »)</div>
             </div>
             <div style="margin-bottom:20px">
-                <div><strong>Immatriculation :</strong> {{ $immat }}</div>
+                <div><strong>Immatriculation :</strong> {{ $immat }} / {{ $marque }} / {{ $modele }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
+                <div><strong>Numéro sinistre :</strong> {{ $numSinistre }}</div>
                 <div><strong>Date du sinistre :</strong> {{ $dateSinistre }}</div>
                 <div><strong>Nature du sinistre :</strong> {{ $natureSinistre }}</div>
             </div>
@@ -266,6 +269,7 @@
                 <div><strong>Assurance :</strong> {{ $assurance }}</div>
                 <div><strong>Immatriculation :</strong> {{ $immat }}</div>
                 <div><strong>Contrat n°</strong>{{ $numPolice }}</div>
+                <div><strong>Numéro sinistre :</strong> {{ $numSinistre }}</div>
                 <div><strong>Date du sinistre :</strong> {{ $dateSinistre }}</div>
                 <div><strong>Nature du sinistre :</strong> {{ $natureSinistre }}</div>
             </div>
@@ -310,7 +314,7 @@
         </div>
         <div style="margin-bottom:20px">
             <h3>Véhicule</h3>
-            <div><strong>Immatriculation :</strong> {{ $immat }} </div>
+            <div><strong>Immatriculation :</strong> {{ $immat }} / {{ $marque }} / {{ $modele }}</div>
             <div><strong>Kilométrage :</strong> {{ $kilom }}</div>
         </div>
         <div class="sec">
@@ -355,7 +359,61 @@
         </div>
     </div>
 
-  
+
+    {{-- 5) NOTIFICATION DE FACTURE (DERNIERE PAGE) --}}
+    @if(isset($latestFacture))
+    <div class="pb"></div>
+    <div class="bar"></div>
+    <div class="pad">
+        <div style="display:flex;justify-content:space-between;margin-bottom:20px">
+            <div>
+                <div style="font-weight:700;font-size:16px">{{ Str::upper($garageName) }}</div>
+                <div>{{ $coAdr ?: '—' }}</div>
+                <div>Tél : {{ $coTel }}</div>
+            </div>
+            <div style="text-align:right">
+                <div style="font-weight:700;font-size:16px">{{ Str::upper($assurance) }}</div>
+                <div>SA</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px;">
+            <div><strong>Véhicule :</strong> {{ $modele }}</div>
+            <div><strong>Immatriculation :</strong> {{ $immat }}</div>
+            <div><strong>Contrat n°</strong> {{ $numPolice }}</div>
+            <div><strong>Nom et Prénom :</strong> {{ $clientNom }} {{ Str::upper($clientPrenom) }}</div>
+            <div><strong>Sinistre :</strong> du {{ $dateSinistre }}</div>
+            <div><strong>Date de déclaration :</strong> {{ $dateDeclaration }}</div>
+        </div>
+
+        <div style="margin-top: 40px;">
+            {{ $villeJour }}, le {{ $now }}
+        </div>
+
+        <div style="margin-top: 20px;">
+            Madame, Monsieur,
+        </div>
+
+        <div class="legal-text" style="margin-top: 20px; line-height: 1.6;">
+            <p>Jointe à la présente, nous vous adressons notre facture n°{{ $latestFacture->numero }}, relative à la remise en état du véhicule sus référencé dont votre règlement est à réaliser à notre adresse.</p>
+            <p>A toute fin utile, nous nous permettons de vous rappeler la convention de cession de créance passée entre le client et notre société qui nous rend destinataires de l'indemnité due, selon les modalités qui ont été portées à votre connaissance par la lettre de notification qui vous a été remise conformément aux dispositions prévues à l'article 1321 et suivants du Code Civil.</p>
+            <p>Avec nos remerciements anticipés, nous vous prions de croire, Madame, Monsieur, en l'assurance de nos plus sincères salutations.</p>
+        </div>
+
+        <div style="margin-top: 40px; font-weight: 500;">
+            Société {{ Str::upper($garageName) }}
+        </div>
+
+        <div style="margin-top: 20px;">
+            <div style="width: 280px; border: 1.5px solid #000; border-radius: 8px; padding: 15px; text-align: center;">
+                <div style="font-weight: 700; font-size: 11px; margin-bottom: 5px;">{{ Str::upper($garageName) }}</div>
+                <div style="font-size: 10px; margin-bottom: 3px;">{{ $coAdr }}</div>
+                <div style="font-size: 10px;">{{ $coTel }}</div>
+                <div style="height: 50px;"></div> {{-- Signature space --}}
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
 </body>
