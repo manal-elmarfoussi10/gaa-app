@@ -60,9 +60,28 @@
                         Créé le: {{ $client->created_at?->format('d/m/Y') }}
                     </span>
                 </div>
-                <div class="mt-2 text-sm text-gray-600">
-                    <span class="font-semibold">Statut interne :</span>
-                    {{ $client->statut_interne ?? '-' }}
+                <div class="mt-4">
+                    <form method="POST" action="{{ route('superadmin.clients.statut_interne', $client->id) }}" class="flex flex-col md:flex-row items-start md:items-center">
+                        @csrf
+                        <div class="mr-4 mb-2 md:mb-0">
+                            <label for="statut_interne" class="block text-sm font-medium text-gray-700">Statut interne:</label>
+                            <select name="statut_interne" id="statut_interne"
+                                    class="mt-1 block w-full md:w-64 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm">
+                                <option value="">-- Aucun --</option>
+                                @foreach([
+                                    'En attente document','Faire devis','Fixer RDV','Faire commande',
+                                    'En attente de pose','Pose terminée','Dossier clôturé','Annulée'
+                                ] as $opt)
+                                    <option value="{{ $opt }}" {{ ($client->statut_interne === $opt || $client->statut === $opt) ? 'selected' : '' }}>
+                                        {{ $opt }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="submit" class="mt-6 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                            Mettre à jour
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -297,7 +316,7 @@
       <h2 class="text-xl font-semibold text-gray-800 flex items-center">
         Signature électronique (GS Auto)
         <span class="ml-3 text-xs font-medium px-3 py-1 rounded-full {{ $isSigned ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }}">
-          {{ $isSigned ? 'SIGNÉ' : 'EN ATTENTE' }}
+          {{ $isSigned ? 'SIGNÉ' : 'EN ATTENTE DE SIGNATURE' }}
         </span>
       </h2>
 
@@ -840,6 +859,7 @@
     <div class="bg-white rounded-xl shadow-md p-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Historique du dossier</h2>
         <div class="relative pl-8 border-l-2 border-gray-200 space-y-6">
+            {{-- Initial creation --}}
             <div class="relative">
                 <div class="absolute -left-11 top-0 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
                     <div class="w-2 h-2 rounded-full bg-white"></div>
@@ -849,24 +869,23 @@
                     <p class="text-sm text-gray-500">{{ $client->created_at?->format('d/m/Y H:i') }}</p>
                 </div>
             </div>
-            <div class="relative">
-                <div class="absolute -left-11 top-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                    <div class="w-2 h-2 rounded-full bg-white"></div>
+
+            {{-- Dynamic history --}}
+            @php
+                $histories = \App\Models\ClientHistory::where('client_id', $client->id)->latest()->get();
+            @endphp
+            @foreach($histories as $history)
+                <div class="relative">
+                    <div class="absolute -left-11 top-0 w-6 h-6 rounded-full {{ $history->status_type === 'statut' ? 'bg-orange-500' : 'bg-green-500' }} flex items-center justify-center">
+                        <div class="w-2 h-2 rounded-full bg-white"></div>
+                    </div>
+                    <div class="pl-4">
+                        <p class="font-medium text-gray-800">{{ $history->status_value }}</p>
+                        <p class="text-sm text-gray-600">{{ $history->description }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ $history->created_at->format('d/m/Y H:i') }}</p>
+                    </div>
                 </div>
-                <div class="pl-4">
-                    <p class="font-medium text-gray-800">Dossier envoyé à l'assurance</p>
-                    <p class="text-sm text-gray-500">—</p>
-                </div>
-            </div>
-            <div class="relative">
-                <div class="absolute -left-11 top-0 w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center">
-                    <div class="w-2 h-2 rounded-full bg-white"></div>
-                </div>
-                <div class="pl-4">
-                    <p class="font-medium text-gray-800">En attente de validation</p>
-                    <p class="text-sm text-gray-500">En cours…</p>
-                </div>
-            </div>
+            @endforeach
         </div>
     </div>
 

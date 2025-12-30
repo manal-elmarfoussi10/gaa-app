@@ -359,7 +359,54 @@
         </div>
     </div>
 
-  
+
+    {{-- 5) NOTIFICATION DE FACTURE (DERNIERE PAGE) --}}
+    @if(isset($latestFacture))
+    <div class="pb"></div>
+    <div class="bar"></div>
+    <div class="pad">
+        <div style="display:flex;justify-content:space-between;margin-bottom:20px">
+            <div>
+                <div style="font-weight:700;font-size:16px">{{ Str::upper($garageName) }}</div>
+                <div>{{ $coAdr ?: '—' }}</div>
+                <div>Tél : {{ $coTel }}</div>
+            </div>
+            <div style="text-align:right">
+                <div style="font-weight:700;font-size:16px">{{ Str::upper($assurance) }}</div>
+                <div>SA</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px;">
+            <div><strong>Véhicule :</strong> {{ $modele }}</div>
+            <div><strong>Immatriculation :</strong> {{ $immat }}</div>
+            <div><strong>Contrat n°</strong> {{ $numPolice }}</div>
+            <div><strong>Nom et Prénom :</strong> {{ $clientNom }} {{ Str::upper($clientPrenom) }}</div>
+            <div><strong>Sinistre :</strong> du {{ $dateSinistre }}</div>
+            <div><strong>Date de déclaration :</strong> {{ $dateDeclaration }}</div>
+        </div>
+
+        <div style="margin-top: 40px;">
+            {{ $villeJour }}, le {{ $now }}
+        </div>
+
+        <div style="margin-top: 20px;">
+            Madame, Monsieur,
+        </div>
+
+        <div class="legal-text" style="margin-top: 20px; line-height: 1.6;">
+            <p>Jointe à la présente, nous vous adressons notre facture n°<strong>{{ $latestFacture->numero }}</strong>, relative à la remise en état du véhicule sus référencé dont votre règlement est à réaliser à notre adresse.</p>
+            <p>A toute fin utile, nous nous permettons de vous rappeler la convention de cession de créance passée entre le client et notre société qui nous rend destinataires de l'indemnité due, selon les modalités qui ont été portées à votre connaissance par la lettre de notification qui vous a été remise conformément aux dispositions prévues à l'article 1321 et suivants du Code Civil.</p>
+            <p>Avec nos remerciements anticipés, nous vous prions de croire, Madame, Monsieur, en l'assurance de nos plus sincères salutations.</p>
+        </div>
+
+        <div style="margin-top: 40px; font-weight: 500;">
+            Société {{ Str::upper($garageName) }}
+        </div>
+
+        {{-- REMOVED signature box from here as per user request --}}
+    </div>
+    @endif
 </div>
 
 </body>

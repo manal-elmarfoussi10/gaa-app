@@ -48,7 +48,7 @@
       <h2 class="text-xl font-semibold text-gray-800 flex items-center">
         Signature électronique (GS Auto)
         <span class="ml-3 text-xs font-medium px-3 py-1 rounded-full {{ $isSigned ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }}">
-          {{ $isSigned ? 'SIGNÉ' : 'EN ATTENTE' }}
+          {{ $isSigned ? 'SIGNÉ' : 'EN ATTENTE DE SIGNATURE' }}
         </span>
       </h2>
 
@@ -152,9 +152,25 @@
       <div class="mb-4 md:mb-0">
         <h2 class="text-lg font-semibold text-gray-800">Statut du dossier</h2>
         <div class="flex items-center mt-2">
-          <span class="bg-orange-100 text-orange-800 text-sm font-medium px-3 py-1 rounded-full">
-            {{ $client->statut ?? 'En attente' }}
+          @php
+              $status = $client->statut_gsauto;
+              $badgeClass = 'bg-gray-100 text-gray-800';
+              if ($status === 'Dossier clôturé' || $status === 'Payé / Acquitté' || $status === 'Pose terminée') {
+                  $badgeClass = 'bg-green-100 text-green-800';
+              } elseif ($status === 'Annulée') {
+                  $badgeClass = 'bg-red-100 text-red-800';
+              } elseif ($status === 'Contrat signé' || $status === 'Devis généré' || $status === 'Facture générée' || $status === 'Avoir généré') {
+                  $badgeClass = 'bg-blue-100 text-blue-800';
+              } elseif ($status === 'Dossier envoyé pour signature') {
+                  $badgeClass = 'bg-purple-100 text-purple-800';
+              } elseif ($status === 'Contrat généré' || $status === 'Faire commande') {
+                  $badgeClass = 'bg-orange-100 text-orange-800';
+              }
+          @endphp
+          <span class="{{ $badgeClass }} text-sm font-medium px-3 py-1 rounded-full">
+            {{ $status }}
           </span>
+
           <span class="ml-3 text-sm text-gray-600">
             Créé le: {{ $client->created_at->format('d/m/Y') }}
           </span>
@@ -171,12 +187,13 @@
               <option value="">-- Aucun --</option>
               @foreach([
                 'En attente document','Faire devis','Fixer RDV','Faire commande',
-                'En attente de pose','Pose terminée','Annulée'
+                'En attente de pose','Pose terminée','Dossier clôturé','Annulée'
               ] as $opt)
-                <option value="{{ $opt }}" {{ $client->statut_interne === $opt ? 'selected' : '' }}>
+                <option value="{{ $opt }}" {{ ($client->statut_interne === $opt || $client->statut === $opt) ? 'selected' : '' }}>
                   {{ $opt }}
                 </option>
               @endforeach
+
             </select>
           </div>
           <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md text-sm font-medium">
@@ -196,12 +213,16 @@
       <span class="text-sm">Modifier dossier</span>
     </a>
 
-    <a href="{{ route('factures.index') }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg flex flex-col items-center justify-center transition-all hover:shadow-lg">
+    @php
+        $lastFacture = $client->factures->last();
+    @endphp
+    <a href="{{ $lastFacture ? route('factures.acquitter', $lastFacture->id) : route('paiements.create') }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg flex flex-col items-center justify-center transition-all hover:shadow-lg">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
       <span class="text-sm">Acquitter facture</span>
     </a>
+
 
     <a href="{{ route('sidexa.index', ['client_id' => $client->id]) }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg flex flex-col items-center justify-center transition-all hover:shadow-lg">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -714,22 +735,30 @@ $avoirs = $client->factures?->flatMap->avoirs ?? collect();
   <div class="bg-white rounded-xl shadow-md p-6">
     <h2 class="text-lg font-semibold text-gray-800 mb-4">Historique du dossier</h2>
     <div class="relative pl-8 border-l-2 border-gray-200 space-y-6">
-      @forelse($client->histories as $history)
+      {{-- Initial creation --}}
+      <div class="relative">
+        <div class="absolute -left-11 top-0 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
+          <div class="w-2 h-2 rounded-full bg-white"></div>
+        </div>
+        <div class="pl-4">
+          <p class="font-medium text-gray-800">Dossier créé</p>
+          <p class="text-sm text-gray-500">{{ $client->created_at->format('d/m/Y H:i') }}</p>
+        </div>
+      </div>
+
+      {{-- Dynamic history --}}
+      @foreach($client->histories->sortByDesc('created_at') as $history)
         <div class="relative">
-          <div class="absolute -left-11 top-0 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
+          <div class="absolute -left-11 top-0 w-6 h-6 rounded-full {{ $history->status_type === 'statut' ? 'bg-orange-500' : 'bg-green-500' }} flex items-center justify-center">
             <div class="w-2 h-2 rounded-full bg-white"></div>
           </div>
           <div class="pl-4">
             <p class="font-medium text-gray-800">{{ $history->status_value }}</p>
-            <p class="text-sm text-gray-500">{{ $history->created_at->format('d/m/Y H:i') }}</p>
-            @if($history->description)
-              <p class="text-sm text-gray-600 mt-1">{{ $history->description }}</p>
-            @endif
+            <p class="text-sm text-gray-600">{{ $history->description }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ $history->created_at->format('d/m/Y H:i') }}</p>
           </div>
         </div>
-      @empty
-        <p class="text-gray-500">Aucun historique disponible.</p>
-      @endforelse
+      @endforeach
     </div>
   </div>
 </div>

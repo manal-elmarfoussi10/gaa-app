@@ -21,8 +21,9 @@ class ContractController extends Controller
 
         // Générer le PDF depuis la vue Blade
         $pdf = Pdf::loadView('contracts.contract', [
-            'client'  => $client,
-            'company' => $client->company,
+            'client'        => $client,
+            'company'       => $client->company,
+            'latestFacture' => $client->factures()->oldest()->first(),
         ])->setPaper('a4', 'portrait', 0, 0, 0, 0);
 
         $dir      = "contracts/{$client->id}";
@@ -161,6 +162,19 @@ class ContractController extends Controller
                     ],
                 ],
             ];
+
+            // 🟢 Add 5th page signature only if a facture exists (since page 5 is only rendered then)
+            if ($client->factures()->exists()) {
+                $payload['fields'][] = [
+                    'document_id' => $doc['id'],
+                    'type'        => 'signature',
+                    'page'        => 5,
+                    'x'           => 100,
+                    'y'           => 670,
+                    'width'       => 180,
+                    'height'      => 45,
+                ];
+            }
 
             $ys->addSigner($sr['id'], $payload);
 

@@ -8,17 +8,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InterventionPhoto extends Model
 {
-    protected \$fillable = [
+    protected $fillable = [
         'intervention_id', 'uploaded_by', 'file_path', 'commentaire'
     ];
 
     public function intervention()
     {
-        return \$this->belongsTo(Intervention::class);
+        return $this->belongsTo(Intervention::class);
     }
 
     public function uploader()
     {
-        return \$this->belongsTo(User::class, 'uploaded_by');
+        return $this->belongsTo(User::class, 'uploaded_by');
     }
 }

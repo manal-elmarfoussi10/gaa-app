@@ -4,6 +4,7 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\ClientHistory;
 use App\Models\User;
 use App\Models\Devis;
 use App\Models\Facture;
@@ -172,6 +173,28 @@ class ClientsController extends Controller
 
         return Pdf::loadView('avoirs.single_pdf', compact('avoir', 'company'))
                   ->stream("avoir_{$avoir->id}.pdf");
+    }
+
+    public function updateStatutInterne(\Illuminate\Http\Request $request, Client $client)
+    {
+        $this->authorizeSupport();
+        
+        $request->validate(['statut_interne' => 'nullable|string|max:255']);
+        
+        $client->withoutGlobalScopes()->where('id', $client->id)->update([
+            'statut_interne' => $request->statut_interne,
+            'statut'         => $request->statut_interne,
+        ]);
+
+        // History entry (bypass scope for create as well)
+        ClientHistory::create([
+            'client_id'    => $client->id,
+            'status_type'  => 'statut',
+            'status_value' => $request->statut_interne ?: 'Inconnu',
+            'description'  => "Mise à jour manuelle du statut (par Support/SuperAdmin) : {$request->statut_interne}.",
+        ]);
+
+        return back()->with('success', 'Statut interne mis à jour.');
     }
 
     /**

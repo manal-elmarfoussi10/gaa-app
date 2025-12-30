@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClientHistory;
 use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\User;
@@ -21,16 +22,18 @@ class ClientController extends Controller
         // Scope to the connected company (superadmin will see all if you use a global scope/bypass)
         $query = Client::with(['factures.avoirs', 'devis'])->latest();
 
-        if (auth()->check() && auth()->user()->role !== User::ROLE_SUPERADMIN) {
+        if (auth()->check() && !auth()->user()->isSupport()) {
             $query->where('company_id', auth()->user()->company_id);
         }
+
 
         $clients = $query->get();
 
         $columns = [
             'date'      => 'Date',
             'dossier'   => 'Dossier',
-            'statut'    => 'Statut GG Auto',
+            'statut'    => 'Statut GS auto',
+
             'assurance' => 'Assurance N° Sinistre',
             'marque'    => 'Marque',
             'modele'    => 'Modèle',
@@ -83,10 +86,11 @@ class ClientController extends Controller
         ])->findOrFail($id);
     
         // (optional) guard by company if you want extra safety beyond middleware
-        if (auth()->user()->role !== User::ROLE_SUPERADMIN &&
+        if (!auth()->user()->isSupport() &&
             (int)$client->company_id !== (int)auth()->user()->company_id) {
             abort(403, 'Accès refusé (mauvaise entreprise).');
         }
+
     
         $users = User::where('company_id', auth()->user()->company_id)->get();
     
@@ -189,8 +193,10 @@ class ClientController extends Controller
         // Attach to current company
         $validated['company_id'] = auth()->user()->company_id ?? null;
     
-        // Initial GS Auto status (separate from your existing "statut")
+        // Initial GS Auto status
+        $validated['statut'] = 'Dossier créé';
         $validated['statut_gsauto'] = 'draft';
+
     
         // Uploads -> store on "public" disk; returns paths like "uploads/xxxx.jpg"
         foreach (['photo_vitrage', 'photo_carte_verte', 'photo_carte_grise'] as $field) {
@@ -227,7 +233,17 @@ class ClientController extends Controller
     public function updateStatutInterne(Request $request, Client $client)
     {
         $request->validate(['statut_interne' => 'nullable|string|max:255']);
-        $client->update(['statut_interne' => $request->statut_interne]);
+        
+        $client->update([
+            'statut_interne' => $request->statut_interne,
+            'statut'         => $request->statut_interne,
+        ]);
+
+        $client->histories()->create([
+            'status_type'  => 'statut',
+            'status_value' => $request->statut_interne ?: 'Inconnu',
+            'description'  => "Mise à jour manuelle du statut : {$request->statut_interne}.",
+        ]);
 
         return back()->with('success', 'Statut interne mis à jour.');
     }
@@ -239,8 +255,8 @@ class ClientController extends Controller
 
     public function destroy(Client $client)
 {
-    // (Optional) safety: only allow deleting inside same company unless superadmin
-    if (auth()->user()->role !== User::ROLE_SUPERADMIN &&
+    // (optional) safety: only allow deleting inside same company unless superadmin/support
+    if (!auth()->user()->isSupport() &&
         (int)$client->company_id !== (int)auth()->user()->company_id) {
         abort(403, 'Accès refusé (mauvaise entreprise).');
     }

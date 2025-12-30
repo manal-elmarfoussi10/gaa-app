@@ -18,10 +18,8 @@ return new class extends Migration
             'photos',
             'rdvs',
             'stocks',
-            'intervention_photos',
             'emails',                 // if you tie emails to a client_id
             'conversations',          // if you tie conversations to a client_id
-            'conversation_threads',   // same as above
 
             // tables that depend on a parent (we’ll backfill via the parent)
             'avoirs',                 // via factures
@@ -46,62 +44,66 @@ return new class extends Migration
         // Generic helper: backfill tables that have client_id -> clients.company_id
         $withClient = [
             'devis', 'factures', 'expenses', 'photos', 'rdvs', 'stocks',
-            'intervention_photos', 'emails', 'conversations', 'conversation_threads',
+            'emails', 'conversations',
             'bons_de_commande',
         ];
         foreach ($withClient as $t) {
             if (Schema::hasColumn($t, 'client_id')) {
-                DB::statement("
-                    UPDATE {$t} t
-                    JOIN clients c ON c.id = t.client_id
-                    SET t.company_id = c.company_id
-                    WHERE t.company_id IS NULL
-                ");
+                // SQLite doesn't support UPDATE with JOIN, so we do it in PHP
+                $records = DB::table($t)->whereNull('company_id')->whereNotNull('client_id')->get();
+                foreach ($records as $record) {
+                    $companyId = DB::table('clients')->where('id', $record->client_id)->value('company_id');
+                    if ($companyId) {
+                        DB::table($t)->where('id', $record->id)->update(['company_id' => $companyId]);
+                    }
+                }
             }
         }
 
         // Backfill avoirs via factures
         if (Schema::hasTable('avoirs') && Schema::hasColumn('avoirs', 'facture_id')) {
-            DB::statement("
-                UPDATE avoirs a
-                JOIN factures f ON f.id = a.facture_id
-                SET a.company_id = f.company_id
-                WHERE a.company_id IS NULL
-            ");
+            $avoirs = DB::table('avoirs')->whereNull('company_id')->whereNotNull('facture_id')->get();
+            foreach ($avoirs as $avoir) {
+                $companyId = DB::table('factures')->where('id', $avoir->facture_id)->value('company_id');
+                if ($companyId) {
+                    DB::table('avoirs')->where('id', $avoir->id)->update(['company_id' => $companyId]);
+                }
+            }
         }
 
         // Backfill paiements via factures (adjust if you use client_id instead)
         if (Schema::hasTable('paiements')) {
             if (Schema::hasColumn('paiements', 'facture_id')) {
-                DB::statement("
-                    UPDATE paiements p
-                    JOIN factures f ON f.id = p.facture_id
-                    SET p.company_id = f.company_id
-                    WHERE p.company_id IS NULL
-                ");
+                $paiements = DB::table('paiements')->whereNull('company_id')->whereNotNull('facture_id')->get();
+                foreach ($paiements as $paiement) {
+                    $companyId = DB::table('factures')->where('id', $paiement->facture_id)->value('company_id');
+                    if ($companyId) {
+                        DB::table('paiements')->where('id', $paiement->id)->update(['company_id' => $companyId]);
+                    }
+                }
             } elseif (Schema::hasColumn('paiements', 'client_id')) {
-                DB::statement("
-                    UPDATE paiements p
-                    JOIN clients c ON c.id = p.client_id
-                    SET p.company_id = c.company_id
-                    WHERE p.company_id IS NULL
-                ");
+                $paiements = DB::table('paiements')->whereNull('company_id')->whereNotNull('client_id')->get();
+                foreach ($paiements as $paiement) {
+                    $companyId = DB::table('clients')->where('id', $paiement->client_id)->value('company_id');
+                    if ($companyId) {
+                        DB::table('paiements')->where('id', $paiement->id)->update(['company_id' => $companyId]);
+                    }
+                }
             }
         }
-
-       
 
         // facture_items via factures
         if (
             Schema::hasTable('facture_items')
             && Schema::hasColumn('facture_items', 'facture_id')
         ) {
-            DB::statement("
-                UPDATE facture_items i
-                JOIN factures f ON f.id = i.facture_id
-                SET i.company_id = f.company_id
-                WHERE i.company_id IS NULL
-            ");
+            $items = DB::table('facture_items')->whereNull('company_id')->whereNotNull('facture_id')->get();
+            foreach ($items as $item) {
+                $companyId = DB::table('factures')->where('id', $item->facture_id)->value('company_id');
+                if ($companyId) {
+                    DB::table('facture_items')->where('id', $item->id)->update(['company_id' => $companyId]);
+                }
+            }
         }
 
         // devis_items via devis
@@ -109,12 +111,13 @@ return new class extends Migration
             Schema::hasTable('devis_items')
             && Schema::hasColumn('devis_items', 'devis_id')
         ) {
-            DB::statement("
-                UPDATE devis_items i
-                JOIN devis d ON d.id = i.devis_id
-                SET i.company_id = d.company_id
-                WHERE i.company_id IS NULL
-            ");
+            $items = DB::table('devis_items')->whereNull('company_id')->whereNotNull('devis_id')->get();
+            foreach ($items as $item) {
+                $companyId = DB::table('devis')->where('id', $item->devis_id)->value('company_id');
+                if ($companyId) {
+                    DB::table('devis_items')->where('id', $item->id)->update(['company_id' => $companyId]);
+                }
+            }
         }
 
         // produits (only if produits are per-company in your business rules)

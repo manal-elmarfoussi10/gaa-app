@@ -20,7 +20,6 @@ class Email extends Model
         'tag',            // if you use "important" via tag
         'tag_color',
         'important',      // keep only if you truly have this column
-        'is_deleted',
         'is_read',        // if present
         'in_trash',       // added for soft delete functionality
         'folder',
@@ -28,6 +27,7 @@ class Email extends Model
         'company_id',
         'file_path',
         'file_name',
+        'starred',
     ];
 
     /* Relationships */

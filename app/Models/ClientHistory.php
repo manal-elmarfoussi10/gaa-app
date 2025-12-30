@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ClientHistory extends Model
 {
+    protected $table = 'client_histories';
+
     protected $fillable = [
         'client_id',
         'status_type',
@@ -13,12 +15,6 @@ class ClientHistory extends Model
         'description',
     ];
 
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
-
-    // Relationships
     public function client()
     {
         return $this->belongsTo(Client::class);

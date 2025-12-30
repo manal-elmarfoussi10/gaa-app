@@ -54,7 +54,7 @@
                         </a>
 
                         {{-- Permanent Delete --}}
-                        <form method="POST" action="{{ route('emails.destroy', $email->id) }}"
+                        <form method="POST" action="{{ route('emails.permanentDelete', $email->id) }}"
                               onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement cet email ?')">
                             @csrf
                             @method('DELETE')

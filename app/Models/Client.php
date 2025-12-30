@@ -27,7 +27,8 @@ class Client extends Model
         // Misc
         'type_cadeau', 'numero_sinistre', 'connu_par', 'adresse_pose',
         'reference_interne', 'reference_client', 'precision',
-        'statut', 'company_id',
+        'statut', 'statut_interne', 'company_id',
+
 
         // Contract files
         'contract_pdf_path',           // unsigned contract
@@ -65,6 +66,7 @@ class Client extends Model
     public function bondecommandes()     { return $this->hasMany(BonDeCommande::class); }
     public function conversations()      { return $this->hasMany(ConversationThread::class); }
     public function interventions()      { return $this->hasMany(Intervention::class); }
+    public function histories()          { return $this->hasMany(ClientHistory::class); }
     public function company()            { return $this->belongsTo(Company::class); }
 
     // ---------- Accessors ----------
@@ -98,8 +100,50 @@ class Client extends Model
         return $this->hasMany(\App\Models\Email::class, 'client_id');
     }
 
-    public function histories()
+    public function getStatutGsautoAttribute($value): string
     {
-        return $this->hasMany(ClientHistory::class);
+        // 1. Check if manually closed/finished
+        if ($this->statut_termine || $this->statut === 'Dossier clôturé' || $this->statut_interne === 'Dossier clôturé') {
+            return 'Dossier clôturé';
+        }
+
+        // 2. Check if cancelled
+        if ($this->statut_interne === 'Annulée' || $this->statut === 'Annulée') {
+            return 'Annulée';
+        }
+
+        // 3. Check payment status
+        if ($this->statut === 'Payé / Acquitté' || $this->statut_interne === 'Payé / Acquitté') {
+            return 'Payé / Acquitté';
+        }
+
+        // 4. Manual internal status override (like 'Fixer RDV', 'Pose terminée', etc.)
+        // We only use this if it's not one of the final states already checked above
+        if (!empty($this->statut_interne)) {
+            return $this->statut_interne;
+        }
+
+        // 5. Signature milestones
+        if ($this->statut_signature || $this->attributes['statut_gsauto'] === 'signed') {
+            return 'Contrat signé';
+        }
+        if ($this->attributes['statut_gsauto'] === 'sent') {
+            return 'Dossier envoyé pour signature';
+        }
+        if ($this->contract_pdf_path) {
+            return 'Contrat généré';
+        }
+
+        // 6. Commercial document milestones (auto-status)
+        if ($this->factures()->exists()) {
+            return 'Facture générée';
+        }
+        if ($this->devis()->exists()) {
+            return 'Devis généré';
+        }
+
+        // 7. Fallback to manual 'statut' or initial creation
+        return $this->statut ?? 'Dossier créé';
     }
+
 }

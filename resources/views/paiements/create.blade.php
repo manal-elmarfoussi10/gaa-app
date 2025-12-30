@@ -14,12 +14,24 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div>
         <label class="block mb-1 font-medium text-gray-700">Montant réglé</label>
-        <input type="number" step="0.01" name="montant" class="w-full border-gray-300 rounded px-4 py-2" required>
+        <input type="number" step="0.01" name="montant" value="{{ request('montant') }}" class="w-full border-gray-300 rounded px-4 py-2" required>
       </div>
+
       <div>
         <label class="block mb-1 font-medium text-gray-700">Mode de paiement</label>
-        <input type="text" name="mode" class="w-full border-gray-300 rounded px-4 py-2">
+        <select name="mode" class="w-full border-gray-300 rounded px-4 py-2">
+          <option value="Chèque">Chèque</option>
+          <option value="Chèque assurance">Chèque assurance</option>
+          <option value="CB">CB</option>
+          <option value="Virement">Virement</option>
+          <option value="Virement assurance">Virement assurance</option>
+          <option value="Paiement en ligne">Paiement en ligne</option>
+          <option value="Espèce">Espèce</option>
+          <option value="Avoir">Avoir</option>
+          <option value="Autre">Autre</option>
+        </select>
       </div>
+
       <div>
         <label class="block mb-1 font-medium text-gray-700">Commentaire</label>
         <input type="text" name="commentaire" class="w-full border-gray-300 rounded px-4 py-2">

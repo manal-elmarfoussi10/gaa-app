@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
 use App\Http\Controllers\SuperAdmin\UnitPackageController;
@@ -70,6 +71,10 @@ use App\Http\Controllers\{
 |--------------------------------------------------------------------------
 */
 Route::get('/', fn () => redirect()->route('login'));
+Route::get('/run-migrations', function () {
+    Artisan::call('migrate', ['--force' => true]);
+    return Artisan::output();
+});
 Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->middleware('guest')->name('password.request');
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('guest')->name('password.email');
 Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->middleware('guest')->name('password.reset');
@@ -143,7 +148,10 @@ Route::middleware(['auth', CompanyAccess::class])
     ->scopeBindings()
     ->group(function () {
 
-   
+    // Signed contract download (client area)
+
+    Route::get('/clients/{client}/contract/signed', [ClientSignatureController::class, 'downloadSigned'])
+        ->name('clients.contract.download_signed');
 
     // Dashboards
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -422,6 +430,7 @@ Route::middleware(['auth','support'])
     ->name('superadmin.')
     ->group(function () {
         Route::get('/clients/{client}', [SAClientsController::class, 'show'])->name('clients.show');
+        Route::post('/clients/{client}/statut-interne', [SAClientsController::class, 'updateStatutInterne'])->name('clients.statut_interne');
         Route::get('/clients/{client}/export/pdf', [SAClientsController::class, 'exportPdf'])->name('clients.export.pdf');
 
         // Conversations
